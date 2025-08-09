@@ -1,0 +1,38 @@
+{
+  "name": "paint-dapp",
+  "version": "1.0.0",
+  "description": "NFT Dapp that allows changes to be made via the SVG",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.ts",
+    "test-deployment": "npx hardhat run scripts/test-deployment.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/technicallyweb3/paint-dapp.git"
+  },
+  "keywords": [
+    "paint",
+    "svg",
+    "dapp",
+    "hardhat"
+  ],
+  "author": "TechnicallyWeb3",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/technicallyweb3/paint-dapp/issues"
+  },
+  "homepage": "https://github.com/technicallyweb3/paint-dapp#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "dotenv": "^17.2.1",
+    "hardhat": "^2.26.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "@tw3/esp": "^1.0.1",
+    "@wttp/gateway": "^0.1.0",
+    "hardhat-build": "^0.1.5"
+  }
+}
