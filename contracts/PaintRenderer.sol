@@ -9,6 +9,7 @@ import "./types.sol";
 
 contract PaintRenderer {
     using Strings for uint8;
+    using Strings for uint16;
     using Strings for uint256;
 
     function renderTrait(Trait memory _traits) external pure returns (bytes memory) {
@@ -96,25 +97,24 @@ contract PaintRenderer {
             bytes memory xStr = bytes(Strings.toString(_points[i].x));
             bytes memory yStr = bytes(Strings.toString(_points[i].y));
             
-            // Format: " L x y" (space + L + space + x + space + y = 4 bytes + x + y lengths)
-            segmentStrings[i - 1] = new bytes(4 + xStr.length + yStr.length);
+            // Format: " Lx y" (space + L + x + space + y = 3 bytes + x + y lengths)
+            segmentStrings[i - 1] = new bytes(3 + xStr.length + yStr.length);
             
-            // Add " L " prefix
+            // Add " L" prefix
             segmentStrings[i - 1][0] = ' ';
             segmentStrings[i - 1][1] = 'L';
-            segmentStrings[i - 1][2] = ' ';
             
             // Copy x coordinate
             for (uint256 j = 0; j < xStr.length; j++) {
-                segmentStrings[i - 1][3 + j] = xStr[j];
+                segmentStrings[i - 1][2 + j] = xStr[j];
             }
             
             // Add space before y
-            segmentStrings[i - 1][3 + xStr.length] = ' ';
+            segmentStrings[i - 1][2 + xStr.length] = ' ';
             
             // Copy y coordinate
             for (uint256 j = 0; j < yStr.length; j++) {
-                segmentStrings[i - 1][4 + xStr.length + j] = yStr[j];
+                segmentStrings[i - 1][3 + xStr.length + j] = yStr[j];
             }
             
             totalSize += segmentStrings[i - 1].length;
@@ -187,7 +187,7 @@ contract PaintRenderer {
             
             path = abi.encodePacked(
                 '<path stroke-linecap="round" stroke-linejoin="round" stroke="#', 
-                toRGBString_(_object.color), '" stroke-width="', _object.stroke.toString(), '" d="M ',
+                toRGBString_(_object.color), '" stroke-width="', _object.stroke.toString(), '" d="M',
                 _object.points[0].x.toString(), ' ', _object.points[0].y.toString(), pathSegments, '"/>'
             );
         }
@@ -196,7 +196,7 @@ contract PaintRenderer {
 
     function renderObjects(Object[] memory _objects) external view returns (bytes memory paths) {
         if (_objects.length == 0) {
-            return abi.encodePacked('<g id="drawing-area" clip-path="url(#canvas-clip)"></g>');
+            return abi.encodePacked('');
         }
         
         // Pre-calculate total size needed
@@ -225,11 +225,7 @@ contract PaintRenderer {
             currentPos += rendered.length;
         }
         
-        return abi.encodePacked(
-            '<g id="drawing-area" clip-path="url(#canvas-clip)">', 
-                combinedObjects, 
-            '</g>'
-        );
+        return combinedObjects;
     }
 
     function getAttributes(Trait memory _trait) external pure returns (bytes memory) {

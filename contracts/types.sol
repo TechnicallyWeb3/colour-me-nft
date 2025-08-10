@@ -3,7 +3,10 @@ pragma solidity ^0.8.20;
 
 error OutOfBounds(uint256 index, uint256 length);
 error InvalidShape(uint8 shape);
-error InvalidPolygon(uint8 polygon);
+error InvalidColor(bytes3 color);
+error InvalidStroke(uint8 stroke);
+error InvalidPoints(uint256 points);
+error InvalidPolygon(uint256 points);
 
 enum Path {
     rect,
@@ -15,8 +18,8 @@ enum Path {
 }
 
 struct Point {
-    uint256 x;
-    uint256 y;
+    uint16 x;
+    uint16 y;
 }
 
 struct Object {

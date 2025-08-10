@@ -26,9 +26,10 @@
       .color-btn {stroke: #333; stroke-width: 2;}
       .color-btn:hover {stroke: #777; stroke-width: 3;}
       .color-btn.active {stroke: #000; stroke-width: 3;}
-      #brush-slider-handle {cursor: grab;}
-      #brush-slider-handle:active {cursor: grabbing;}
-      #brush-slider-track {cursor: pointer;}
+      .brush-size {fill: #ddd; stroke: #999; stroke-width: 1;}
+      .brush-size:hover {fill: #ccc; stroke: #777;}
+      .brush-size.active {fill: #4CAF50; stroke: #45a049;}
+      .brush-size.active:hover {fill: #45a049; stroke: #3d8b40;}
       .tool-button { 
         font-size: 20px; 
         fill: #666; 
@@ -104,11 +105,10 @@
   <rect x="10" y="10" width="980" height="70" class="toolbar" rx="5"/>
 
   <!-- Brush size controls -->
-  <g id="brush-size-controls">
-    <rect x="300" y="25" width="120" height="20" fill="#f0f0f0" stroke="#ccc" stroke-width="1" rx="10"/>
-    <rect id="brush-slider-track" x="305" y="27.5" width="110" height="15" fill="#ddd" rx="7.5"/>
-    <circle id="brush-slider-handle" cx="310" cy="35" r="8" fill="#4CAF50" stroke="#45a049" stroke-width="2" cursor="pointer"/>
-  </g>
+  <circle cx="320" cy="35" r="5" class="brush-size active" data-size="8"/>
+  <circle cx="338" cy="35" r="8" class="brush-size" data-size="15"/>
+  <circle cx="363" cy="35" r="12" class="brush-size" data-size="25"/>
+  <circle cx="398" cy="35" r="18" class="brush-size" data-size="40"/>
   
   <!-- Color palette -->
   <circle cx="50" cy="35" r="15" class="color-btn active" fill="#000000"/>
@@ -130,18 +130,18 @@
   
   <!-- Tool buttons -->
   <g class="tool-group">
-    <rect x="575" y="20" width="30" height="30" class="tool-bg active"/>
-    <text x="590" y="40" text-anchor="middle" class="tool-button">🖌️</text>
+    <rect x="650" y="20" width="30" height="30" class="tool-bg active"/>
+    <text x="665" y="40" text-anchor="middle" class="tool-button">🖌️</text>
   </g>
   
   <g class="tool-group">
-    <rect x="615" y="20" width="30" height="30" class="tool-bg"/>
-    <text x="630" y="40" text-anchor="middle" class="tool-button">🧽</text>
+    <rect x="690" y="20" width="30" height="30" class="tool-bg"/>
+    <text x="705" y="40" text-anchor="middle" class="tool-button">🧽</text>
   </g>
   
   <g class="tool-group">
-    <rect x="655" y="20" width="30" height="30" class="tool-bg"/>
-    <text x="670" y="40" text-anchor="middle" class="tool-button">🪣</text>
+    <rect x="730" y="20" width="30" height="30" class="tool-bg"/>
+    <text x="745" y="40" text-anchor="middle" class="tool-button">🪣</text>
   </g>
   
   <!-- Action buttons -->
@@ -163,17 +163,11 @@
     <text x="940" y="65" text-anchor="middle" class="toolbar-text">Export</text>
   </g>
   
-  <!-- Drawing Size Display -->
-  <g class="size-group">
-    <text id="drawing-size-text" x="750" y="40" text-anchor="middle" class="toolbar-text" style="font-size: 16px;">0 KB</text>
-  </g>
-  
   <!-- Labels -->
   <text x="150" y="65" text-anchor="middle" class="toolbar-text">Colors</text>
   <text x="350" y="65" text-anchor="middle" class="toolbar-text">Brush Size</text>
   <text x="500" y="65" text-anchor="middle" class="toolbar-text">Shapes</text>
-  <text x="630" y="65" text-anchor="middle" class="toolbar-text">Tools</text>
-  <text x="750" y="65" text-anchor="middle" class="toolbar-text">Txn Count</text>
+  <text x="700" y="65" text-anchor="middle" class="toolbar-text">Tools</text>
 
   <script type="text/javascript">
     <![CDATA[
@@ -279,8 +273,8 @@
         const points = [];
         for (let i = 0; i < sides; i++) {
           const angle = (i * 2 * Math.PI) / sides - Math.PI / 2 + offset;
-          const x = Math.round(centerX + (width / 2) * Math.cos(angle));
-          const y = Math.round(centerY + (height / 2) * Math.sin(angle));
+          const x = Math.round((centerX + (width / 2) * Math.cos(angle)) * 100) / 100;
+          const y = Math.round((centerY + (height / 2) * Math.sin(angle)) * 100) / 100;
           points.push(x, y);
         }
         return points.join(',');
@@ -298,81 +292,14 @@
           currentColor = this.getAttribute('fill');
         });
       });
-      // Brush size slider functionality
-      const brushSlider = document.getElementById('brush-slider-handle');
-      const brushSliderTrack = document.getElementById('brush-slider-track');
-      const brushSizeDisplay = document.getElementById('brush-size-display');
-      let isDraggingSlider = false;
-      
-      function updateBrushSizeFromSlider(x) {
-        const trackRect = brushSliderTrack.getBoundingClientRect();
-        const trackLeft = trackRect.left;
-        const trackWidth = trackRect.width;
-        
-        // Calculate position relative to track
-        let relativeX = x - trackLeft;
-        relativeX = Math.max(0, Math.min(relativeX, trackWidth));
-        
-        // Convert to brush size (1-40)
-        const brushSize = Math.round(1 + (relativeX / trackWidth) * 39);
-        
-        // Update slider handle position
-        const sliderX = 305 + (relativeX / trackWidth) * 110;
-        brushSlider.setAttribute('cx', sliderX);
-        
-        // Update brush size
-        currentBrushSize = brushSize;
-        
-        // Update slider handle size to match brush size (with scaling factor)
-        const handleRadius = Math.max(4, Math.min(20, brushSize * 0.5));
-        brushSlider.setAttribute('r', handleRadius);
-      }
-      
-      function startSliderDrag(evt) {
-        if (currentTool === 'shape' && currentShape !== 'polyline') finalizeShape();
-        isDraggingSlider = true;
-        updateBrushSizeFromSlider(evt.clientX);
-      }
-      
-      function updateSliderDrag(evt) {
-        if (isDraggingSlider) {
-          updateBrushSizeFromSlider(evt.clientX);
-        }
-      }
-      
-      function stopSliderDrag() {
-        isDraggingSlider = false;
-      }
-      
-      // Slider event listeners
-      brushSlider.addEventListener('mousedown', startSliderDrag);
-      brushSliderTrack.addEventListener('mousedown', startSliderDrag);
-      document.addEventListener('mousemove', updateSliderDrag);
-      document.addEventListener('mouseup', stopSliderDrag);
-      
-      // Touch events for slider
-      brushSlider.addEventListener('touchstart', function(evt) {
-        evt.preventDefault();
-        if (currentTool === 'shape' && currentShape !== 'polyline') finalizeShape();
-        isDraggingSlider = true;
-        updateBrushSizeFromSlider(evt.touches[0].clientX);
+      // Brush size selection
+      document.querySelectorAll('.brush-size').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (currentTool === 'shape' && currentShape !== 'polyline') finalizeShape();
+          setActiveElement('.brush-size', this);
+          currentBrushSize = parseInt(this.getAttribute('data-size'));
+        });
       });
-      
-      brushSliderTrack.addEventListener('touchstart', function(evt) {
-        evt.preventDefault();
-        if (currentTool === 'shape' && currentShape !== 'polyline') finalizeShape();
-        isDraggingSlider = true;
-        updateBrushSizeFromSlider(evt.touches[0].clientX);
-      });
-      
-      document.addEventListener('touchmove', function(evt) {
-        if (isDraggingSlider) {
-          evt.preventDefault();
-          updateBrushSizeFromSlider(evt.touches[0].clientX);
-        }
-      });
-      
-      document.addEventListener('touchend', stopSliderDrag);
       // Tool selection with optimized class management
       document.querySelectorAll('.tool-group').forEach((group, index) => {
         group.addEventListener('click', function() {
@@ -408,33 +335,6 @@
           return data;
         });
         localStorage.setItem('paintAppData', JSON.stringify(drawingElements));
-        updateDrawingSize();
-      }
-      
-      // Function to calculate and display drawing area size
-      function updateDrawingSize() {
-        const drawingSizeText = document.getElementById('drawing-size-text');
-        if (!drawingSizeText) return;
-        
-        // Calculate size of all drawing elements
-        let totalSize = 0;
-        drawingArea.querySelectorAll('*').forEach(element => {
-          // Get the outerHTML of each element
-          const elementHTML = element.outerHTML;
-          // Convert to bytes (UTF-8 encoding)
-          totalSize += new Blob([elementHTML]).size;
-        });
-        
-        // Calculate transactions needed (assuming ~40KB per transaction)
-        const bytesPerTx = 32 * 1024; // 32KB in bytes
-        const txCount = Math.ceil(totalSize / bytesPerTx);
-        
-        // Display transaction count
-        if (txCount === 1) {
-          drawingSizeText.textContent = '1 txn';
-        } else {
-          drawingSizeText.textContent = `${txCount} txns`;
-        }
       }
       // Optimized load function with element creation mapping
       const elementCreators = {
@@ -464,7 +364,6 @@
               paths.push(element);
             }
           });
-          updateDrawingSize();
         }
       }
       // Optimized export function with reduced string operations
@@ -503,7 +402,6 @@
             () => { // Clear
               drawingArea.innerHTML = '';
               paths = [];
-              updateDrawingSize();
               sendMessageToParent('CLEAR_REQUEST');
             },
             () => { // Save
@@ -526,7 +424,6 @@
           });
           drawingArea.appendChild(fillRect);
           paths.push(fillRect);
-          updateDrawingSize();
           return;
         }
         if (currentTool === 'shape') {
@@ -550,7 +447,6 @@
         });
         drawingArea.appendChild(currentPath);
         paths.push(currentPath);
-        updateDrawingSize();
       }
       function createShapeStart(pos) {
         isDrawing = true;
@@ -560,7 +456,6 @@
             currentShape.startsWith('polygon') ? 'polygon' : currentShape, config(pos));
           drawingArea.appendChild(shape);
           currentShapeElement = shape;
-          updateDrawingSize();
         }
       }
       function updateShape(pos) {
@@ -610,11 +505,8 @@
         // Check if polyline has too many points (limit to 500)
         if (polylinePoints.length >= 1000) { // 1000 because each point is x,y (so 500 coordinate pairs)
           // Finalize current polyline and start a new one
-          // we need to get the last point of the polyline and add it to the points array
-          const lastX = polylinePoints[polylinePoints.length - 4];
-          const lastY = polylinePoints[polylinePoints.length - 3];
           finalizeShape();
-          polylinePoints = [lastX, lastY, pos.x, pos.y];
+          polylinePoints = [pos.x, pos.y];
           currentShapeElement = createSVGElement('polyline', {
             points: polylinePoints.join(','),
             fill: 'none',
@@ -622,7 +514,6 @@
             'stroke-width': currentBrushSize
           });
           drawingArea.appendChild(currentShapeElement);
-          updateDrawingSize();
         } else {
           if (!currentShapeElement) {
             currentShapeElement = createSVGElement('polyline', {
@@ -632,7 +523,6 @@
               'stroke-width': currentBrushSize
             });
             drawingArea.appendChild(currentShapeElement);
-            updateDrawingSize();
           } else {
             currentShapeElement.setAttribute('points', polylinePoints.join(','));
           }
@@ -676,7 +566,6 @@
           });
           drawingArea.appendChild(currentPath);
           paths.push(currentPath);
-          updateDrawingSize();
         } else {
           // Continue with existing path
           currentPath.setAttribute('d', currentD + ` L ${pos.x} ${pos.y}`);
@@ -783,17 +672,41 @@
       window.addEventListener('load', function() {
         updateCoordinateFactors();
         loadDrawing();
-        updateDrawingSize();
         
-        // Initialize brush slider position based on current brush size
-        const initialBrushSize = currentBrushSize;
-        const sliderX = 305 + ((initialBrushSize - 1) / 39) * 110;
-        brushSlider.setAttribute('cx', sliderX);
-        brushSizeDisplay.textContent = initialBrushSize;
+        // THIS CODE SHOULD BE REMOVED FOR PRODUCTION!!!
+        // TEMPORARY: Assign random colors to color buttons (except first one)
+        // TODO: Remove this function when no longer needed
+        function assignRandomColors() {
+          const colorButtons = document.querySelectorAll('.color-btn');
+          const colors = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff'];
+          
+          // Generate 5 random colors
+          for (let i = 1; i < colorButtons.length; i++) {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            colorButtons[i].setAttribute('fill', randomColor);
+          }
+        }
         
-        // Initialize slider handle size
-        const initialHandleRadius = Math.max(4, Math.min(20, initialBrushSize * 0.5));
-        brushSlider.setAttribute('r', initialHandleRadius);
+        // TEMPORARY: Assign random shapes to shape buttons
+        // TODO: Remove this function when no longer needed
+        function assignRandomShapes() {
+          const shapeUseElements = document.querySelectorAll('.shape-btn');
+          const shapeIds = ['shape-0', 'shape-1', 'shape-2', 'shape-3']; // Basic shapes
+          const polygonIds = ['polygon-3', 'polygon-5', 'polygon-6']; // Polygons
+          
+          // Shuffle arrays to get random selection
+          const shuffledShapes = shapeIds.sort(() => Math.random() - 0.5);
+          const shuffledPolygons = polygonIds.sort(() => Math.random() - 0.5);
+          
+          // Assign 2 random shapes and 1 random polygon
+          shapeUseElements[0].setAttribute('href', '#' + shuffledShapes[0]);
+          shapeUseElements[1].setAttribute('href', '#' + shuffledShapes[1]);
+          shapeUseElements[2].setAttribute('href', '#' + shuffledPolygons[0]);
+        }
+        
+        // Uncomment the lines below to enable random colors and shapes
+        // assignRandomColors();
+        // assignRandomShapes();
       });
     ]]>
   </script>

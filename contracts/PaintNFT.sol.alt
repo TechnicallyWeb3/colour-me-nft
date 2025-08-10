@@ -33,6 +33,7 @@ contract PaintNFT is ERC721, Ownable {
     mapping(uint256 => Trait) public traits;
     mapping(uint256 => bytes) public traitSVG;
     mapping(uint256 => Object[]) public art;
+    mapping(uint256 => bytes) public artSVG;
 
     function setSVG(bytes memory _svgStart, bytes memory _svgEnd) external onlyOwner {
         svgStart = _svgStart;
@@ -82,13 +83,11 @@ contract PaintNFT is ERC721, Ownable {
     }
 
     function _objectAllowed(uint256 tokenId, Object memory object) internal view {
-        // do we make this less restrictive? Let hackers make dope art?
         if (!(
             object.shape == traits[tokenId].shape0 || 
             object.shape == traits[tokenId].shape1 ||
             object.shape == Path.polygon ||
-            object.shape == Path.path ||
-            object.shape > Path.path
+            object.shape == Path.path
         )) {
             revert InvalidShape(uint8(object.shape));
         }
@@ -103,13 +102,17 @@ contract PaintNFT is ERC721, Ownable {
         )) {
             revert InvalidColor(object.color);
         }
-        if (
+        if ((
+            object.shape == Path.line || 
             object.shape == Path.polyline ||
-            object.shape == Path.path
-        ) { 
-            if (object.points.length < 2) {
-                revert InvalidPoints(object.points.length);
-            }
+            object.shape == Path.path) && 
+            !(
+                object.stroke == 8 ||
+                object.stroke == 15 ||
+                object.stroke == 25 ||
+                object.stroke == 40
+        )) {
+            revert InvalidStroke(object.stroke);
         }
         // find MAX_POINTS for ethereum transaction limits
         if (
@@ -122,48 +125,75 @@ contract PaintNFT is ERC721, Ownable {
             }
         } else if (object.shape == Path.polygon) {
             if (object.points.length != traits[tokenId].polygon) {
-                revert InvalidPoints(object.points.length);
+                revert InvalidPolygon(object.points.length);
             }
         }
         // pass
     }
 
     function setArt(uint256 tokenId, Object[] memory _art) external {
-        delete art[tokenId];
-
         for (uint256 i = 0; i < _art.length; i++) {
             _objectAllowed(tokenId, _art[i]);
-            art[tokenId].push();
-            art[tokenId][i].color = _art[i].color; 
-            art[tokenId][i].shape = _art[i].shape;
-            art[tokenId][i].stroke = _art[i].stroke;
-            for (uint256 j = 0; j < _art[i].points.length; j++) {
-                art[tokenId][i].points.push(_art[i].points[j]);
-            }
         }
+        delete artSVG[tokenId];
+        artSVG[tokenId] = abi.encodePacked(
+            '<g id="drawing-area" clip-path="url(#canvas-clip)">',
+                paintRenderer.renderObjects(_art),
+            '</g>'
+        );
     }
 
     function appendArt(uint256 tokenId, Object[] memory _object) external {
-        uint256 artLength = art[tokenId].length;
+        if (artSVG[tokenId].length == 0) {
+            revert OutOfBounds(_object.length, 0);
+        }
         for (uint256 i = 0; i < _object.length; i++) {
             _objectAllowed(tokenId, _object[i]);
-            art[tokenId].push();
-            art[tokenId][i + artLength].color = _object[i].color; 
-            art[tokenId][i + artLength].shape = _object[i].shape;
-            art[tokenId][i + artLength].stroke = _object[i].stroke;
-            for (uint256 j = 0; j < _object[i].points.length; j++) {
-                art[tokenId][i + artLength].points.push(_object[i].points[j]);
-            }
         }
+        
+        // Pre-compute the total size needed
+        bytes memory renderedObjects = paintRenderer.renderObjects(_object);
+        uint256 currentLength = artSVG[tokenId].length;
+        uint256 newLength = currentLength - 4 + renderedObjects.length + 4; // Remove </g>, add rendered objects, add </g>
+        
+        // Create new buffer with exact size
+        bytes memory newArtSVG = new bytes(newLength);
+        
+        // Copy existing SVG content (excluding last 4 bytes which are </g>)
+        bytes memory currentSVG = artSVG[tokenId];
+        assembly {
+            // memcpy via identity pre-compile (address 0x04)
+            let len := sub(currentLength, 4)                       // length to copy (excluding </g>)
+            let src := add(currentSVG, 32)                         // source: existing SVG
+            let dst := add(newArtSVG, 32)                          // destination: new buffer
+            pop(staticcall(gas(), 4, src, len, dst, len))
+        }
+        
+        // Copy rendered objects
+        assembly {
+            let len := mload(renderedObjects)                      // length of rendered objects
+            let src := add(renderedObjects, 32)                    // source: rendered objects
+            let dst := add(add(newArtSVG, 32), sub(currentLength, 4)) // destination: after existing content
+            pop(staticcall(gas(), 4, src, len, dst, len))
+        }
+        
+        // Add closing </g> at the end
+        assembly {
+            let dst := add(add(newArtSVG, 32), sub(newLength, 4)) // destination: last 4 bytes
+            mstore8(dst, 0x3c)                                    // '<'
+            mstore8(add(dst, 1), 0x2f)                            // '/'
+            mstore8(add(dst, 2), 0x67)                            // 'g'
+            mstore8(add(dst, 3), 0x3e)                            // '>'
+        }
+        
+        artSVG[tokenId] = newArtSVG;
     }
 
-    function tokenSVG(uint256 tokenId) public view returns (bytes memory) {
+    function _renderSVG(uint256 tokenId) internal view returns (bytes memory) {
         return abi.encodePacked(
             svgStart, 
             traitSVG[tokenId],
-            '<g id="drawing-area" clip-path="url(#canvas-clip)">',
-                paintRenderer.renderObjects(art[tokenId]),
-            '</g>',
+            artSVG[tokenId], 
             svgEnd
         );
     }
@@ -174,7 +204,7 @@ contract PaintNFT is ERC721, Ownable {
             '{"name":"', name(), ' #', tokenId.toString(), '",',
                 '"description":"Color your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
                 '"external_url":"', baseURL,'#', tokenId.toString(), '",',
-                '"image_data":"data:image/svg+xml;base64,', tokenSVG(tokenId).encode(), '",'
+                '"image_data":"data:image/svg+xml;base64,', _renderSVG(tokenId).encode(), '",'
                 '"attributes":', paintRenderer.getAttributes(traits[tokenId]),
             '}'
         ));
