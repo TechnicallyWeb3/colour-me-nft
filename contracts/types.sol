@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 error OutOfBounds(uint256 index, uint256 length);
-error InvalidShape(uint8 shape);
+error InvalidShape(Path shape);
 error InvalidColor(bytes3 color);
 error InvalidStroke(uint8 stroke);
 error InvalidPoints(uint256 points);
@@ -42,12 +42,11 @@ struct Trait {
 }
 
 function toShapeLabel(Path shape) pure returns (bytes memory) {
-    uint8 _shape = uint8(shape);
-    if (_shape == 0) return "Rectangle";
-    if (_shape == 1) return "Ellipse";
-    if (_shape == 2) return "Line";
-    if (_shape == 3) return "Polyline";
-    revert InvalidShape(_shape);
+    if (shape == Path.rect) return "Rectangle";
+    if (shape == Path.ellipse) return "Ellipse";
+    if (shape == Path.line) return "Line";
+    if (shape == Path.polyline) return "Polyline";
+    revert InvalidShape(shape);
 }
 
 function toPolygonLabel(uint8 polygon) pure returns (bytes memory) {

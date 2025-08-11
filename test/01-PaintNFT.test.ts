@@ -35,7 +35,8 @@ describe("PaintNFT", function () {
         "https://paintcan.xyz/",    // string memory _baseURL,
         10000,                      // uint256 _maxSupply,
         paintRenderer.target,       // address _paintRenderer,
-        owner.address               // address _owner
+        owner.address,              // address _owner,
+        1000                        // uint96 _royalty (10%)
     );
   });
 
@@ -48,9 +49,10 @@ describe("PaintNFT", function () {
 
   describe("when the svg is set", function () {
     beforeEach(async function () {
-      svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.final.start.svg")).toString('hex');
-      svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.final.end.svg")).toString('hex');
-  
+      svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.min.start.svg")).toString('hex');
+      svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.min.end.svg")).toString('hex');
+      // console.log('svgStart: ', bytesToString(svgStart));
+      // console.log('svgEnd: ', bytesToString(svgEnd));
       const tx = await paintNFT.setSVG(svgStart, svgEnd);
       await tx.wait();
   
@@ -119,7 +121,7 @@ describe("PaintNFT", function () {
         const attributes = await paintRenderer.getAttributes(traitsManual);
         // console.log(bytesToString(attributes));
         const shape = (shape: bigint) => {
-            return shape === 0n ? 'Rectangle' : shape === 1n ? 'Ellipse' : shape === 2n ? 'Line' : 'Polyline';
+            return shape === 0n ? 'Rectangle' : shape === 1n ? 'Line' : shape === 2n ? 'Ellipse' : 'Polyline';
         }
         const polygon = (polygon: bigint) => {
             return polygon === 3n ? 'Triangle' : polygon === 5n ? 'Pentagon' : 'Hexagon';
@@ -251,14 +253,15 @@ describe("PaintNFT", function () {
         // Try to get tokenURI to check if it's still valid
         try {
           const uri = await paintNFT.tokenURI(tokenId);
+          const imageData = JSON.parse(uri).image_data;
           maxLength = uri.length;
           if (i%10 === 0) {
             // console.log(`TokenURI Length: ${uri.length} bytes, max points: ${maxPoints}`);
           }
-          svg = base64Decode(uri.split('data:image/svg+xml;base64,')[1]);
+          svg = base64Decode(imageData.split('data:image/svg+xml;base64,')[1]);
         } catch (uriError) {
           // console.log( `TokenURI reverted after ${totalPaths} paths, ${totalPoints} total points, max points: ${maxPoints}, max length: ${maxLength} bytes`);
-          fs.writeFileSync(path.join(__dirname, "../assets/paint.svg"), svg);
+          fs.writeFileSync(path.join(__dirname, "../assets/paint.test.svg"), svg);
           return; // Exit the loop if tokenURI fails
         }
       }
@@ -772,7 +775,7 @@ describe("PaintNFT", function () {
             const art1Point = [{
               shape: shape,
               color: '0x000000',
-              points: [{ x: 100n, y: 100n }],
+              points: [{ x: 100n, y: 100n }, { x: 200n, y: 200n }],
               stroke: 8n,
             }];
             

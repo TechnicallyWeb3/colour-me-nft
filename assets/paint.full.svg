@@ -65,34 +65,6 @@
     <clipPath id="canvas-clip">
       <use href="#canvas-bg"/>
     </clipPath>
-    <g id="shape-0" class="shape-group">
-      <rect data-shape="rect" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <rect x="5" y="7.5" width="20" height="15" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="shape-1" class="shape-group">
-      <rect data-shape="ellipse" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <ellipse cx="15" cy="15" rx="8" ry="8" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="shape-2" class="shape-group">
-      <rect data-shape="line" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <line x1="5" y1="10" x2="25" y2="20" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="shape-3" class="shape-group">
-      <rect data-shape="polyline" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <polyline points="5,15 12.5,10 17.5,20 25,15" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="polygon-3" class="shape-group">
-      <rect data-shape="polygon-3" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <polygon points="15,7 25,23 5,23" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="polygon-5" class="shape-group">
-      <rect data-shape="polygon-5" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <polygon points="15,5 25,12 20,22.5 10,22.5 5,12" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
-    <g id="polygon-6" class="shape-group">
-      <rect data-shape="polygon-6" x="0" y="0" width="30" height="30" class="tool-bg"/>
-      <polygon points="10,6 20,6 25,15 20,24 10,24 5,15" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
-    </g>
   </defs>
   
   <!-- Background -->
@@ -121,9 +93,23 @@
   <circle cx="210" cy="35" r="15" class="color-btn" fill="#ffff00" />
   <circle cx="250" cy="35" r="15" class="color-btn" fill="#ff00ff" />
   <!-- Shapes -->
-  <use href="#shape-0" x="445" y="20" class="shape-btn"/>
+  <!-- <use href="#shape-0" x="445" y="20" class="shape-btn"/>
   <use href="#shape-1" x="485" y="20" class="shape-btn"/>
-  <use href="#polygon-3" x="525" y="20" class="shape-btn"/>
+  <use href="#polygon-3" x="525" y="20" class="shape-btn"/> -->
+
+  <g class="shape-group" transform="translate(445, 20)">
+    <rect data-shape="line" x="0" y="0" width="30" height="30" class="tool-bg"/>
+    <line x1="5" y1="10" x2="25" y2="20" stroke="#333" stroke-width="2" class="shape-icon"/>
+  </g>
+  <g class="shape-group" transform="translate(485, 20)">
+    <rect data-shape="polyline" x="0" y="0" width="30" height="30" class="tool-bg"/>
+    <polyline points="5,15 12.5,10 17.5,20 25,15" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
+  </g>
+  <g class="shape-group" transform="translate(525, 20)">
+    <rect data-shape="polygon-3" x="0" y="0" width="30" height="30" class="tool-bg"/>
+    <polygon points="15,7 25,23 5,23" fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>
+  </g>
+
   <!-- Drawing area -->
   <g id="drawing-area" clip-path="url(#canvas-clip)">
   </g>

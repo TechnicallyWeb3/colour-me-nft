@@ -3,10 +3,19 @@ pragma solidity ^0.8.20;
 
 import "./interfaces/IPaintRenderer.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
-contract PaintNFT is ERC721, Ownable {
+interface IPaintNFT is IERC721 {
+    function mint(address to) external;
+    function setArt(uint256 tokenId, Object[] memory _art) external;
+    function appendArt(uint256 tokenId, Object[] memory _object) external;
+    function tokenSVG(uint256 tokenId) external view returns (bytes memory);
+    function tokenURI(uint256 tokenId) external view returns (string memory);
+}
+
+contract PaintNFT is ERC721, ERC2981, Ownable {
     using Strings for uint256;
     using Base64 for bytes;
 
@@ -16,11 +25,13 @@ contract PaintNFT is ERC721, Ownable {
         string memory _baseURL,
         uint256 _maxSupply,
         address _paintRenderer,
-        address _owner
+        address _owner,
+        uint96 _royalty
     ) ERC721(name, symbol) Ownable(_owner) {
         baseURL = _baseURL;
         maxSupply = _maxSupply;
         paintRenderer = IPaintRenderer(_paintRenderer);
+        _setDefaultRoyalty(owner(), _royalty);
     }
 
     string public baseURL;
@@ -90,7 +101,7 @@ contract PaintNFT is ERC721, Ownable {
             object.shape == Path.path ||
             object.shape > Path.path
         )) {
-            revert InvalidShape(uint8(object.shape));
+            revert InvalidShape(object.shape);
         }
         if (!(
             object.color == 0x000000 ||
@@ -170,13 +181,11 @@ contract PaintNFT is ERC721, Ownable {
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         _requireOwned(tokenId);
-        return string(abi.encodePacked(
-            '{"name":"', name(), ' #', tokenId.toString(), '",',
-                '"description":"Color your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
-                '"external_url":"', baseURL,'#', tokenId.toString(), '",',
-                '"image_data":"data:image/svg+xml;base64,', tokenSVG(tokenId).encode(), '",'
-                '"attributes":', paintRenderer.getAttributes(traits[tokenId]),
-            '}'
-        ));
+        return string(paintRenderer.getURI(name(), tokenId, baseURL, tokenSVG(tokenId), traits[tokenId]));
     }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
+    }
+
 }

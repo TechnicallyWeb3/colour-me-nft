@@ -5,12 +5,72 @@ pragma solidity ^0.8.20;
 /// @custom:interface import "../types.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import "./types.sol";
 
 contract PaintRenderer {
     using Strings for uint8;
     using Strings for uint16;
     using Strings for uint256;
+    using Base64 for bytes;
+
+    bytes constant shapePrefix = '<rect x="0" y="0" width="30" height="30" class="tool-bg" data-shape="';
+    bytes constant shapeSuffix = ' fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>';
+
+    function renderShapeTool(Path _shape) public pure returns (bytes memory) {
+        
+        if (_shape == Path.rect) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'rect"/><rect x="5" y="7.5" width="20" height="15"',
+                shapeSuffix
+            );
+        } else if (_shape == Path.ellipse) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'ellipse"/><ellipse cx="15" cy="15" rx="8" ry="8"',
+                shapeSuffix
+            );
+        } else if (_shape == Path.line) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'line"/><line x1="5" y1="10" x2="25" y2="20"',
+                shapeSuffix
+            );
+        } else if (_shape == Path.polyline) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'polyline"/><polyline points="5,15 12.5,10 17.5,20 25,15"',
+                shapeSuffix
+            );
+        } else {
+            revert InvalidShape(_shape);
+        }
+    }
+
+    function renderPolygon(uint8 _polygon) public pure returns (bytes memory) {
+        if (_polygon == 3) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'polygon-3"/><polygon points="15,7 25,23 5,23"',
+                shapeSuffix
+            );
+        } else if (_polygon == 5) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'polygon-5"/><polygon points="15,5 25,12 20,22.5 10,22.5 5,12"',
+                shapeSuffix
+            );
+        } else if (_polygon == 6) {
+            return abi.encodePacked(
+                shapePrefix, 
+                'polygon-6"/><polygon points="10,6 20,6 25,15 20,24 10,24 5,15"',
+                shapeSuffix
+            );
+        } else {
+            revert InvalidPolygon(_polygon);
+        }
+    }
 
     function renderTrait(Trait memory _traits) external pure returns (bytes memory) {
         return abi.encodePacked(
@@ -19,10 +79,9 @@ contract PaintRenderer {
             '"/><circle cx="170" cy="35" r="15" class="color-btn" fill="#', toRGBString_(_traits.color2),
             '"/><circle cx="210" cy="35" r="15" class="color-btn" fill="#', toRGBString_(_traits.color3),
             '"/><circle cx="250" cy="35" r="15" class="color-btn" fill="#', toRGBString_(_traits.color4),
-            '"/><use href="#shape-', uint8(_traits.shape0).toString(),
-            '" x="445" y="20" class="shape-btn"/><use href="#shape-', uint8(_traits.shape1).toString(),
-            '" x="485" y="20" class="shape-btn"/><use href="#polygon-', _traits.polygon.toString(),
-            '" x="525" y="20" class="shape-btn"/>'
+            '"/><g class="shape-group" transform="translate(445, 20)">', renderShapeTool(_traits.shape0),
+            '</g><g class="shape-group" transform="translate(485, 20)">', renderShapeTool(_traits.shape1),
+            '</g><g class="shape-group" transform="translate(525, 20)">', renderPolygon(_traits.polygon), '</g>'
         );
     }
 
@@ -228,7 +287,7 @@ contract PaintRenderer {
         return combinedObjects;
     }
 
-    function getAttributes(Trait memory _trait) external pure returns (bytes memory) {
+    function getAttributes(Trait memory _trait) public pure returns (bytes memory) {
         return abi.encodePacked(
             '[{"trait_type":"Color1","value":"#', toRGBString_(_trait.color0), 
             '"},{"trait_type":"Color2","value":"#', toRGBString_(_trait.color1), 
@@ -241,4 +300,20 @@ contract PaintRenderer {
         );
     }
 
+    function getURI(
+        string memory _name, 
+        uint256 _tokenId, 
+        string memory _baseURL, 
+        bytes memory _svg, 
+        Trait memory _trait
+    ) external pure returns (bytes memory) {
+        return abi.encodePacked(
+            '{"name":"', _name, ' #', _tokenId.toString(), '",',
+                '"description":"Color your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
+                '"external_url":"', _baseURL,'#', _tokenId.toString(), '",',
+                '"image_data":"data:image/svg+xml;base64,', _svg.encode(), '",'
+                '"attributes":', getAttributes(_trait),
+            '}'
+        );
+    }
 }
