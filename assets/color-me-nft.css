@@ -1,0 +1,503 @@
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+    background: #008080;
+    min-height: 100vh;
+    color: #000;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 48px;
+    color: #ffff00;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+    font-weight: bold;
+}
+
+.page-header p {
+    margin: 15px 0 0 0;
+    font-size: 20px;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+/* Windows XP Window Frame */
+.xp-window {
+    position: absolute;
+    top: 120px;
+    left: 50px;
+    background: #ece9d8;
+    border: 1px solid #0054e3;
+    border-radius: 8px;
+    box-shadow: 
+        0 0 0 1px #ffffff,
+        0 0 0 2px #0054e3,
+        0 4px 8px rgba(0,0,0,0.3);
+    margin: 0;
+    max-width: min(1000px, 100vw);
+    max-height: min(1000px, 100vh);
+    overflow: hidden;
+    z-index: 999;
+}
+
+.xp-titlebar {
+    background: linear-gradient(to right, #0054e3, #4a9eff);
+    color: white;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 11px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+    cursor: default;
+    border-radius: 8px 8px 0 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    /* Improve dragging performance */
+    will-change: transform;
+}
+
+.xp-titlebar-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.xp-titlebar-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.xp-control-buttons {
+    display: flex;
+    gap: 3px;
+}
+
+.xp-btn {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #0054e3;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000;
+    transition: all 0.1s ease;
+}
+
+.xp-btn.minimize {
+    background: linear-gradient(to bottom, #e1e1e1, #c0c0c0);
+    border-color: #7a7a7a;
+}
+
+.xp-btn.minimize:hover {
+    background: linear-gradient(to bottom, #f0f0f0, #d4d4d4);
+}
+
+.xp-btn.maximize {
+    background: linear-gradient(to bottom, #e1e1e1, #c0c0c0);
+    border-color: #7a7a7a;
+}
+
+.xp-btn.maximize:hover {
+    background: linear-gradient(to bottom, #f0f0f0, #d4d4d4);
+}
+
+.xp-btn.close {
+    background: linear-gradient(to bottom, #ff6b6b, #ff5252);
+    border-color: #d32f2f;
+    color: white;
+}
+
+.xp-btn.close:hover {
+    background: linear-gradient(to bottom, #ff8a8a, #ff6b6b);
+}
+
+.xp-content {
+    padding: 12px;
+    background: #ece9d8;
+    border-radius: 0 0 8px 8px;
+    max-height: calc(min(1000px, 100vh) - 60px);
+    overflow: hidden;
+}
+
+.object-container {
+    max-width: min(1000px, calc(100vw - 40px));
+    max-height: min(1000px, calc(100vh - 200px));
+    aspect-ratio: 1/1;
+    border: 1px solid #c0c0c0;
+    border-radius: 6px;
+    background: white;
+    margin-bottom: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+    width: 100%;
+    height: auto;
+}
+
+.xp-control-panel {
+    background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+    border: 1px solid #c0c0c0;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.xp-status-dot {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #666;
+    border-radius: 50%;
+    background: #ff0000;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.xp-status-dot.connected {
+    background: #00cc00;
+}
+
+.xp-status-dot.ready {
+    background: #0099ff;
+}
+
+.xp-transaction-info {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.xp-info-box {
+    background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+    padding: 10px 14px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    text-align: center;
+    min-width: 80px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-info-label {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.xp-info-value {
+    font-size: 13px;
+    font-weight: bold;
+    color: #0054e3;
+}
+
+.xp-action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.xp-btn-large {
+    padding: 10px 20px;
+    border: 1px solid #0054e3;
+    border-radius: 4px;
+    background: linear-gradient(to bottom, #4a9eff, #0054e3);
+    color: white;
+    font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 90px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: all 0.1s ease;
+}
+
+.xp-btn-large:hover {
+    background: linear-gradient(to bottom, #5aaeff, #0064f3);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.xp-btn-large:active {
+    background: linear-gradient(to bottom, #0054e3, #0044d3);
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.xp-btn-large:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: linear-gradient(to bottom, #c0c0c0, #a0a0a0);
+    border-color: #808080;
+    transform: none;
+    box-shadow: none;
+}
+
+.xp-btn-large.primary {
+    background: linear-gradient(to bottom, #4a9eff, #0054e3);
+}
+
+.xp-btn-large.success {
+    background: linear-gradient(to bottom, #66cc66, #339933);
+    border-color: #339933;
+}
+
+.xp-btn-large.success:hover {
+    background: linear-gradient(to bottom, #77dd77, #44aa44);
+}
+
+/* Separate Transaction Window */
+.xp-transaction-window-standalone {
+    position: absolute;
+    top: 1150px;
+    left: 50px;
+    width: 400px;
+    background: #ece9d8;
+    border: 1px solid #0054e3;
+    border-radius: 8px;
+    box-shadow: 
+        0 0 0 1px #ffffff,
+        0 0 0 2px #0054e3,
+        0 4px 8px rgba(0,0,0,0.3);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.xp-transaction-window-standalone .xp-titlebar {
+    background: linear-gradient(to right, #0054e3, #4a9eff);
+    color: white;
+    padding: 6px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 11px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.xp-transaction-window-standalone .xp-content {
+    padding: 15px;
+    background: #ece9d8;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.xp-transaction-window-standalone .xp-transaction-title {
+    background: linear-gradient(to right, #0054e3, #4a9eff);
+    color: white;
+    padding: 6px 12px;
+    margin: -15px -15px 15px -15px;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+}
+
+.xp-transaction-window-standalone .xp-transaction-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-transaction-window-standalone .xp-gas-details {
+    background: linear-gradient(to bottom, #e6f3ff, #cce7ff);
+    border: 1px solid #99ccff;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 11px;
+    color: #0054e3;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* Transaction Status Window */
+.xp-transaction-window {
+    background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+    border: 1px solid #c0c0c0;
+    border-radius: 6px;
+    padding: 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-transaction-title {
+    background: linear-gradient(to right, #0054e3, #4a9eff);
+    color: white;
+    padding: 6px 12px;
+    margin: -20px -20px 20px -20px;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 6px 6px 0 0;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+}
+
+.xp-transaction-list {
+    max-height: 200px;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.xp-transaction-item {
+    background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+    border: 1px solid #c0c0c0;
+    border-radius: 3px;
+    margin-bottom: 6px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+    transition: all 0.1s ease;
+}
+
+.xp-transaction-item:hover {
+    background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
+    border-color: #0054e3;
+}
+
+.xp-transaction-item:last-child {
+    margin-bottom: 0;
+}
+
+.xp-transaction-details {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.xp-transaction-status {
+    padding: 3px 8px;
+    border: 1px solid #666;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.xp-transaction-status.pending {
+    background: linear-gradient(to bottom, #ffffcc, #ffff99);
+    color: #cc6600;
+    border-color: #cc6600;
+}
+
+.xp-transaction-status.completed {
+    background: linear-gradient(to bottom, #ccffcc, #99ff99);
+    color: #006600;
+    border-color: #006600;
+}
+
+.xp-transaction-status.failed {
+    background: linear-gradient(to bottom, #ffcccc, #ff9999);
+    color: white;
+    border-color: #cc0000;
+}
+
+.xp-gas-details {
+    background: linear-gradient(to bottom, #e6f3ff, #cce7ff);
+    border: 1px solid #99ccff;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 20px;
+    font-size: 11px;
+    color: #0054e3;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1000px) {
+    .xp-window {
+        left: 20px;
+        right: 20px;
+        max-width: calc(100vw - 40px);
+    }
+    
+    .xp-action-buttons {
+        justify-content: center;
+    }
+    
+    .xp-transaction-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .xp-transaction-window-standalone {
+        width: 350px;
+        left: 20px;
+    }
+}
+
+@media (max-height: 1000px) {
+    .xp-window {
+        top: 80px;
+    }
+    
+    .xp-transaction-window-standalone {
+        top: 960px;
+    }
+    
+    .object-container {
+        max-height: calc(100vh - 300px);
+    }
+    
+    .xp-transaction-list {
+        max-height: 150px;
+    }
+    
+    .xp-transaction-window-standalone {
+        max-height: calc(100vh - 100px);
+    }
+} 

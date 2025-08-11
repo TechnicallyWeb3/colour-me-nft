@@ -4,536 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Me NFT</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        .header p {
-            margin: 10px 0 0 0;
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        .object-container {
-            width: 100%;
-            height: 1000px;
-            border: none;
-            background: white;
-        }
-        .control-panel {
-            padding: 20px;
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #dc3545;
-            animation: pulse 2s infinite;
-        }
-        .status-dot.connected {
-            background: #28a745;
-            animation: none;
-        }
-        .status-dot.ready {
-            background: #17a2b8;
-            animation: none;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        .transaction-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-        .info-box {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            text-align: center;
-            min-width: 80px;
-        }
-        .info-label {
-            font-size: 0.8em;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #495057;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .gas-estimate {
-            background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 6px;
-            padding: 10px 15px;
-            margin-top: 15px;
-            font-size: 0.9em;
-            color: #1976d2;
-        }
-    </style>
+    <link rel="stylesheet" href="color-me-nft.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>�� Color Me NFT</h1>
-            <p>Create, color, and mint your digital artwork on Polygon</p>
+    <div class="page-header">
+        <h1>Color Me NFT</h1>
+        <p>Create, color, and mint your digital artwork on Polygon</p>
+    </div>
+    
+    <div class="xp-window" id="main-window">
+        <div class="xp-titlebar">
+            <div class="xp-titlebar-text">
+                <div class="xp-titlebar-icon">🎨</div>
+                Color Me NFT
+            </div>
+            <div class="xp-control-buttons">
+                <div class="xp-btn minimize"></div>
+                <div class="xp-btn maximize"></div>
+                <div class="xp-btn close""></div>
+            </div>
         </div>
         
-        <object 
-            data="paint.full.svg" 
-            class="object-container"
-            id="paint-object"
-            type="image/svg+xml"
-            title="Paint Application">
-        </object>
+        <div class="xp-content">
+            <object 
+                data="paint.full.svg" 
+                class="object-container"
+                id="paint-object"
+                type="image/svg+xml"
+                title="Paint Application">
+            </object>
+            
+            <div class="xp-control-panel">
+                <div class="xp-status-bar">
+                    <div class="xp-status-indicator">
+                        <div class="xp-status-dot" id="status-dot"></div>
+                        <span id="status-text">Initializing...</span>
+                    </div>
+                    <div class="xp-transaction-info">
+                        <div class="xp-info-box">
+                            <div class="xp-info-label">Drawing Size</div>
+                            <div class="xp-info-value" id="drawing-size">0 KB</div>
+                        </div>
+                        <div class="xp-info-box">
+                            <div class="xp-info-label">Transactions</div>
+                            <div class="xp-info-value" id="tx-count">0</div>
+                        </div>
+                        <div class="xp-info-box">
+                            <div class="xp-info-label">Gas Est.</div>
+                            <div class="xp-info-value" id="gas-estimate">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="xp-action-buttons">
+                    <button class="xp-btn-large primary" id="connect-wallet">
+                        Connect Wallet
+                    </button>
+                    <button class="xp-btn-large" id="switch-network" disabled>
+                        Switch to Polygon
+                    </button>
+                    <button class="xp-btn-large success" id="mint-nft" disabled>
+                        Mint NFT
+                    </button>
+                    <button class="xp-btn-large" id="export-svg">
+                        Export SVG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Separate Transaction Status Window -->
+    <div class="xp-transaction-window-standalone" id="transaction-window">
+        <div class="xp-titlebar">
+            <div class="xp-titlebar-text">
+                <div class="xp-titlebar-icon">📊</div>
+                Transaction Status
+            </div>
+            <div class="xp-control-buttons">
+                <div class="xp-btn minimize"></div>
+                <div class="xp-btn maximize"></div>
+                <div class="xp-btn close"></div>
+            </div>
+        </div>
         
-        <div class="control-panel">
-            <div class="status-bar">
-                <div class="status-indicator">
-                    <div class="status-dot" id="status-dot"></div>
-                    <span id="status-text">Initializing...</span>
-                </div>
-                <div class="transaction-info">
-                    <div class="info-box">
-                        <div class="info-label">Drawing Size</div>
-                        <div class="info-value" id="drawing-size">0 KB</div>
-                    </div>
-                    <div class="info-box">
-                        <div class="info-label">Transactions</div>
-                        <div class="info-value" id="tx-count">0</div>
-                    </div>
-                    <div class="info-box">
-                        <div class="info-label">Gas Est.</div>
-                        <div class="info-value" id="gas-estimate">0</div>
+        <div class="xp-content">
+            <div class="xp-transaction-title">
+                Transaction Details
+                <span id="transaction-count">0 transactions</span>
+            </div>
+            
+            <div class="xp-transaction-list" id="transaction-list">
+                <div class="xp-transaction-item">
+                    <div class="xp-transaction-details">
+                        <span>No transactions yet</span>
                     </div>
                 </div>
             </div>
             
-            <div class="action-buttons">
-                <button class="btn btn-primary" id="connect-wallet">
-                    🔗 Connect Wallet
-                </button>
-                <button class="btn btn-secondary" id="switch-network" disabled>
-                    �� Switch to Polygon
-                </button>
-                <button class="btn btn-success" id="mint-nft" disabled>
-                    🎭 Mint NFT
-                </button>
-                <button class="btn btn-secondary" id="export-svg">
-                    📁 Export SVG
-                </button>
-            </div>
-            
-            <div class="gas-estimate" id="gas-details" style="display: none;">
+            <div class="xp-gas-details" id="gas-details" style="display: none;">
                 <strong>Gas Estimation:</strong> Based on current gas prices and transaction count
             </div>
         </div>
     </div>
 
-    <script>
-        // DOM elements
-        const paintObject = document.getElementById('paint-object');
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        const drawingSize = document.getElementById('drawing-size');
-        const txCount = document.getElementById('tx-count');
-        const gasEstimate = document.getElementById('gas-estimate');
-        const connectWalletBtn = document.getElementById('connect-wallet');
-        const switchNetworkBtn = document.getElementById('switch-network');
-        const mintNftBtn = document.getElementById('mint-nft');
-        const exportSvgBtn = document.getElementById('export-svg');
-        const gasDetails = document.getElementById('gas-details');
-
-        // App state
-        let walletConnected = false;
-        let currentAccount = null;
-        let currentNetwork = null;
-        let drawingData = null;
-        let transactionChunks = [];
-        
-        // Blockchain constants
-        const POLYGON_CHAIN_ID = '0x89';
-        const POLYGON_NETWORK = {
-            chainId: POLYGON_CHAIN_ID,
-            chainName: 'Polygon Mainnet',
-            nativeCurrency: {
-                name: 'Polygon PoS',
-                symbol: 'POL',
-                decimals: 18
-            },
-            rpcUrls: ['https://polygon-bor-rpc.publicnode.com/'],
-            blockExplorerUrls: ['https://polygonscan.com/']
-        };
-
-        // Gas limits and transaction sizing
-        const MAX_GAS_PER_TX = 300000; // 300k gas limit per transaction
-        const BYTES_PER_TX = 32 * 1024; // 32KB per transaction (conservative)
-        const GAS_PRICE_ESTIMATE = 30; // 30 gwei estimate
-
-        // Update status display
-        function updateStatus(message, type = 'disconnected') {
-            statusText.textContent = message;
-            statusDot.className = 'status-dot ' + type;
-        }
-
-        // Update transaction info
-        function updateTransactionInfo(size, count) {
-            drawingSize.textContent = size;
-            txCount.textContent = count;
-            
-            // Estimate gas (rough calculation)
-            const estimatedGas = count * MAX_GAS_PER_TX;
-            const gasInGwei = (estimatedGas * GAS_PRICE_ESTIMATE) / 1e9;
-            gasEstimate.textContent = gasInGwei.toFixed(2) + ' POL';
-        }
-
-        // Check MetaMask availability
-        async function checkMetaMask() {
-            if (typeof window.ethereum !== 'undefined') {
-                return true;
-            }
-            return false;
-        }
-
-        // Connect wallet
-        async function connectWallet() {
-            if (!await checkMetaMask()) {
-                updateStatus('MetaMask not installed', 'disconnected');
-                return false;
-            }
-
-            try {
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                });
-                
-                if (accounts.length > 0) {
-                    currentAccount = accounts[0];
-                    walletConnected = true;
-                    updateStatus('Wallet connected: ' + currentAccount.substring(0, 6) + '...' + currentAccount.substring(38), 'connected');
-                    connectWalletBtn.disabled = true;
-                    switchNetworkBtn.disabled = false;
-                    return true;
-                }
-            } catch (error) {
-                console.error('Error connecting wallet:', error);
-                updateStatus('Failed to connect wallet: ' + error.message, 'disconnected');
-            }
-            return false;
-        }
-
-        // Switch to Polygon network
-        async function switchToPolygon() {
-            if (!walletConnected) {
-                if (!await connectWallet()) return false;
-            }
-
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: POLYGON_CHAIN_ID }],
-                });
-                
-                currentNetwork = 'polygon';
-                updateStatus('Connected to Polygon network', 'ready');
-                switchNetworkBtn.disabled = true;
-                mintNftBtn.disabled = false;
-                return true;
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [POLYGON_NETWORK],
-                        });
-                        
-                        currentNetwork = 'polygon';
-                        updateStatus('Added and connected to Polygon network', 'ready');
-                        switchNetworkBtn.disabled = true;
-                        mintNftBtn.disabled = false;
-                        return true;
-                    } catch (addError) {
-                        console.error('Error adding Polygon network:', addError);
-                        updateStatus('Failed to add Polygon network: ' + addError.message, 'disconnected');
-                        return false;
-                    }
-                } else {
-                    console.error('Error switching to Polygon:', switchError);
-                    updateStatus('Failed to switch to Polygon: ' + switchError.message, 'disconnected');
-                    return false;
-                }
-            }
-        }
-
-        // Chunk drawing data into transactions
-        function chunkDrawingData(drawingData) {
-            const chunks = [];
-            const dataString = JSON.stringify(drawingData);
-            const totalBytes = new Blob([dataString]).size;
-            
-            // Calculate number of transactions needed
-            const numTransactions = Math.ceil(totalBytes / BYTES_PER_TX);
-            
-            for (let i = 0; i < numTransactions; i++) {
-                const start = i * BYTES_PER_TX;
-                const end = Math.min(start + BYTES_PER_TX, totalBytes);
-                const chunk = dataString.substring(start, end);
-                
-                chunks.push({
-                    index: i,
-                    total: numTransactions,
-                    data: chunk,
-                    size: chunk.length
-                });
-            }
-            
-            return chunks;
-        }
-
-        // Mint NFT (placeholder for now)
-        async function mintNFT() {
-            if (!walletConnected || currentNetwork !== 'polygon') {
-                updateStatus('Wallet not connected or wrong network', 'disconnected');
-                return;
-            }
-
-            if (!drawingData) {
-                updateStatus('No drawing data to mint', 'disconnected');
-                return;
-            }
-
-            try {
-                updateStatus('Preparing NFT mint...', 'ready');
-                
-                // Chunk the data
-                transactionChunks = chunkDrawingData(drawingData);
-                updateTransactionInfo(
-                    (new Blob([JSON.stringify(drawingData)]).size / 1024).toFixed(1) + ' KB',
-                    transactionChunks.length
-                );
-                
-                // Show gas details
-                gasDetails.style.display = 'block';
-                
-                updateStatus(`Ready to mint! ${transactionChunks.length} transactions required`, 'ready');
-                
-                // Here you would implement the actual minting logic
-                // For now, just show the preparation is complete
-                
-            } catch (error) {
-                console.error('Error preparing NFT mint:', error);
-                updateStatus('Error preparing NFT mint: ' + error.message, 'disconnected');
-            }
-        }
-
-        // Export SVG
-        function exportSVG() {
-            if (paintObject.contentDocument) {
-                paintObject.contentDocument.defaultView.postMessage({
-                    type: 'EXPORT_REQUEST'
-                }, '*');
-            }
-        }
-
-        // Event listeners
-        connectWalletBtn.addEventListener('click', connectWallet);
-        switchNetworkBtn.addEventListener('click', switchToPolygon);
-        mintNftBtn.addEventListener('click', mintNFT);
-        exportSvgBtn.addEventListener('click', exportSVG);
-
-        // Listen for messages from the SVG
-        window.addEventListener('message', async function(event) {
-            // Verify the message is from our object
-            if (event.source !== paintObject.contentWindow) return;
-            
-            const { type, data } = event.data;
-            
-            switch (type) {
-                case 'DRAWING_UPDATE':
-                    console.log('Drawing update received from SVG');
-                    drawingData = data;
-                    
-                    // Calculate transaction requirements
-                    const dataSize = new Blob([JSON.stringify(data)]).size;
-                    const sizeKB = (dataSize / 1024).toFixed(1);
-                    const numTx = Math.ceil(dataSize / BYTES_PER_TX);
-                    
-                    updateTransactionInfo(sizeKB + ' KB', numTx);
-                    
-                    if (walletConnected && currentNetwork === 'polygon') {
-                        updateStatus(`Drawing updated: ${numTx} transactions needed`, 'ready');
-                    } else {
-                        updateStatus(`Drawing updated: ${sizeKB} KB`, 'disconnected');
-                    }
-                    break;
-                    
-                case 'SAVE_REQUEST':
-                    console.log('Save request received from SVG');
-                    // The SVG handles its own localStorage, we just need to get the data
-                    if (paintObject.contentDocument) {
-                        paintObject.contentDocument.defaultView.postMessage({
-                            type: 'GET_DRAWING_DATA'
-                        }, '*');
-                    }
-                    break;
-                    
-                case 'EXPORT_REQUEST':
-                    console.log('Export request received from SVG');
-                    // Handle export if needed
-                    break;
-                    
-                case 'CLEAR_REQUEST':
-                    console.log('Clear request received from SVG');
-                    drawingData = null;
-                    transactionChunks = [];
-                    updateTransactionInfo('0 KB', '0');
-                    updateStatus('Canvas cleared', 'disconnected');
-                    break;
-            }
-        });
-
-        // Initialize
-        window.addEventListener('load', function() {
-            updateStatus('Color Me NFT loaded, ready to create!', 'disconnected');
-            
-            // Wait for the SVG to load
-            paintObject.addEventListener('load', function() {
-                updateStatus('Paint app loaded, ready to create!', 'disconnected');
-                
-                // Request initial drawing data
-                setTimeout(() => {
-                    if (paintObject.contentDocument) {
-                        paintObject.contentDocument.defaultView.postMessage({
-                            type: 'GET_DRAWING_DATA'
-                        }, '*');
-                    }
-                }, 1000);
-            });
-        });
-
-        // Handle network changes
-        if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.on('accountsChanged', function (accounts) {
-                if (accounts.length === 0) {
-                    // User disconnected wallet
-                    walletConnected = false;
-                    currentAccount = null;
-                    currentNetwork = null;
-                    updateStatus('Wallet disconnected', 'disconnected');
-                    connectWalletBtn.disabled = false;
-                    switchNetworkBtn.disabled = true;
-                    mintNftBtn.disabled = true;
-                } else {
-                    // Account changed
-                    currentAccount = accounts[0];
-                    updateStatus('Account changed: ' + currentAccount.substring(0, 6) + '...' + currentAccount.substring(38), 'connected');
-                }
-            });
-
-            window.ethereum.on('chainChanged', function (chainId) {
-                if (chainId === POLYGON_CHAIN_ID) {
-                    currentNetwork = 'polygon';
-                    updateStatus('Connected to Polygon network', 'ready');
-                    switchNetworkBtn.disabled = true;
-                    mintNftBtn.disabled = false;
-                } else {
-                    currentNetwork = null;
-                    updateStatus('Wrong network detected', 'disconnected');
-                    switchNetworkBtn.disabled = false;
-                    mintNftBtn.disabled = true;
-                }
-            });
-        }
-    </script>
+    <script src="color-me-nft.js"></script>
 </body>
 </html> 
