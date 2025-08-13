@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "../types.sol";
 
-interface IPaintRenderer {
+interface IColourMeRenderer {
 
     function renderShapeTool(Path _shape) external pure returns (bytes memory);
     function renderPolygon(uint8 _polygon) external pure returns (bytes memory);

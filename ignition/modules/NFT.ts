@@ -9,16 +9,16 @@ const NFTModule = buildModule("NFTModule", (m) => {
     const maxSupply = m.getParameter("maxSupply", 10000);
     const owner = m.getParameter("owner", m.getAccount(0));
 
-    const paintRenderer = m.contract("PaintRenderer");
-    const nft = m.contract("PaintNFT", [name, symbol, baseURL, maxSupply, paintRenderer, owner]);
+    const cmr = m.contract("ColourMeRenderer");
+    const nft = m.contract("ColourMeNFT", [name, symbol, baseURL, maxSupply, cmr, owner]);
 
-    const svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../../assets/paint.min.start.svg")).toString('hex');
-    const svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../../assets/paint.min.end.svg")).toString('hex');
+    const svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../../assets/colour-me.min.start.svg")).toString('hex');
+    const svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../../assets/colour-me.min.end.svg")).toString('hex');
 
     // Initialize the contract with any required setup
     m.call(nft, "setSVG", [svgStart, svgEnd]);
 
-    return { nft, paintRenderer };
+    return { nft, cmr };
 });
 
 export default NFTModule;

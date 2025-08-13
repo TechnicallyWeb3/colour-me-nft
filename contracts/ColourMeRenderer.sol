@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.20;
 
-/// @custom:interface build ./interfaces/IPaintRenderer.sol
+/// @custom:interface build ./interfaces/IColourMeRenderer.sol
 /// @custom:interface import "../types.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import "./types.sol";
 
-contract PaintRenderer {
+contract ColourMeRenderer {
     using Strings for uint8;
     using Strings for uint16;
     using Strings for uint256;
@@ -219,7 +219,7 @@ contract PaintRenderer {
             );
         } else if (_object.shape == Path.line) {
             path = abi.encodePacked(
-                '<line stroke="#', toRGBString_(_object.color),
+                '<line fill="none" stroke="#', toRGBString_(_object.color),
                 '" stroke-width="', _object.stroke.toString(),
                 '" x1="', _object.points[0].x.toString(),
                 '" y1="', _object.points[0].y.toString(),
@@ -231,7 +231,7 @@ contract PaintRenderer {
             
             if (_object.shape == Path.polyline) {
                 path = abi.encodePacked(
-                    '<polyline stroke="#', toRGBString_(_object.color), 
+                    '<polyline fill="none" stroke="#', toRGBString_(_object.color), 
                     '" stroke-width="', _object.stroke.toString(), 
                     '" points="', pointsString, '"/>'
                 );
@@ -245,7 +245,7 @@ contract PaintRenderer {
             bytes memory pathSegments = _getPathSegments(_object.points);
             
             path = abi.encodePacked(
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke="#', 
+                '<path stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="#', 
                 toRGBString_(_object.color), '" stroke-width="', _object.stroke.toString(), '" d="M',
                 _object.points[0].x.toString(), ' ', _object.points[0].y.toString(), pathSegments, '"/>'
             );
@@ -289,11 +289,11 @@ contract PaintRenderer {
 
     function getAttributes(Trait memory _trait) public pure returns (bytes memory) {
         return abi.encodePacked(
-            '[{"trait_type":"Color1","value":"#', toRGBString_(_trait.color0), 
-            '"},{"trait_type":"Color2","value":"#', toRGBString_(_trait.color1), 
-            '"},{"trait_type":"Color3","value":"#', toRGBString_(_trait.color2), 
-            '"},{"trait_type":"Color4","value":"#', toRGBString_(_trait.color3), 
-            '"},{"trait_type":"Color5","value":"#', toRGBString_(_trait.color4), 
+            '[{"trait_type":"Colour1","value":"#', toRGBString_(_trait.color0), 
+            '"},{"trait_type":"Colour2","value":"#', toRGBString_(_trait.color1), 
+            '"},{"trait_type":"Colour3","value":"#', toRGBString_(_trait.color2), 
+            '"},{"trait_type":"Colour4","value":"#', toRGBString_(_trait.color3), 
+            '"},{"trait_type":"Colour5","value":"#', toRGBString_(_trait.color4), 
             '"},{"trait_type":"Shape1","value":"', toShapeLabel(_trait.shape0), 
             '"},{"trait_type":"Shape2","value":"', toShapeLabel(_trait.shape1), 
             '"},{"trait_type":"Shape3","value":"', toPolygonLabel(_trait.polygon), '"}]'
@@ -309,7 +309,7 @@ contract PaintRenderer {
     ) external pure returns (bytes memory) {
         return abi.encodePacked(
             '{"name":"', _name, ' #', _tokenId.toString(), '",',
-                '"description":"Color your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
+                '"description":"Colour your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
                 '"external_url":"', _baseURL,'#', _tokenId.toString(), '",',
                 '"image_data":"data:image/svg+xml;base64,', _svg.encode(), '",'
                 '"attributes":', getAttributes(_trait),

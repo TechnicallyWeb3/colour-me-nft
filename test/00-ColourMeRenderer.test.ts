@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-describe("PaintRenderer", function () {
-  let paintRenderer: any;
+describe("ColourMeRenderer", function () {
+  let cmr: any;
 
   beforeEach(async function () {
-    const PaintRendererFactory = await ethers.getContractFactory("PaintRenderer");
-    paintRenderer = await PaintRendererFactory.deploy();
+    const CMRFactory = await ethers.getContractFactory("ColourMeRenderer");
+    cmr = await CMRFactory.deploy();
   });
 
   describe("_renderTrait", function () {
@@ -22,7 +22,7 @@ describe("PaintRenderer", function () {
         polygon: 3
       };
 
-      const result = await paintRenderer.renderTrait(trait);
+      const result = await cmr.renderTrait(trait);
       const svgString = ethers.toUtf8String(result);
 
       // Check that all colors are present
@@ -32,16 +32,24 @@ describe("PaintRenderer", function () {
       expect(svgString).to.include("#ffff00");
       expect(svgString).to.include("#ff00ff");
 
+      // console.log(svgString);
+
       // Check that shapes and polygon are present
-      expect(svgString).to.include('href="#shape-0"');
-      expect(svgString).to.include('href="#shape-1"');
-      expect(svgString).to.include('href="#polygon-3"');
+      expect(svgString).to.include('<g class="shape-group" transform="translate(445, 20)">');
+      expect(svgString).to.include('<g class="shape-group" transform="translate(485, 20)">');
+      expect(svgString).to.include('<g class="shape-group" transform="translate(525, 20)">');
+
+      expect(svgString).to.include('<rect x="0" y="0" width="30" height="30" class="tool-bg" data-shape="');
+      expect(svgString).to.include('rect"/><rect x="5" y="7.5" width="20" height="15"');
+      expect(svgString).to.include('line"/><line x1="5" y1="10" x2="25" y2="20"');
+      expect(svgString).to.include('polygon-3"/><polygon points="15,7 25,23 5,23"');
+      expect(svgString).to.include(' fill="none" stroke="#333" stroke-width="2" class="shape-icon"/>');
 
       // Check SVG structure
       expect(svgString).to.include('<circle');
-      expect(svgString).to.include('<use');
+      expect(svgString).to.include('<rect');
       expect(svgString).to.include('class="color-btn"');
-      expect(svgString).to.include('class="shape-btn"');
+      expect(svgString).to.include('class="shape-group"');
     });
   });
 
@@ -57,7 +65,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       // console.log(svgString);
@@ -82,7 +90,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       expect(svgString).to.include('<ellipse');
@@ -105,7 +113,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       expect(svgString).to.include('<line');
@@ -130,7 +138,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       expect(svgString).to.include('<polyline');
@@ -153,7 +161,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       expect(svgString).to.include('<polygon');
@@ -176,7 +184,7 @@ describe("PaintRenderer", function () {
         ]
       };
 
-      const result = await paintRenderer.renderPath(object);
+      const result = await cmr.renderPath(object);
       const svgString = ethers.toUtf8String(result);
 
       // console.log(svgString);
@@ -186,10 +194,10 @@ describe("PaintRenderer", function () {
       expect(svgString).to.include('stroke-width="25"');
       expect(svgString).to.include('stroke-linecap="round"');
       expect(svgString).to.include('stroke-linejoin="round"');
-      expect(svgString).to.include('d="M 10 10');
-      expect(svgString).to.include('L 50 50');
-      expect(svgString).to.include('L 90 10');
-      expect(svgString).to.include('L 130 50');
+      expect(svgString).to.include('d="M10 10');
+      expect(svgString).to.include('L50 50');
+      expect(svgString).to.include('L90 10');
+      expect(svgString).to.include('L130 50');
       expect(svgString).to.include('/>');
     });
   });
@@ -198,10 +206,10 @@ describe("PaintRenderer", function () {
     it("should render empty objects array", async function () {
       const objects: any[] = [];
 
-      const result = await paintRenderer.renderObjects(objects);
+      const result = await cmr.renderObjects(objects);
       const svgString = ethers.toUtf8String(result);
 
-      expect(svgString).to.equal('<g id="drawing-area" clip-path="url(#canvas-clip)"></g>');
+      expect(svgString).to.equal('');
     });
 
     it("should render single object", async function () {
@@ -215,7 +223,7 @@ describe("PaintRenderer", function () {
         ]
       }];
 
-      const result = await paintRenderer.renderObjects(objects);
+      const result = await cmr.renderObjects(objects);
       const svgString = ethers.toUtf8String(result);
 
       expect(svgString).to.include('<rect');
@@ -253,17 +261,15 @@ describe("PaintRenderer", function () {
         }
       ];
 
-      const result = await paintRenderer.renderObjects(objects);
+      const result = await cmr.renderObjects(objects);
       const svgString = ethers.toUtf8String(result);
 
-      expect(svgString).to.include('<g id="drawing-area" clip-path="url(#canvas-clip)">');
       expect(svgString).to.include('<rect');
       expect(svgString).to.include('<line');
       expect(svgString).to.include('<ellipse');
       expect(svgString).to.include('fill="#ff0000"');
       expect(svgString).to.include('stroke="#00ff00"');
       expect(svgString).to.include('fill="#0000ff"');
-      expect(svgString).to.include('</g>');
     });
 
     it("should handle complex polygon with many points", async function () {
@@ -281,16 +287,14 @@ describe("PaintRenderer", function () {
         ]
       }];
 
-      const result = await paintRenderer.renderObjects(objects);
+      const result = await cmr.renderObjects(objects);
       const svgString = ethers.toUtf8String(result);
 
-      expect(svgString).to.include('<g id="drawing-area" clip-path="url(#canvas-clip)">');
       expect(svgString).to.include('<polygon');
       expect(svgString).to.include('fill="#123456"');
       expect(svgString).to.include('points="');
       expect(svgString).to.include('10,10 50,10 90,30 70,70 30,70 10,50');
       expect(svgString).to.include('/>');
-      expect(svgString).to.include('</g>');
     });
 
     it("should handle complex path with many segments", async function () {
@@ -308,23 +312,21 @@ describe("PaintRenderer", function () {
         ]
       }];
 
-      const result = await paintRenderer.renderObjects(objects);
+      const result = await cmr.renderObjects(objects);
       const svgString = ethers.toUtf8String(result);
 
       // console.log(svgString);
 
-      expect(svgString).to.include('<g id="drawing-area" clip-path="url(#canvas-clip)">');
       expect(svgString).to.include('<path');
       expect(svgString).to.include('stroke="#abcdef"');
       expect(svgString).to.include('stroke-width="40"');
-      expect(svgString).to.include('d="M 10 10');
-      expect(svgString).to.include('L 30 30');
-      expect(svgString).to.include('L 50 10');
-      expect(svgString).to.include('L 70 30');
-      expect(svgString).to.include('L 90 10');
-      expect(svgString).to.include('L 110 30');
+      expect(svgString).to.include('d="M10 10');
+      expect(svgString).to.include('L30 30');
+      expect(svgString).to.include('L50 10');
+      expect(svgString).to.include('L70 30');
+      expect(svgString).to.include('L90 10');
+      expect(svgString).to.include('L110 30');
       expect(svgString).to.include('/>');
-      expect(svgString).to.include('</g>');
     });
 
     it.skip("should test gas limits by adding paths incrementally", async function () {
@@ -352,7 +354,7 @@ describe("PaintRenderer", function () {
         }
         
         try {
-          const tx = await paintRenderer.renderObjects(objects);
+          const tx = await cmr.renderObjects(objects);
           const receipt = await tx.wait();
           const gasUsed = receipt.gasUsed;
           
@@ -405,7 +407,7 @@ describe("PaintRenderer", function () {
         }
         
         try {
-          const tx = await paintRenderer.renderObjects(objects);
+          const tx = await cmr.renderObjects(objects);
           const receipt = await tx.wait();
           const gasUsed = receipt.gasUsed;
           
@@ -438,7 +440,7 @@ describe("PaintRenderer", function () {
     it.skip("should convert RGB bytes to hex string", async function () {
       // Test with pure function call
       const rgb = "0xff0000"; // red
-      const result = await paintRenderer.toRGBString(rgb);
+      const result = await cmr.toRGBString(rgb);
       const hexString = ethers.toUtf8String(result);
       
       expect(hexString).to.equal("ff0000");
@@ -454,7 +456,7 @@ describe("PaintRenderer", function () {
       ];
 
       for (const testCase of testCases) {
-        const result = await paintRenderer.toRGBString(testCase.input);
+        const result = await cmr.toRGBString(testCase.input);
         const hexString = ethers.toUtf8String(result);
         expect(hexString).to.equal(testCase.expected);
       }

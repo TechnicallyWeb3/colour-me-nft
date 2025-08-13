@@ -1,4 +1,5 @@
 # Paint DApp Deployment Guide
+// this file is highly incorrect, AIGC wrong, should be rewritten. 
 
 This guide explains how to deploy the PaintRenderer and PaintNFT contracts for the final testing phase.
 
@@ -23,7 +24,7 @@ npm run deploy
 
 This will:
 - Deploy the `PaintRenderer` contract
-- Read the SVG files from `assets/paint.final.start.svg` and `assets/paint.final.end.svg`
+- Read the SVG files from `assets/colour-me.min.start.svg` and `assets/colour-me.min.end.svg`
 - Deploy the `PaintNFT` contract with the proper constructor parameters
 - Save deployment information to `deployment.json`
 
@@ -59,7 +60,7 @@ After deployment, the contract addresses will be saved in `deployment.json`:
 
 ## Expected Output
 
-The final SVG output should be similar to `assets/paint.final.svg`, containing:
+The final SVG output should be similar to `assets/colour-me.min.svg`, containing:
 - The toolbar with color palette, brush sizes, shapes, and tools
 - The canvas area
 - Dynamic content generated from the blockchain traits
@@ -75,7 +76,7 @@ You can modify the deployment parameters in `scripts/deploy.ts`:
 
 ## Troubleshooting
 
-1. **SVG files not found**: Ensure `assets/paint.final.start.svg` and `assets/paint.final.end.svg` exist
+1. **SVG files not found**: Ensure `assets/colour-me.min.start.svg` and `assets/colour-me.min.end.svg` exist
 2. **Deployment fails**: Check your network configuration and account balance
 3. **TypeScript errors**: Make sure all dependencies are installed correctly
 

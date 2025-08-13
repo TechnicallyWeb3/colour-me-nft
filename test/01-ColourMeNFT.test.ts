@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { PaintNFT, PaintRenderer } from "../typechain-types";
+import { ColourMeRenderer, ColourMeNFT } from "../typechain-types";
 import { ObjectStruct, TraitStruct } from "../typechain-types/contracts/PaintRenderer";
 import * as fs from "fs";
 import * as path from "path";
 
-describe("PaintNFT", function () {
-  let paintRenderer: PaintRenderer;
-  let paintNFT: PaintNFT;
+describe("ColourMeNFT", function () {
+  let cmr: ColourMeRenderer;
+  let cmn: ColourMeNFT;
   let owner: any;
   let user1: any;
 
@@ -24,39 +24,39 @@ describe("PaintNFT", function () {
 
   beforeEach(async function () {
     [owner, user1] = await ethers.getSigners();
-    const PaintRendererFactory = await ethers.getContractFactory("PaintRenderer");
-    paintRenderer = await PaintRendererFactory.deploy();
+    const ColourMeRendererFactory = await ethers.getContractFactory("ColourMeRenderer");
+    cmr = await ColourMeRendererFactory.deploy();
 
-    const PaintNFTFactory = await ethers.getContractFactory("PaintNFT");
+    const ColourMeNFTFactory = await ethers.getContractFactory("ColourMeNFT");
 
-    paintNFT = await PaintNFTFactory.deploy(
-        "PaintCanvas",              // string memory name, 
-        "PAINTCAN",                 // string memory symbol,
-        "https://paintcan.xyz/",    // string memory _baseURL,
-        10000,                      // uint256 _maxSupply,
-        paintRenderer.target,       // address _paintRenderer,
-        owner.address,              // address _owner,
-        1000                        // uint96 _royalty (10%)
+    cmn = await ColourMeNFTFactory.deploy(
+        "ColourMeNFT",            // string memory name, 
+        "CMNFT",                  // string memory symbol,
+        "https://colourme.xyz/",  // string memory _baseURL,
+        10000,                    // uint256 _maxSupply,
+        cmr.target,               // address _colourMeRenderer,
+        owner.address,            // address _owner,
+        1000                      // uint96 _royalty (10%)
     );
   });
 
   it("should mint a token", async function () {
-    const tx = await paintNFT.mint(user1.address);
+    const tx = await cmn.mint(user1.address);
     await tx.wait();
-    const tokenId = await paintNFT.tokenCount();
+    const tokenId = await cmn.tokenCount();
     expect(tokenId).to.equal(1);
   });
 
   describe("when the svg is set", function () {
     beforeEach(async function () {
-      svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.min.start.svg")).toString('hex');
-      svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../assets/paint.min.end.svg")).toString('hex');
+      svgStart = '0x' + fs.readFileSync(path.join(__dirname, "../assets/colour-me.min.start.svg")).toString('hex');
+      svgEnd = '0x' + fs.readFileSync(path.join(__dirname, "../assets/colour-me.min.end.svg")).toString('hex');
       // console.log('svgStart: ', bytesToString(svgStart));
       // console.log('svgEnd: ', bytesToString(svgEnd));
-      const tx = await paintNFT.setSVG(svgStart, svgEnd);
+      const tx = await cmn.setSVG(svgStart, svgEnd);
       await tx.wait();
   
-      const svgBytes = await paintNFT.tokenSVG(0);
+      const svgBytes = await cmn.tokenSVG(0);
       // console.log('svgBytes: ', bytesToString(svgBytes));
       // const traits: TraitStruct = {
       //     color0: '0x000000',
@@ -94,19 +94,19 @@ describe("PaintNFT", function () {
     });
 
     it("should return the correct svg", async function () {
-        const tx = await paintNFT.mint(user1.address);
+        const tx = await cmn.mint(user1.address);
         await tx.wait();
-        const tokenId = await paintNFT.tokenCount();
-        const svg = await paintNFT.tokenSVG(tokenId);
+        const tokenId = await cmn.tokenCount();
+        const svg = await cmn.tokenSVG(tokenId);
         // console.log(bytesToString(svg));
     });
 
     it("should return the correct attributes", async function () {
-        const tx = await paintNFT.mint(user1.address);
+        const tx = await cmn.mint(user1.address);
         await tx.wait();
-        const tokenId = await paintNFT.tokenCount();
+        const tokenId = await cmn.tokenCount();
         // console.log(tokenId);
-        const traits = await paintNFT.traits(tokenId) as TraitStruct;
+        const traits = await cmn.traits(tokenId) as TraitStruct;
         // console.log(traits);
         const traitsManual = {
             color0: traits.color0,
@@ -118,7 +118,7 @@ describe("PaintNFT", function () {
             shape1: traits.shape1,
             polygon: traits.polygon,
         }
-        const attributes = await paintRenderer.getAttributes(traitsManual);
+        const attributes = await cmr.getAttributes(traitsManual);
         // console.log(bytesToString(attributes));
         const shape = (shape: bigint) => {
             return shape === 0n ? 'Rectangle' : shape === 1n ? 'Line' : shape === 2n ? 'Ellipse' : 'Polyline';
@@ -127,11 +127,11 @@ describe("PaintNFT", function () {
             return polygon === 3n ? 'Triangle' : polygon === 5n ? 'Pentagon' : 'Hexagon';
         }
         expect(bytesToString(attributes)).to.equal('['
-            +'{"trait_type":"Color1","value":"#' + traits.color0.slice(2) + '"},'
-            +'{"trait_type":"Color2","value":"#' + traits.color1.slice(2) + '"},'
-            +'{"trait_type":"Color3","value":"#' + traits.color2.slice(2) + '"},'
-            +'{"trait_type":"Color4","value":"#' + traits.color3.slice(2) + '"},'
-            +'{"trait_type":"Color5","value":"#' + traits.color4.slice(2) + '"},'
+            +'{"trait_type":"Colour1","value":"#' + traits.color0.slice(2) + '"},'
+            +'{"trait_type":"Colour2","value":"#' + traits.color1.slice(2) + '"},'
+            +'{"trait_type":"Colour3","value":"#' + traits.color2.slice(2) + '"},'
+            +'{"trait_type":"Colour4","value":"#' + traits.color3.slice(2) + '"},'
+            +'{"trait_type":"Colour5","value":"#' + traits.color4.slice(2) + '"},'
             +'{"trait_type":"Shape1","value":"' + shape(BigInt(traits.shape0)) + '"},'
             +'{"trait_type":"Shape2","value":"' + shape(BigInt(traits.shape1)) + '"},'
             +'{"trait_type":"Shape3","value":"' + polygon(BigInt(traits.polygon)) + '"}'
@@ -140,20 +140,20 @@ describe("PaintNFT", function () {
     });
 
     it("should return the tokenURI", async function () {
-        await expect(paintNFT.tokenURI(1)).to.be.revertedWithCustomError(paintNFT, "ERC721NonexistentToken");
+        await expect(cmn.tokenURI(1)).to.be.revertedWithCustomError(cmn, "ERC721NonexistentToken");
         // console.log('minting token');
-        const tx = await paintNFT.mint(user1.address);
+        const tx = await cmn.mint(user1.address);
         await tx.wait();
         // console.log('token minted');
-        const tokenURI = await paintNFT.tokenURI(1);
+        const tokenURI = await cmn.tokenURI(1);
         // console.log(tokenURI);
-        expect(tokenURI).to.include('"external_url":"https://paintcan.xyz/#1"');
+        expect(tokenURI).to.include('"external_url":"https://colourme.xyz/#1"');
     });
 
     it("should save art objects", async function () {
-      const tx = await paintNFT.mint(user1.address);
+      const tx = await cmn.mint(user1.address);
       await tx.wait();
-      const tokenId = await paintNFT.tokenCount();
+      const tokenId = await cmn.tokenCount();
       const art = [
         {
           shape: 5n,
@@ -171,9 +171,9 @@ describe("PaintNFT", function () {
           stroke: 8n,
         }
       ]
-      const txArt = await paintNFT.setArt(tokenId, art);
+      const txArt = await cmn.setArt(tokenId, art);
       await txArt.wait();
-      const uri = await paintNFT.tokenURI(tokenId);
+      const uri = await cmn.tokenURI(tokenId);
       // console.log('uri: ', uri);
       const artObjects = JSON.parse(uri).image_data.split('data:image/svg+xml;base64,')[1];
       // console.log('artObjects: ', artObjects);
@@ -184,15 +184,15 @@ describe("PaintNFT", function () {
       const userArt = svg.split('<g id="drawing-area" clip-path="url(#canvas-clip)">')[1].split('</g>')[0];
       // console.log('userArt: ', userArt);
   
-      expect(userArt).to.include('<path stroke-linecap="round" stroke-linejoin="round" stroke="#000000" stroke-width="8" d="M100 100 L300 200"/>');
+      expect(userArt).to.include('<path stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="#000000" stroke-width="8" d="M100 100 L300 200"/>');
       
     });
   
     it("should save large art objects", async function () {
       this.timeout(300000);
-      const tx = await paintNFT.mint(user1.address);
+      const tx = await cmn.mint(user1.address);
       await tx.wait();
-      const tokenId = await paintNFT.tokenCount();
+      const tokenId = await cmn.tokenCount();
       
       let totalPaths = 0;
       let totalPoints = 0;
@@ -208,10 +208,10 @@ describe("PaintNFT", function () {
         const paths = [];
         for (let j = 0; j < pointCount; j++) {
           if (j === 0) {
-            // First point: random x between 1-980, y between 1-900
+            // First point: random x/y between 1-1000
             paths.push({
-              x: Math.floor(Math.random() * 980) + 1,
-              y: Math.floor(Math.random() * 900) + 1,
+              x: Math.floor(Math.random() * 1000) + 1,
+              y: Math.floor(Math.random() * 1000) + 1,
             });
           } else {
             // Subsequent points: -50 to +50 from previous point, keeping within limits
@@ -219,8 +219,8 @@ describe("PaintNFT", function () {
             const deltaX = Math.floor(Math.random() * 101) - 50; // -50 to +50
             const deltaY = Math.floor(Math.random() * 101) - 50; // -50 to +50
             
-            const newX = Math.max(1, Math.min(980, prevPoint.x + deltaX));
-            const newY = Math.max(1, Math.min(900, prevPoint.y + deltaY));
+            const newX = Math.max(1, Math.min(1000, prevPoint.x + deltaX));
+            const newY = Math.max(1, Math.min(1000, prevPoint.y + deltaY));
             
             paths.push({ x: newX, y: newY });
           }
@@ -236,7 +236,7 @@ describe("PaintNFT", function () {
         ];
         
         try {
-          const txArt = await paintNFT.appendArt(tokenId, art);
+          const txArt = await cmn.appendArt(tokenId, art);
           await txArt.wait();
           totalPaths++;
           totalPoints += pointCount;
@@ -252,7 +252,7 @@ describe("PaintNFT", function () {
 
         // Try to get tokenURI to check if it's still valid
         try {
-          const uri = await paintNFT.tokenURI(tokenId);
+          const uri = await cmn.tokenURI(tokenId);
           const imageData = JSON.parse(uri).image_data;
           maxLength = uri.length;
           if (i%10 === 0) {
@@ -261,7 +261,7 @@ describe("PaintNFT", function () {
           svg = base64Decode(imageData.split('data:image/svg+xml;base64,')[1]);
         } catch (uriError) {
           // console.log( `TokenURI reverted after ${totalPaths} paths, ${totalPoints} total points, max points: ${maxPoints}, max length: ${maxLength} bytes`);
-          fs.writeFileSync(path.join(__dirname, "../assets/paint.test.svg"), svg);
+          fs.writeFileSync(path.join(__dirname, "../assets/colour-me.test.svg"), svg);
           return; // Exit the loop if tokenURI fails
         }
       }
@@ -271,9 +271,9 @@ describe("PaintNFT", function () {
 
     it("should find the max points", async function () {
       this.timeout(300000);
-      const tx = await paintNFT.mint(user1.address);
+      const tx = await cmn.mint(user1.address);
       await tx.wait();
-      const tokenId = await paintNFT.tokenCount();
+      const tokenId = await cmn.tokenCount();
       let succeed = true;
 
       const art = [
@@ -309,7 +309,7 @@ describe("PaintNFT", function () {
           art[0].points.push(newPoint());
         }
         try {
-          await paintNFT.setArt(tokenId, art);
+          await cmn.setArt(tokenId, art);
           writes++;
           if (writes % 10 === 0) {
             console.log(`Written points: ${art[0].points.length}`);
@@ -323,8 +323,8 @@ describe("PaintNFT", function () {
         }
 
         try {
-          expect(await paintNFT.tokenURI(tokenId)).to.not.be.reverted;
-          const tokenURI = await paintNFT.tokenURI(tokenId);
+          expect(await cmn.tokenURI(tokenId)).to.not.be.reverted;
+          const tokenURI = await cmn.tokenURI(tokenId);
           tokenURILength = tokenURI.length;
         } catch (error) {
           console.log(`Failed to get tokenURI after ${writes} writes, length: ${tokenURILength} bytes`);
@@ -335,9 +335,9 @@ describe("PaintNFT", function () {
 
     it("should find the max paths", async function () {
       this.timeout(300000);
-      const tx = await paintNFT.mint(user1.address);
+      const tx = await cmn.mint(user1.address);
       await tx.wait();
-      const tokenId = await paintNFT.tokenCount();
+      const tokenId = await cmn.tokenCount();
 
       let points = [{
         x: 100,
@@ -367,7 +367,7 @@ describe("PaintNFT", function () {
         stroke: 15,
       }];
 
-      const txSet = await paintNFT.setArt(tokenId, artSet);
+      const txSet = await cmn.setArt(tokenId, artSet);
       await txSet.wait();
       let succeed = true;
       let writes = 1;
@@ -376,7 +376,7 @@ describe("PaintNFT", function () {
 
       while (succeed) {
         try {
-          const txAppend = await paintNFT.appendArt(tokenId, artSet);
+          const txAppend = await cmn.appendArt(tokenId, artSet);
           await txAppend.wait();
           writes++;
         } catch (error) {
@@ -385,7 +385,7 @@ describe("PaintNFT", function () {
         }
 
         try {
-          const uri = await paintNFT.tokenURI(tokenId);
+          const uri = await cmn.tokenURI(tokenId);
           if (writes % 50 === 0) {
             console.log(`Written paths: ${writes}, total size: ${uri.length}`);
           }
@@ -401,10 +401,10 @@ describe("PaintNFT", function () {
       let traits: TraitStruct;
 
       beforeEach(async function () {
-        const tx = await paintNFT.mint(user1.address);
+        const tx = await cmn.mint(user1.address);
         await tx.wait();
-        tokenId = await paintNFT.tokenCount();
-        traits = await paintNFT.traits(tokenId) as TraitStruct;
+        tokenId = await cmn.tokenCount();
+        traits = await cmn.traits(tokenId) as TraitStruct;
       });
 
       describe("Shape validation", function () {
@@ -419,13 +419,13 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
           }
         });
 
         it("should accept polygon and path shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Test polygon shape (always allowed) - use the token's polygon trait
           const polygonArt = [{
@@ -438,7 +438,7 @@ describe("PaintNFT", function () {
             stroke: 0n,
           }];
           
-          await expect(paintNFT.setArt(tokenId, polygonArt)).to.not.be.reverted;
+          await expect(cmn.setArt(tokenId, polygonArt)).to.not.be.reverted;
           
           // Test path shape (always allowed) - but only with valid strokes
           const pathArt = [{
@@ -448,12 +448,12 @@ describe("PaintNFT", function () {
             stroke: 8n, // Must be 8, 15, 25, or 40 for path
           }];
           
-          await expect(paintNFT.setArt(tokenId, pathArt)).to.not.be.reverted;
+          await expect(cmn.setArt(tokenId, pathArt)).to.not.be.reverted;
         });
 
         it("should reject invalid shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Test shapes that are NOT in the token's traits and are not polygon/path
           // We need to find shapes that are NOT allowed for this specific token
@@ -471,8 +471,8 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art)).to.be.revertedWithCustomError(
-              paintNFT, "InvalidShape"
+            await expect(cmn.setArt(tokenId, art)).to.be.revertedWithCustomError(
+              cmn, "InvalidShape"
             );
           }
         });
@@ -480,8 +480,8 @@ describe("PaintNFT", function () {
 
       describe("Color validation", function () {
         it("should accept black and white colors", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Find a valid shape for this token (either from traits or polygon/path)
           const validShape = traits.shape0; // Use the first allowed shape
@@ -496,13 +496,13 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
           }
         });
 
         it("should accept colors from traits", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Find a valid shape for this token (either from traits or polygon/path)
           const validShape = traits.shape0; // Use the first allowed shape
@@ -517,13 +517,13 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
           }
         });
 
         it("should reject invalid colors", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Find a valid shape for this token (either from traits or polygon/path)
           const validShape = traits.shape0; // Use the first allowed shape
@@ -538,8 +538,8 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art)).to.be.revertedWithCustomError(
-              paintNFT, "InvalidColor"
+            await expect(cmn.setArt(tokenId, art)).to.be.revertedWithCustomError(
+              cmn, "InvalidColor"
             );
           }
         });
@@ -547,8 +547,8 @@ describe("PaintNFT", function () {
 
       describe("Stroke validation (now accepts any stroke)", function () {
         it("should accept any stroke for line/polyline/path shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const anyStrokes = [0n, 1n, 5n, 10n, 20n, 30n, 50n, 100n];
           const lineShapes = [2, 3, 5]; // line, polyline, path
@@ -576,14 +576,14 @@ describe("PaintNFT", function () {
                 stroke: stroke,
               }];
               
-              await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+              await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
             }
           }
         });
 
         it("should accept any stroke for line/polyline/path shapes (stroke validation removed)", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const anyStrokes = [0n, 1n, 5n, 10n, 20n, 30n, 50n, 100n];
           const lineShapes = [2, 3, 5]; // line, polyline, path
@@ -611,14 +611,14 @@ describe("PaintNFT", function () {
               }];
               
               // Since stroke validation was removed, all strokes should now be accepted
-              await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+              await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
             }
           }
         });
 
         it("should accept any stroke for rect/ellipse/polygon shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const anyStrokes = [1n, 5n, 10n, 20n, 30n, 50n, 100n];
           const solidShapes = [0, 1, 4]; // rect, ellipse, polygon
@@ -657,7 +657,7 @@ describe("PaintNFT", function () {
                 stroke: stroke,
               }];
               
-              await expect(paintNFT.setArt(tokenId, art)).to.not.be.reverted;
+              await expect(cmn.setArt(tokenId, art)).to.not.be.reverted;
             }
           }
         });
@@ -665,8 +665,8 @@ describe("PaintNFT", function () {
 
       describe("Point validation", function () {
         it("should require exactly 2 points for rect/ellipse/line shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const twoPointShapes = [0, 1, 2]; // rect, ellipse, line
           
@@ -689,8 +689,8 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art1Point)).to.be.revertedWithCustomError(
-              paintNFT, "InvalidPoints"
+            await expect(cmn.setArt(tokenId, art1Point)).to.be.revertedWithCustomError(
+              cmn, "InvalidPoints"
             );
 
             // Test with 3 points (should fail)
@@ -701,8 +701,8 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art3Points)).to.be.revertedWithCustomError(
-              paintNFT, "InvalidPoints"
+            await expect(cmn.setArt(tokenId, art3Points)).to.be.revertedWithCustomError(
+              cmn, "InvalidPoints"
             );
 
             // Test with 2 points (should pass)
@@ -713,13 +713,13 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art2Points)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, art2Points)).to.not.be.reverted;
           }
         });
 
         it("should require correct polygon point count", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const polygonShape = 4;
           const expectedPoints = Number(traits.polygon);
@@ -736,8 +736,8 @@ describe("PaintNFT", function () {
             stroke: 8n,
           }];
           
-          await expect(paintNFT.setArt(tokenId, artWrongPoints)).to.be.revertedWithCustomError(
-            paintNFT, "InvalidPoints"
+          await expect(cmn.setArt(tokenId, artWrongPoints)).to.be.revertedWithCustomError(
+            cmn, "InvalidPoints"
           );
 
           // Test with correct number of points (should pass)
@@ -751,12 +751,12 @@ describe("PaintNFT", function () {
             stroke: 8n,
           }];
           
-          await expect(paintNFT.setArt(tokenId, artCorrectPoints)).to.not.be.reverted;
+          await expect(cmn.setArt(tokenId, artCorrectPoints)).to.not.be.reverted;
         });
 
         it("should accept variable points for polyline/path shapes", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const variablePointShapes = [3, 5]; // polyline, path
           
@@ -779,7 +779,7 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, art1Point)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, art1Point)).to.not.be.reverted;
 
             // Test with many points (should pass)
             const artManyPoints = [{
@@ -792,15 +792,15 @@ describe("PaintNFT", function () {
               stroke: 8n,
             }];
             
-            await expect(paintNFT.setArt(tokenId, artManyPoints)).to.not.be.reverted;
+            await expect(cmn.setArt(tokenId, artManyPoints)).to.not.be.reverted;
           }
         });
       });
 
       describe("Combined validation", function () {
         it("should reject art with multiple validation failures", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           const invalidArt = [{
             shape: 99, // invalid shape
@@ -811,14 +811,14 @@ describe("PaintNFT", function () {
           
           // Should fail with first validation error (InvalidShape)
           // enum failure leading to reverted without a reason error
-          await expect(paintNFT.setArt(tokenId, invalidArt)).to.be.reverted; // WithCustomError(
+          await expect(cmn.setArt(tokenId, invalidArt)).to.be.reverted; // WithCustomError(
           //   paintNFT, "InvalidShape"
           // );
         });
 
         it("should accept complex valid art", async function () {
-          const tokenId = await paintNFT.tokenCount();
-          const traits = await paintNFT.traits(tokenId);
+          const tokenId = await cmn.tokenCount();
+          const traits = await cmn.traits(tokenId);
           
           // Build complex art using only shapes and colors that are valid for this token
           const complexArt = [];
@@ -860,7 +860,7 @@ describe("PaintNFT", function () {
             return;
           }
           
-          await expect(paintNFT.setArt(tokenId, complexArt)).to.not.be.reverted;
+          await expect(cmn.setArt(tokenId, complexArt)).to.not.be.reverted;
         });
       });
     });

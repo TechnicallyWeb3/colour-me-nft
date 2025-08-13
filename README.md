@@ -1,11 +1,11 @@
-# Paint DApp - Interactive NFT Art Creation Platform
+# Colour Me NFT - Interactive NFT Art Creation Platform
 
 A decentralized application (dApp) that allows users to create, customize, and mint unique NFT artwork on the Polygon blockchain. Built with Solidity smart contracts and a modern web interface.
 
 ## 🎨 Features
 
-- **Interactive Paint Canvas**: Create artwork using various shapes, colors, and tools
-- **Dynamic NFT Generation**: Each NFT has unique traits including colors, shapes, and polygon configurations
+- **Interactive Paint Canvas**: Create artwork using various shapes, colours, and tools
+- **Dynamic NFT Generation**: Each NFT has unique traits including colours, shapes, and polygon configurations
 - **On-Chain Art Storage**: Artwork modifications are stored directly on the blockchain
 - **Royalty System**: Built-in royalty support for creators
 - **Polygon Integration**: Deployed on Polygon for low-cost transactions
@@ -22,7 +22,7 @@ paint-dapp/
 ├── assets/              # Frontend assets and HTML files
 │   ├── paint-app.html  # Main paint application
 │   ├── paint.full.svg  # Full SVG template
-│   └── color-me-nft.html # NFT viewer
+│   └── colour-me-nft.html # NFT viewer
 ├── test/                # Contract test files
 ├── ignition/            # Hardhat Ignition deployment modules
 └── minify_and_split.py  # SVG optimization script
@@ -41,7 +41,7 @@ paint-dapp/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/technicallyweb3/paint-dapp.git
+git clone https://github.com/technicallyweb3/colour-me-nft.git
 cd paint-dapp
 ```
 
@@ -126,14 +126,14 @@ The split parts are designed to work with the smart contract's `setSVG()` functi
 
 The main paint interface is located at `assets/paint-app.html`. It provides:
 - Interactive canvas for creating artwork
-- Color palette selection
+- Colour palette selection
 - Shape tools (rectangle, ellipse, line, polyline, polygon)
 - Web3 wallet integration
 - NFT minting capabilities
 
 ### NFT Viewer
 
-View and interact with minted NFTs at `assets/color-me-nft.html`.
+View and interact with minted NFTs at `assets/colour-me-nft.html`.
 
 ## 🔗 Smart Contracts
 
@@ -149,7 +149,7 @@ The main NFT contract that handles:
 
 Handles SVG rendering and art generation:
 - Shape and polygon rendering
-- Color palette generation
+- Colour palette generation
 - Trait visualization
 
 ## 🧪 Testing
@@ -197,8 +197,8 @@ This project is licensed under the AGPL-3.0 License - see the LICENSE file for d
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/technicallyweb3/paint-dapp/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/technicallyweb3/paint-dapp/discussions)
+- **Issues**: [GitHub Issues](https://github.com/technicallyweb3/colour-me-nft/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/technicallyweb3/colour-me-nft/discussions)
 
 ## 🙏 Acknowledgments
 

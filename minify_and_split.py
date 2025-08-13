@@ -96,7 +96,7 @@ def split_svg(file_path):
     return minified_start, minified_end, minified_full
 
 def main():
-    file_path = Path("assets/paint.full.svg")
+    file_path = Path("assets/colour-me.full.svg")
     
     if not file_path.exists():
         print(f"Error: File {file_path} not found!")
@@ -110,8 +110,8 @@ def main():
             return
         
         # Write the files
-        start_file = file_path.parent / "paint.min.start.svg"
-        end_file = file_path.parent / "paint.min.end.svg"
+        start_file = file_path.parent / "colour-me.min.start.svg"
+        end_file = file_path.parent / "colour-me.min.end.svg"
         
         with open(start_file, 'w', encoding='utf-8') as f:
             f.write(start_part)
@@ -124,7 +124,7 @@ def main():
         print(f"  End: {end_file}")
         
         # Also create the minified full version
-        minified_file = file_path.parent / "paint.min.svg"
+        minified_file = file_path.parent / "colour-me.min.svg"
         with open(minified_file, 'w', encoding='utf-8') as f:
             f.write(full_content)
         

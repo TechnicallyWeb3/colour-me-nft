@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.20;
 
-import "./interfaces/IPaintRenderer.sol";
+import "./interfaces/IColourMeRenderer.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
-interface IPaintNFT is IERC721 {
+interface IColourMeNFT is IERC721 {
     function mint(address to) external;
     function setArt(uint256 tokenId, Object[] memory _art) external;
     function appendArt(uint256 tokenId, Object[] memory _object) external;
@@ -15,7 +15,7 @@ interface IPaintNFT is IERC721 {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
-contract PaintNFT is ERC721, ERC2981, Ownable {
+contract ColourMeNFT is ERC721, ERC2981, Ownable {
     using Strings for uint256;
     using Base64 for bytes;
 
@@ -30,7 +30,7 @@ contract PaintNFT is ERC721, ERC2981, Ownable {
     ) ERC721(name, symbol) Ownable(_owner) {
         baseURL = _baseURL;
         maxSupply = _maxSupply;
-        paintRenderer = IPaintRenderer(_paintRenderer);
+        cmr = IColourMeRenderer(_paintRenderer);
         _setDefaultRoyalty(owner(), _royalty);
     }
 
@@ -39,7 +39,7 @@ contract PaintNFT is ERC721, ERC2981, Ownable {
     bytes public svgEnd;
     uint256 public tokenCount;
     uint256 public maxSupply;
-    IPaintRenderer public paintRenderer;
+    IColourMeRenderer public cmr;
 
     mapping(uint256 => Trait) public traits;
     mapping(uint256 => bytes) public traitSVG;
@@ -89,7 +89,7 @@ contract PaintNFT is ERC721, ERC2981, Ownable {
         tokenCount++;
         _mint(to, tokenCount);
         traits[tokenCount] = _randomTraits(tokenCount);
-        traitSVG[tokenCount] = paintRenderer.renderTrait(traits[tokenCount]);
+        traitSVG[tokenCount] = cmr.renderTrait(traits[tokenCount]);
     }
 
     function _objectAllowed(uint256 tokenId, Object memory object) internal view {
@@ -173,7 +173,7 @@ contract PaintNFT is ERC721, ERC2981, Ownable {
             svgStart, 
             traitSVG[tokenId],
             '<g id="drawing-area" clip-path="url(#canvas-clip)">',
-                paintRenderer.renderObjects(art[tokenId]),
+                cmr.renderObjects(art[tokenId]),
             '</g>',
             svgEnd
         );
@@ -181,7 +181,7 @@ contract PaintNFT is ERC721, ERC2981, Ownable {
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         _requireOwned(tokenId);
-        return string(paintRenderer.getURI(name(), tokenId, baseURL, tokenSVG(tokenId), traits[tokenId]));
+        return string(cmr.getURI(name(), tokenId, baseURL, tokenSVG(tokenId), traits[tokenId]));
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
