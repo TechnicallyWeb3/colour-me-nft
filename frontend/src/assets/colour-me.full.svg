@@ -163,14 +163,12 @@
       const CANVAS_Y = 90;
       const CANVAS_WIDTH = 980;
       const CANVAS_HEIGHT = 900;
-
       // Cached DOM elements for better performance
       const drawingArea = document.getElementById('drawing-area');
       const canvas = document.querySelector('.canvas');
       const svg = document.querySelector('svg');
-
-      // Painting app functionality
       const localStorageKey = 'colourMeArt.' + (drawingArea.getAttribute('data-token') || '0');
+      // Painting app functionality
       let isDrawing = false;
       let currentColor = '#000000';
       let currentBrushSize = 8;
@@ -182,18 +180,15 @@
       let currentShapeElement = null;
       let polylinePoints = [];
       let polylinePreview = null;
-
       // Cached SVG namespace for better performance
       const SVG_NS = 'http://www.w3.org/2000/svg';
       const XHTML_NS = 'http://www.w3.org/1999/xhtml';
-
       // Cached coordinate conversion factors
       let svgRect = null;
       let svgWidth = 1000;
       let svgHeight = 1000;
       let displayWidth = 1000;
       let displayHeight = 1000;
-
       // Update coordinate conversion factors
       function updateCoordinateFactors() {
         svgRect = svg.getBoundingClientRect();
@@ -202,7 +197,6 @@
         displayWidth = svgRect.width;
         displayHeight = svgRect.height;
       }
-
       // Optimized position calculation function
       function calculatePosition(clientX, clientY) {
         if (!svgRect) updateCoordinateFactors();
@@ -215,18 +209,15 @@
           y: Math.round(rawY)
         };
       }
-
       // Unified position getter for mouse and touch
       function getMousePos(evt) {
         return calculatePosition(evt.clientX, evt.clientY);
       }
-
       // should test what happens when there are multiple touches, zoom, etc.
       function getTouchPos(evt) {
         const touch = evt.touches[0];
         return calculatePosition(touch.clientX, touch.clientY);
       }
-
       // Optimized element creation with batch attribute setting
       function createSVGElement(tagName, attributes = {}) {
         const element = document.createElementNS(SVG_NS, tagName);
@@ -235,13 +226,11 @@
         });
         return element;
       }
-
       // Optimized class manipulation
       function setActiveElement(selector, activeElement) {
         document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
         if (activeElement) activeElement.classList.add('active');
       }
-
       // Optimized shape creation with predefined attributes
       const shapeConfigs = {
         rect: (pos) => ({
@@ -267,7 +256,6 @@
           points: `${pos.x},${pos.y - 0.5} ${pos.x + 0.5},${pos.y - 0.25} ${pos.x + 0.5},${pos.y + 0.25} ${pos.x},${pos.y + 0.5} ${pos.x - 0.5},${pos.y + 0.25} ${pos.x - 0.5},${pos.y - 0.25}`
         })
       };
-
       // Optimized polygon point generation
       function generatePolygonPoints(centerX, centerY, width, height, sides, offset = 0) {
         const points = [];
@@ -279,13 +267,11 @@
         }
         return points.join(',');
       }
-
       // Optimized boundary checking
       function isWithinCanvas(pos) {
         return pos.x >= CANVAS_X && pos.x <= CANVAS_X + CANVAS_WIDTH && 
                pos.y >= CANVAS_Y && pos.y <= CANVAS_Y + CANVAS_HEIGHT;
       }
-
       // Color selection with optimized event handling
       document.querySelectorAll('.color-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -646,7 +632,6 @@
         const cleanHex = bytes3.replace('0x', '');
         return '#' + cleanHex;
       }
-
       // Optimized export function with reduced string operations
       function exportDrawing() {
         const contractObjects = saveDrawing();
@@ -670,7 +655,6 @@
         link.download = 'painting.svg';
         link.click();
       }
-
       // Action buttons with optimized event handling
       document.querySelectorAll('.action-group').forEach((group, index) => {
         group.addEventListener('click', function() {
@@ -707,7 +691,6 @@
           if (actions[index]) actions[index]();
         });
       });
-
       // Optimized drawing functions
       function startDrawing(pos) {
         if (!isWithinCanvas(pos)) return;
@@ -745,7 +728,6 @@
         paths.push(currentPath);
         
       }
-
       function createShapeStart(pos) {
         isDrawing = true;
         const config = shapeConfigs[currentShape];
@@ -757,7 +739,6 @@
           
         }
       }
-
       function updateShape(pos) {
         if (!currentShapeElement || !startPos) return;
         switch (currentShape) {
@@ -801,7 +782,6 @@
             break;
         }
       }
-
       function addPolylinePoint(pos) {
         polylinePoints.push(pos.x, pos.y);
         
@@ -836,7 +816,6 @@
           }
         }
       }
-
       function finalizeShape() {
         if (currentShapeElement) {
           paths.push(currentShapeElement);
@@ -851,7 +830,6 @@
           currentShapeElement = null;
         }
       }
-
       function draw(pos) {
         if (!isDrawing) return;
         if (currentTool === 'shape' && currentShapeElement && startPos) {
@@ -886,7 +864,6 @@
           currentPath.setAttribute('d', currentD + `L${pos.x} ${pos.y}`);
         }
       }
-
       function stopDrawing() {
         if (currentTool === 'shape' && currentShapeElement && startPos) {
           finalizeShape();
@@ -899,13 +876,11 @@
           currentShapeElement = null;
         }
       }
-
       // Optimized event handlers with throttling for mousemove
       let mouseMoveThrottle = null;
       canvas.addEventListener('mousedown', function(evt) {
         startDrawing(getMousePos(evt));
       });
-
       document.addEventListener('mousemove', function(evt) {
         if (isDrawing) {
           if (mouseMoveThrottle) return;
@@ -936,20 +911,16 @@
           }
         }
       });
-
       document.addEventListener('mouseup', stopDrawing);
-
       // Touch events
       canvas.addEventListener('touchstart', function(evt) {
         evt.preventDefault();
         startDrawing(getTouchPos(evt));
       }, { passive: false });
-
       canvas.addEventListener('touchmove', function(evt) {
         evt.preventDefault();
         draw(getTouchPos(evt));
       }, { passive: false });
-
       canvas.addEventListener('touchend', function(evt) {
         evt.preventDefault();
         stopDrawing();
@@ -989,7 +960,6 @@
           }
         }
       });
-
       // Context menu prevention
       canvas.addEventListener('contextmenu', function(evt) {
         evt.preventDefault();
@@ -1010,14 +980,12 @@
           polylinePoints = [];
         }
       });
-
       // Communication with HTML parent
       function sendMessageToParent(type, data = {}) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type, data }, '*');
         }
       }
-
       // Message listener
       window.addEventListener('message', function(event) {
         const { type, success, message } = event.data;
@@ -1028,7 +996,6 @@
           saveDrawing();
         }
       });
-      
       // Initialize on load
       window.addEventListener('load', function() {
         updateCoordinateFactors();

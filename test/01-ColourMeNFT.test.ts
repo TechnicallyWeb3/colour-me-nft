@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { ColourMeRenderer, ColourMeNFT } from "../typechain-types";
-import { ObjectStruct, TraitStruct } from "../typechain-types/contracts/PaintRenderer";
+import { ObjectStruct, TraitStruct } from "../typechain-types/contracts/ColourMeRenderer";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -84,9 +84,10 @@ describe("ColourMeNFT", function () {
       // console.log('endSVG: ', bytesToString(svgEnd));
       expect(bytesToString(svgBytes)).to.include(bytesToString(svgEnd));
       
+      // console.log('svgDynamic: ', bytesToString(svgBytes).slice((bytesToString(svgStart)).length, (bytesToString(svgBytes)).length - (bytesToString(svgEnd)).length));
       expect(bytesToString(svgBytes)).to.equal(
           bytesToString(svgStart) 
-          + '<g id="drawing-area" clip-path="url(#canvas-clip)"></g>'
+          + '<g id="drawing-area" clip-path="url(#canvas-clip)" data-token="0"></g>'
           // + bytesToString(renderedTraitBytes) 
           // + bytesToString(renderedObjectBytes) 
           + bytesToString(svgEnd)
@@ -181,7 +182,7 @@ describe("ColourMeNFT", function () {
       const svg = base64Decode(artObjects);
       // console.log('svg: ', svg);
   
-      const userArt = svg.split('<g id="drawing-area" clip-path="url(#canvas-clip)">')[1].split('</g>')[0];
+      const userArt = svg.split(`<g id="drawing-area" clip-path="url(#canvas-clip)" data-token="${tokenId}">`)[1].split('</g>')[0];
       // console.log('userArt: ', userArt);
   
       expect(userArt).to.include('<path stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="#000000" stroke-width="8" d="M100 100 L300 200"/>');

@@ -101,7 +101,16 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
             object.shape == Path.path ||
             object.shape > Path.path
         )) {
-            revert InvalidShape(object.shape);
+            if (!(
+                object.shape == Path.rect && 
+                object.points.length == 2 &&
+                object.points[0].x == 10 &&
+                object.points[0].y == 90 &&
+                object.points[1].x == 980 &&
+                object.points[1].y == 900
+            )) {
+                revert InvalidShape(object.shape);
+            }
         }
         if (!(
             object.color == 0x000000 ||
@@ -172,7 +181,7 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         return abi.encodePacked(
             svgStart, 
             traitSVG[tokenId],
-            '<g id="drawing-area" clip-path="url(#canvas-clip)">',
+            '<g id="drawing-area" clip-path="url(#canvas-clip)" data-token="', tokenId.toString(), '">',
                 cmr.renderObjects(art[tokenId]),
             '</g>',
             svgEnd

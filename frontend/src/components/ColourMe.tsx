@@ -8,8 +8,7 @@ interface ColourMeProps {
 }
 
 const ColourMe: React.FC<ColourMeProps> = ({ 
-  width = 1000, 
-  height = 1000, 
+  width = 1000,
   className = '' 
 }) => {
   return (
@@ -17,7 +16,7 @@ const ColourMe: React.FC<ColourMeProps> = ({
       data={colourMeSvg}
       type="image/svg+xml"
       width={width}
-      height={height}
+      height={width}
       className={className}
     >
       <p>Your browser does not support SVG</p>
