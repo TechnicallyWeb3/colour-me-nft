@@ -21,7 +21,7 @@ export const dappConfig = {
   // Contract Configuration  
   contracts: {
     ColourMeNFT: {
-      address: "0xdbC43Ba45381e02825b14322cDdd15eC4B3164E6",
+      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       deployedBlock: 0, // Start block for event filtering
     }
   },

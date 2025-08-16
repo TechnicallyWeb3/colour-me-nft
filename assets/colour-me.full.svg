@@ -92,10 +92,6 @@
   <circle cx="170" cy="35" r="15" class="color-btn" fill="#00ff00" />
   <circle cx="210" cy="35" r="15" class="color-btn" fill="#ffff00" />
   <circle cx="250" cy="35" r="15" class="color-btn" fill="#ff00ff" />
-  <!-- Shapes -->
-  <!-- <use href="#shape-0" x="445" y="20" class="shape-btn"/>
-  <use href="#shape-1" x="485" y="20" class="shape-btn"/>
-  <use href="#polygon-3" x="525" y="20" class="shape-btn"/> -->
 
   <g class="shape-group" transform="translate(445, 20)">
     <rect data-shape="line" x="0" y="0" width="30" height="30" class="tool-bg"/>
@@ -158,20 +154,25 @@
 
   <script type="text/javascript">
     <![CDATA[
-      // Canvas constants
+      // Application constants - Canvas boundaries and namespaces
       const CANVAS_X = 10;
       const CANVAS_Y = 90;
       const CANVAS_WIDTH = 980;
       const CANVAS_HEIGHT = 900;
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
-      // Cached DOM elements for better performance
+      // Cached DOM elements for performance optimization
       const drawingArea = document.getElementById('drawing-area');
       const canvas = document.querySelector('.canvas');
       const svg = document.querySelector('svg');
+      const brushSlider = document.getElementById('brush-slider-handle');
+      const brushSliderTrack = document.getElementById('brush-slider-track');
 
-      // Painting app functionality
+      // Application state variables
       const localStorageKey = 'colourMeArt.' + (drawingArea.getAttribute('data-token') || '0');
       let isDrawing = false;
+      let isDraggingSlider = false;
       let currentColor = '#000000';
       let currentBrushSize = 8;
       let currentTool = 'brush'; // 'brush', 'eraser', 'bucket', 'shape'
@@ -182,19 +183,17 @@
       let currentShapeElement = null;
       let polylinePoints = [];
       let polylinePreview = null;
+      let mouseMoveThrottle = null;
+      let lastDrawPos = null;
 
-      // Cached SVG namespace for better performance
-      const SVG_NS = 'http://www.w3.org/2000/svg';
-      const XHTML_NS = 'http://www.w3.org/1999/xhtml';
-
-      // Cached coordinate conversion factors
+      // Coordinate conversion cache for performance
       let svgRect = null;
       let svgWidth = 1000;
       let svgHeight = 1000;
       let displayWidth = 1000;
       let displayHeight = 1000;
 
-      // Update coordinate conversion factors
+      // Update coordinate conversion factors when window resizes
       function updateCoordinateFactors() {
         svgRect = svg.getBoundingClientRect();
         svgWidth = svg.viewBox.baseVal.width;
@@ -203,7 +202,7 @@
         displayHeight = svgRect.height;
       }
 
-      // Optimized position calculation function
+      // Optimized position calculation with coordinate transformation
       function calculatePosition(clientX, clientY) {
         if (!svgRect) updateCoordinateFactors();
         const x = clientX - svgRect.left;
@@ -216,18 +215,17 @@
         };
       }
 
-      // Unified position getter for mouse and touch
+      // Unified position getters for input events
       function getMousePos(evt) {
         return calculatePosition(evt.clientX, evt.clientY);
       }
 
-      // should test what happens when there are multiple touches, zoom, etc.
       function getTouchPos(evt) {
         const touch = evt.touches[0];
         return calculatePosition(touch.clientX, touch.clientY);
       }
 
-      // Optimized element creation with batch attribute setting
+      // Optimized SVG element creation with batch attribute setting
       function createSVGElement(tagName, attributes = {}) {
         const element = document.createElementNS(SVG_NS, tagName);
         Object.entries(attributes).forEach(([key, value]) => {
@@ -236,13 +234,13 @@
         return element;
       }
 
-      // Optimized class manipulation
+      // Optimized class manipulation for UI state changes
       function setActiveElement(selector, activeElement) {
         document.querySelectorAll(selector).forEach(el => el.classList.remove('active'));
         if (activeElement) activeElement.classList.add('active');
       }
 
-      // Optimized shape creation with predefined attributes
+      // Shape configuration templates for efficient shape creation
       const shapeConfigs = {
         rect: (pos) => ({
           fill: currentColor, x: pos.x, y: pos.y, width: 1, height: 1
@@ -268,7 +266,7 @@
         })
       };
 
-      // Optimized polygon point generation
+      // Optimized polygon point generation for regular polygons
       function generatePolygonPoints(centerX, centerY, width, height, sides, offset = 0) {
         const points = [];
         for (let i = 0; i < sides; i++) {
@@ -280,24 +278,36 @@
         return points.join(',');
       }
 
-      // Optimized boundary checking
+      // Canvas boundary validation for drawing operations
       function isWithinCanvas(pos) {
         return pos.x >= CANVAS_X && pos.x <= CANVAS_X + CANVAS_WIDTH && 
                pos.y >= CANVAS_Y && pos.y <= CANVAS_Y + CANVAS_HEIGHT;
       }
 
-      // Color selection with optimized event handling
-      document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          setActiveElement('.color-btn', this);
-          currentColor = this.getAttribute('fill');
-        });
-      });
-      // Brush size slider functionality
-      const brushSlider = document.getElementById('brush-slider-handle');
-      const brushSliderTrack = document.getElementById('brush-slider-track');
-      let isDraggingSlider = false;
-      
+      // **OPTIMIZATION: Unified distance calculation for brush radius filtering**
+      function isWithinBrushRadius(currentPos, lastPos) {
+        if (!lastPos) return false;
+        const dx = currentPos.x - lastPos.x;
+        const dy = currentPos.y - lastPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < currentBrushSize / 2;
+      }
+
+      // **OPTIMIZATION: Unified canvas boundary checking for mouse/touch events**
+      function isOutsideCanvas(x, y) {
+        const canvasRect = canvas.getBoundingClientRect();
+        return x < canvasRect.left || x > canvasRect.right || 
+               y < canvasRect.top || y > canvasRect.bottom;
+      }
+
+      // **OPTIMIZATION: Unified polyline cleanup function**
+      function resetPolylineState() {
+        finalizeShape();
+        currentShapeElement = null;
+        polylinePoints = [];
+      }
+
+      // Brush size slider functionality with optimized event handling
       function updateBrushSizeFromSlider(x) {
         const trackRect = brushSliderTrack.getBoundingClientRect();
         const trackLeft = trackRect.left;
@@ -307,19 +317,15 @@
         let relativeX = x - trackLeft;
         relativeX = Math.max(0, Math.min(relativeX, trackWidth));
         
-        // Convert to brush size (1-40)
-        const brushSize = Math.round(1 + (relativeX / trackWidth) * 39);
-        
-        // Update slider handle position
+        // Convert to brush size (8-40) and update elements
+        const brushSize = Math.round(8 + (relativeX / trackWidth) * 32);
         const sliderX = 305 + (relativeX / trackWidth) * 110;
-        brushSlider.setAttribute('cx', sliderX);
-        
-        // Update brush size
-        currentBrushSize = brushSize;
-        
-        // Update slider handle size to match brush size (with scaling factor)
         const handleRadius = Math.max(4, Math.min(20, brushSize * 0.5));
+        
+        // Batch DOM updates for better performance
+        brushSlider.setAttribute('cx', sliderX);
         brushSlider.setAttribute('r', handleRadius);
+        currentBrushSize = brushSize;
       }
       
       function startSliderDrag(evt) {
@@ -337,14 +343,22 @@
       function stopSliderDrag() {
         isDraggingSlider = false;
       }
-      
-      // Slider event listeners
+
+      // Color palette event handling
+      document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          setActiveElement('.color-btn', this);
+          currentColor = this.getAttribute('fill');
+        });
+      });
+
+      // Slider event listeners with touch support
       brushSlider.addEventListener('mousedown', startSliderDrag);
       brushSliderTrack.addEventListener('mousedown', startSliderDrag);
       document.addEventListener('mousemove', updateSliderDrag);
       document.addEventListener('mouseup', stopSliderDrag);
       
-      // Touch events for slider
+      // Touch events for slider with passive: false for preventDefault
       brushSlider.addEventListener('touchstart', function(evt) {
         evt.preventDefault();
         finalizeShape();
@@ -367,7 +381,8 @@
       });
       
       document.addEventListener('touchend', stopSliderDrag);
-      // Tool selection with optimized class management
+
+      // Tool selection with optimized state management
       document.querySelectorAll('.tool-group').forEach((group, index) => {
         group.addEventListener('click', function() {
           setActiveElement('.tool-bg', this.querySelector('.tool-bg'));
@@ -377,7 +392,8 @@
           currentTool = tools[index] || 'brush';
         });
       });
-      // Shape selection
+
+      // Shape selection with polyline state reset
       document.querySelectorAll('.shape-group').forEach((group) => {
         group.addEventListener('click', function() {
           setActiveElement('.shape-group .tool-bg', this.querySelector('.tool-bg'));
@@ -393,28 +409,25 @@
         });
       });
 
-      // Replace the existing saveDrawing function
+      // **OPTIMIZATION: Enhanced saveDrawing function with improved object creation**
       function saveDrawing(storageKey = localStorageKey) {
         const drawingElements = Array.from(drawingArea.children).map(element => {
-          // Transform SVG element to contract Object format
+          // Optimized color extraction and object creation
           const stroke = element.getAttribute('stroke') ? hexToBytes3(element.getAttribute('stroke')) : null;
           const fill = element.getAttribute('fill') !== '#none' ? hexToBytes3(element.getAttribute('fill')) : null;
           const color = stroke || fill || '0x000000';
-          // console.log('color', color);
-          const object = {
+          
+          return {
             shape: getElementShape(element),
             color: color,
             stroke: parseInt(element.getAttribute('stroke-width') || '0'),
             points: extractPoints(element)
           };
-          return object;
         });
 
-        console.log('saving to localStorage: ', storageKey);
-        
+        // Efficient localStorage operations
         if (drawingElements.length > 0) {
           localStorage.setItem(storageKey, JSON.stringify(drawingElements));
-          // console.log('Saved to localStorage:', drawingElements);
         } else {
           localStorage.removeItem(storageKey);
         }
@@ -422,25 +435,26 @@
         return drawingElements.length > 0 ? drawingElements : null;
       }
 
-      // Add these helper functions after the existing functions
+      // Shape type mapping for contract compatibility
       function getElementShape(element) {
         const tagName = element.tagName.toLowerCase();
-        switch (tagName) {
-          case 'rect': return 0; // Path.rect
-          case 'line': return 1; // Path.line
-          case 'ellipse': return 2; // Path.ellipse
-          case 'polyline': return 3; // Path.polyline
-          case 'polygon': return 4; // Path.polygon
-          case 'path': return 5; // Path.path
-          default: return 5; // Default to path
-        }
+        const shapeMap = {
+          'rect': 0, 'line': 1, 'ellipse': 2, 'polyline': 3, 'polygon': 4, 'path': 5
+        };
+        return shapeMap[tagName] || 5; // Default to path
       }
 
+      // Color format conversion for contract compatibility
       function hexToBytes3(hexColor) {
-        // Remove # if present and convert to 0x format
         return hexColor ? hexColor.replace('#', '0x') : null;
       }
 
+      function bytes3ToHex(bytes3) {
+        const cleanHex = bytes3.replace('0x', '');
+        return '#' + cleanHex;
+      }
+
+      // **OPTIMIZATION: Consolidated point extraction with shared logic**
       function extractPoints(element) {
         const tagName = element.tagName.toLowerCase();
         const points = [];
@@ -451,8 +465,7 @@
             const y = parseInt(element.getAttribute('y'));
             const width = parseInt(element.getAttribute('width'));
             const height = parseInt(element.getAttribute('height'));
-            points.push({ x: x, y: y });
-            points.push({ x: width, y: height });
+            points.push({ x: x, y: y }, { x: width, y: height });
             break;
             
           case 'ellipse':
@@ -460,41 +473,32 @@
             const cy = parseInt(element.getAttribute('cy'));
             const rx = parseInt(element.getAttribute('rx'));
             const ry = parseInt(element.getAttribute('ry'));
-            points.push({ x: cx, y: cy });
-            points.push({ x: rx, y: ry });
+            points.push({ x: cx, y: cy }, { x: rx, y: ry });
             break;
             
           case 'line':
-            points.push({ 
-              x: parseInt(element.getAttribute('x1')), 
-              y: parseInt(element.getAttribute('y1')) 
-            });
-            points.push({ 
-              x: parseInt(element.getAttribute('x2')), 
-              y: parseInt(element.getAttribute('y2')) 
-            });
+            points.push(
+              { x: parseInt(element.getAttribute('x1')), y: parseInt(element.getAttribute('y1')) },
+              { x: parseInt(element.getAttribute('x2')), y: parseInt(element.getAttribute('y2')) }
+            );
             break;
             
           case 'polyline':
-            const polylinePoints = extractPolylinePoints(element);
-            points.push(...polylinePoints);
-            break;
-            
           case 'polygon':
-            const polygonPoints = extractPolygonPoints(element);
-            points.push(...polygonPoints);
+            // **OPTIMIZATION: Unified function for both polyline and polygon points**
+            points.push(...extractShapePoints(element));
             break;
             
           case 'path':
-            const pathPoints = extractPathPoints(element);
-            points.push(...pathPoints);
+            points.push(...extractPathPoints(element));
             break;
         }
         
         return points;
       }
 
-      function extractPolylinePoints(element) {
+      // **OPTIMIZATION: Single function replaces extractPolylinePoints and extractPolygonPoints**
+      function extractShapePoints(element) {
         const points = [];
         const pointsAttr = element.getAttribute('points');
         const coords = pointsAttr.split(/[,\s]+/);
@@ -507,19 +511,7 @@
         return points;
       }
 
-      function extractPolygonPoints(element) {
-        const points = [];
-        const pointsAttr = element.getAttribute('points');
-        const coords = pointsAttr.split(/[,\s]+/);
-        for (let i = 0; i < coords.length; i += 2) {
-          points.push({ 
-            x: parseInt(coords[i]), 
-            y: parseInt(coords[i + 1]) 
-          });
-        }
-        return points;
-      }
-
+      // Path point extraction for SVG path elements
       function extractPathPoints(element) {
         const points = [];
         const d = element.getAttribute('d');
@@ -528,32 +520,26 @@
         commands.forEach(cmd => {
           const parts = cmd.trim().split(/\s+/);
           if (parts.length >= 2) {
-            const command = parts[0].charAt(0);
             const x = parseInt(parts[0].substring(1));
             const y = parseInt(parts[1]);
-            points.push({
-              x: x,
-              y: y
-            });
+            points.push({ x: x, y: y });
           }
         });
         
         return points;
       }
 
-      // Replace the existing loadDrawing function
+      // Load drawing data with optimized parsing
       function loadDrawing() {
         const savedData = localStorage.getItem(localStorageKey);
         const tokenData = saveDrawing('tokenArt');
 
         if (tokenData) {
           sendMessageToParent('LOAD_DATA', { artData: tokenData });
-          console.log('loadedData: tokenArt', tokenData);
         }
 
         if (savedData) {
           const savedObjects = JSON.parse(savedData);
-          // console.log('Loading from localStorage:', savedObjects);
           drawingArea.innerHTML = '';
           paths = [];
           
@@ -566,70 +552,82 @@
           });
 
           sendMessageToParent('LOAD_DATA', { artData: savedObjects });
-          console.log('loadedData: savedObjects', savedObjects);
-
         }
-        
       }
 
+      // Create SVG elements from contract data with optimized attribute setting
       function createElementFromContract(obj) {
         const element = document.createElementNS(SVG_NS, getElementTag(obj.shape));
-        // console.log('obj.color', obj.color);
         
-        // Set attributes based on shape type
+        // **OPTIMIZATION: Batch attribute setting based on shape type**
         switch (obj.shape) {
           case 0: // rect
             const [pos, size] = obj.points;
-            element.setAttribute('x', pos.x);
-            element.setAttribute('y', pos.y);
-            element.setAttribute('width', size.x);
-            element.setAttribute('height', size.y);
+            Object.assign(element, {
+              x: { baseVal: { value: pos.x } },
+              y: { baseVal: { value: pos.y } },
+              width: { baseVal: { value: size.x } },
+              height: { baseVal: { value: size.y } }
+            });
             element.setAttribute('fill', bytes3ToHex(obj.color));
             break;
             
           case 1: // line
             const [start, end] = obj.points;
-            element.setAttribute('x1', start.x);
-            element.setAttribute('y1', start.y);
-            element.setAttribute('x2', end.x);
-            element.setAttribute('y2', end.y);
-            element.setAttribute('stroke', bytes3ToHex(obj.color));
-            element.setAttribute('stroke-width', obj.stroke);
+            const lineAttrs = {
+              x1: start.x, y1: start.y, x2: end.x, y2: end.y,
+              stroke: bytes3ToHex(obj.color), 'stroke-width': obj.stroke
+            };
+            Object.entries(lineAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
+            });
             break;
             
           case 2: // ellipse
             const [center, radius] = obj.points;
-            element.setAttribute('cx', center.x);
-            element.setAttribute('cy', center.y);
-            element.setAttribute('rx', radius.x);
-            element.setAttribute('ry', radius.y);
-            element.setAttribute('fill', bytes3ToHex(obj.color));
+            const ellipseAttrs = {
+              cx: center.x, cy: center.y, rx: radius.x, ry: radius.y,
+              fill: bytes3ToHex(obj.color)
+            };
+            Object.entries(ellipseAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
+            });
             break;
             
           case 3: // polyline
-            const polylinePointsStr = obj.points.map(p => `${p.x},${p.y}`).join(' ');
-            element.setAttribute('points', polylinePointsStr);
-            element.setAttribute('fill', 'none');
-            element.setAttribute('stroke', bytes3ToHex(obj.color));
-            element.setAttribute('stroke-width', obj.stroke);
+            const polylineAttrs = {
+              points: obj.points.map(p => `${p.x},${p.y}`).join(' '),
+              fill: 'none',
+              stroke: bytes3ToHex(obj.color),
+              'stroke-width': obj.stroke
+            };
+            Object.entries(polylineAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
+            });
             break;
             
           case 4: // polygon
-            const polygonPointsStr = obj.points.map(p => `${p.x},${p.y}`).join(' ');
-            element.setAttribute('points', polygonPointsStr);
-            element.setAttribute('fill', bytes3ToHex(obj.color));
+            const polygonAttrs = {
+              points: obj.points.map(p => `${p.x},${p.y}`).join(' '),
+              fill: bytes3ToHex(obj.color)
+            };
+            Object.entries(polygonAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
+            });
             break;
             
           case 5: // path
-            const pathData = obj.points.map((p, i) => 
-              `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`
-            ).join('');
-            element.setAttribute('d', pathData);
-            element.setAttribute('fill', 'none');
-            element.setAttribute('stroke', bytes3ToHex(obj.color));
-            element.setAttribute('stroke-width', obj.stroke);
-            element.setAttribute('stroke-linecap', 'round');
-            element.setAttribute('stroke-linejoin', 'round');
+            const pathAttrs = {
+              d: obj.points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(''),
+              fill: 'none',
+              stroke: bytes3ToHex(obj.color),
+              'stroke-width': obj.stroke,
+              'stroke-linecap': 'round',
+              'stroke-linejoin': 'round'
+            };
+            Object.entries(pathAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
+            });
             break;
         }
         
@@ -641,18 +639,11 @@
         return tags[shape] || 'path';
       }
 
-      function bytes3ToHex(bytes3) {
-        // Convert 0x format back to # format for SVG
-        const cleanHex = bytes3.replace('0x', '');
-        return '#' + cleanHex;
-      }
-
-      // Optimized export function with reduced string operations
+      // Optimized export function with efficient SVG generation
       function exportDrawing() {
         const contractObjects = saveDrawing();
         if (!contractObjects) return;
         
-        // Convert to SVG format for export
         const svgElements = contractObjects.map(obj => {
           const element = createElementFromContract(obj);
           return element.outerHTML;
@@ -671,7 +662,7 @@
         link.click();
       }
 
-      // Action buttons with optimized event handling
+      // Action button handlers with optimized save logic
       document.querySelectorAll('.action-group').forEach((group, index) => {
         group.addEventListener('click', function() {
           const actions = [
@@ -680,7 +671,6 @@
               paths = [];
               saveDrawing();
               sendMessageToParent('CLEAR_REQUEST');
-              console.log('cleared');
             },
             () => { // Save
               const tokenArtString = localStorage.getItem('tokenArt');
@@ -708,9 +698,10 @@
         });
       });
 
-      // Optimized drawing functions
+      // Drawing state management functions
       function startDrawing(pos) {
         if (!isWithinCanvas(pos)) return;
+        
         if (currentTool === 'bucket') {
           drawingArea.innerHTML = '';
           paths = [];
@@ -719,9 +710,9 @@
           });
           drawingArea.appendChild(fillRect);
           paths.push(fillRect);
-          
           return;
         }
+        
         if (currentTool === 'shape') {
           if (currentShape === 'polyline') {
             addPolylinePoint(pos);
@@ -732,9 +723,12 @@
             return;
           }
         }
+        
+        // Standard brush/eraser drawing
         isDrawing = true;
+        lastDrawPos = pos;
         currentPath = createSVGElement('path', {
-          stroke: currentTool === 'eraser' ? 'white' : currentColor,
+          stroke: currentTool === 'eraser' ? '#ffffff' : currentColor,
           'stroke-width': currentBrushSize,
           fill: 'none',
           'stroke-linecap': 'round',
@@ -743,7 +737,6 @@
         });
         drawingArea.appendChild(currentPath);
         paths.push(currentPath);
-        
       }
 
       function createShapeStart(pos) {
@@ -754,61 +747,68 @@
             currentShape.startsWith('polygon') ? 'polygon' : currentShape, config(pos));
           drawingArea.appendChild(shape);
           currentShapeElement = shape;
-          
         }
       }
 
+      // **OPTIMIZATION: Improved shape updating with reduced calculations**
       function updateShape(pos) {
         if (!currentShapeElement || !startPos) return;
+        
+        // **OPTIMIZATION: Calculate common values once**
+        const deltaX = pos.x - startPos.x;
+        const deltaY = pos.y - startPos.y;
+        const absWidth = Math.abs(deltaX);
+        const absHeight = Math.abs(deltaY);
+        const centerX = (startPos.x + pos.x) / 2;
+        const centerY = (startPos.y + pos.y) / 2;
+        
         switch (currentShape) {
           case 'rect':
-            const rectX = Math.min(startPos.x, pos.x);
-            const rectY = Math.min(startPos.y, pos.y);
-            const rectWidth = Math.abs(pos.x - startPos.x);
-            const rectHeight = Math.abs(pos.y - startPos.y);
-            currentShapeElement.setAttribute('x', rectX);
-            currentShapeElement.setAttribute('y', rectY);
-            currentShapeElement.setAttribute('width', rectWidth);
-            currentShapeElement.setAttribute('height', rectHeight);
+            const rectAttrs = {
+              x: Math.min(startPos.x, pos.x),
+              y: Math.min(startPos.y, pos.y),
+              width: absWidth,
+              height: absHeight
+            };
+            Object.entries(rectAttrs).forEach(([key, value]) => {
+              currentShapeElement.setAttribute(key, value);
+            });
             break;
+            
           case 'ellipse':
-            const ellipseCenterX = (startPos.x + pos.x) / 2;
-            const ellipseCenterY = (startPos.y + pos.y) / 2;
-            const radiusX = Math.abs(pos.x - startPos.x) / 2;
-            const radiusY = Math.abs(pos.y - startPos.y) / 2;
-            currentShapeElement.setAttribute('cx', ellipseCenterX);
-            currentShapeElement.setAttribute('cy', ellipseCenterY);
-            currentShapeElement.setAttribute('rx', radiusX);
-            currentShapeElement.setAttribute('ry', radiusY);
+            const ellipseAttrs = {
+              cx: centerX,
+              cy: centerY,
+              rx: absWidth / 2,
+              ry: absHeight / 2
+            };
+            Object.entries(ellipseAttrs).forEach(([key, value]) => {
+              currentShapeElement.setAttribute(key, value);
+            });
             break;
+            
           case 'line':
             currentShapeElement.setAttribute('x2', pos.x);
             currentShapeElement.setAttribute('y2', pos.y);
             break;
+            
           case 'polygon-3':
           case 'polygon-5':
           case 'polygon-6':
-            // For polygon shapes, we need to regenerate the points based on the new size
             const sides = parseInt(currentShape.split('-')[1]);
-            const centerX = (startPos.x + pos.x) / 2;
-            const centerY = (startPos.y + pos.y) / 2;
-            const width = Math.abs(pos.x - startPos.x);
-            const height = Math.abs(pos.y - startPos.y);
             const offset = pos.y > startPos.y ? Math.PI : 0;
-            
-            const points = generatePolygonPoints(centerX, centerY, width, height, sides, offset);
+            const points = generatePolygonPoints(centerX, centerY, absWidth, absHeight, sides, offset);
             currentShapeElement.setAttribute('points', points);
             break;
         }
       }
 
+      // Polyline point management with size limiting
       function addPolylinePoint(pos) {
         polylinePoints.push(pos.x, pos.y);
         
-        // Check if polyline has too many points (limit to 500)
-        if (polylinePoints.length >= 1000) { // 1000 because each point is x,y (so 500 coordinate pairs)
-          // Finalize current polyline and start a new one
-          // we need to get the last point of the polyline and add it to the points array
+        // Limit polyline points to prevent performance issues
+        if (polylinePoints.length >= 1000) {
           const lastX = polylinePoints[polylinePoints.length - 4];
           const lastY = polylinePoints[polylinePoints.length - 3];
           finalizeShape();
@@ -820,7 +820,6 @@
             'stroke-width': currentBrushSize
           });
           drawingArea.appendChild(currentShapeElement);
-          
         } else {
           if (!currentShapeElement) {
             currentShapeElement = createSVGElement('polyline', {
@@ -830,7 +829,6 @@
               'stroke-width': currentBrushSize
             });
             drawingArea.appendChild(currentShapeElement);
-            
           } else {
             currentShapeElement.setAttribute('points', polylinePoints.join(','));
           }
@@ -852,6 +850,7 @@
         }
       }
 
+      // **OPTIMIZATION: Improved draw function with path length limiting**
       function draw(pos) {
         if (!isDrawing) return;
         if (currentTool === 'shape' && currentShapeElement && startPos) {
@@ -860,18 +859,19 @@
         }
         if (!currentPath || !isWithinCanvas(pos)) return;
         
-        // Check if current path has too many points (limit to 500)
+        // Limit path complexity for performance
         const currentD = currentPath.getAttribute('d');
         const pathPoints = currentD.match(/[ML]\s*[\d.-]+\s+[\d.-]+/g) || [];
-        const pointCount = pathPoints.length;
         
-        if (pointCount >= 500) {
-        
-          // Finalize current path and start a new one
-          const lastX = pathPoints[pathPoints.length - 1].split(' ')[0].slice(1); // remove the L/M
-          const lastY = pathPoints[pathPoints.length - 1].split(' ')[1];
+        if (pathPoints.length >= 500) {
+          // Start new path segment
+          const lastPoint = pathPoints[pathPoints.length - 1];
+          const coords = lastPoint.split(' ');
+          const lastX = coords[0].slice(1);
+          const lastY = coords[1];
+          
           currentPath = createSVGElement('path', {
-            stroke: currentTool === 'eraser' ? 'white' : currentColor,
+            stroke: currentTool === 'eraser' ? '#ffffff' : currentColor,
             'stroke-width': currentBrushSize,
             fill: 'none',
             'stroke-linecap': 'round',
@@ -880,9 +880,7 @@
           });
           drawingArea.appendChild(currentPath);
           paths.push(currentPath);
-          
         } else {
-          // Continue with existing path
           currentPath.setAttribute('d', currentD + `L${pos.x} ${pos.y}`);
         }
       }
@@ -894,26 +892,38 @@
         isDrawing = false;
         currentPath = null;
         startPos = null;
-        // Don't reset currentShapeElement for polyline - we want to keep adding to it
+        lastDrawPos = null;
+        
+        // Don't reset currentShapeElement for polyline - continue building
         if (currentTool !== 'shape' || currentShape !== 'polyline') {
           currentShapeElement = null;
         }
       }
 
-      // Optimized event handlers with throttling for mousemove
-      let mouseMoveThrottle = null;
+      // **OPTIMIZATION: Streamlined mouse event handlers**
       canvas.addEventListener('mousedown', function(evt) {
         startDrawing(getMousePos(evt));
       });
 
       document.addEventListener('mousemove', function(evt) {
         if (isDrawing) {
+          const currentPos = getMousePos(evt);
+          
+          // **OPTIMIZATION: Use unified brush radius check**
+          if (isWithinBrushRadius(currentPos, lastDrawPos)) {
+            return;
+          }
+          
+          // Throttle with requestAnimationFrame for smooth performance
           if (mouseMoveThrottle) return;
           mouseMoveThrottle = requestAnimationFrame(() => {
-            draw(getMousePos(evt));
+            draw(currentPos);
+            lastDrawPos = currentPos;
             mouseMoveThrottle = null;
           });
         }
+        
+        // Polyline preview line
         if (currentTool === 'shape' && currentShape === 'polyline' && polylinePoints.length > 0) {
           if (!polylinePreview) {
             polylinePreview = createSVGElement('line', {
@@ -926,10 +936,12 @@
           const lastX = polylinePoints[polylinePoints.length - 2];
           const lastY = polylinePoints[polylinePoints.length - 1];
           const pos = getMousePos(evt);
-          polylinePreview.setAttribute('x1', lastX);
-          polylinePreview.setAttribute('y1', lastY);
-          polylinePreview.setAttribute('x2', pos.x);
-          polylinePreview.setAttribute('y2', pos.y);
+          
+          const previewAttrs = { x1: lastX, y1: lastY, x2: pos.x, y2: pos.y };
+          Object.entries(previewAttrs).forEach(([key, value]) => {
+            polylinePreview.setAttribute(key, value);
+          });
+          
           if (!isWithinCanvas(pos)) {
             polylinePreview.remove();
             polylinePreview = null;
@@ -939,7 +951,7 @@
 
       document.addEventListener('mouseup', stopDrawing);
 
-      // Touch events
+      // **OPTIMIZATION: Simplified touch event handlers**
       canvas.addEventListener('touchstart', function(evt) {
         evt.preventDefault();
         startDrawing(getTouchPos(evt));
@@ -947,7 +959,15 @@
 
       canvas.addEventListener('touchmove', function(evt) {
         evt.preventDefault();
-        draw(getTouchPos(evt));
+        const currentPos = getTouchPos(evt);
+        
+        // **OPTIMIZATION: Use unified brush radius check for touch**
+        if (isWithinBrushRadius(currentPos, lastDrawPos)) {
+          return;
+        }
+        
+        draw(currentPos);
+        lastDrawPos = currentPos;
       }, { passive: false });
 
       canvas.addEventListener('touchend', function(evt) {
@@ -955,94 +975,58 @@
         stopDrawing();
       }, { passive: false });
       
-      // Click/touch out of canvas to finalize polyline
+      // **OPTIMIZATION: Unified polyline finalization for click events**
       document.addEventListener('click', function(evt) {
         if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
-          const canvasRect = canvas.getBoundingClientRect();
-          const clickX = evt.clientX;
-          const clickY = evt.clientY;
-          
-          // Check if click is outside the canvas area
-          if (clickX < canvasRect.left || clickX > canvasRect.right || 
-              clickY < canvasRect.top || clickY > canvasRect.bottom) {
-            finalizeShape();
-            currentShapeElement = null;
-            polylinePoints = [];
+          if (isOutsideCanvas(evt.clientX, evt.clientY)) {
+            resetPolylineState();
           }
         }
       });
       
-      // Touch out of canvas to finalize polyline
+      // **OPTIMIZATION: Unified polyline finalization for touch events**
       document.addEventListener('touchend', function(evt) {
         if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
-          const canvasRect = canvas.getBoundingClientRect();
           const touch = evt.changedTouches[0];
-          const touchX = touch.clientX;
-          const touchY = touch.clientY;
-          
-          // Check if touch is outside the canvas area
-          if (touchX < canvasRect.left || touchX > canvasRect.right || 
-              touchY < canvasRect.top || touchY > canvasRect.bottom) {
-            finalizeShape();
-            currentShapeElement = null;
-            polylinePoints = [];
+          if (isOutsideCanvas(touch.clientX, touch.clientY)) {
+            resetPolylineState();
           }
         }
       });
 
-      // Context menu prevention
-      canvas.addEventListener('contextmenu', function(evt) {
-        evt.preventDefault();
-        if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
-          // Finalize polyline on right-click
-          finalizeShape();
-          currentShapeElement = null;
-          polylinePoints = [];
-        }
-      });
-      
-      // Double-click to finish polyline
+      // **OPTIMIZATION: Consolidated polyline finalization handlers**
       canvas.addEventListener('dblclick', function(evt) {
         evt.preventDefault();
         if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
-          finalizeShape();
-          currentShapeElement = null;
-          polylinePoints = [];
+          resetPolylineState();
         }
       });
 
-      // Communication with HTML parent
+      // Parent window communication
       function sendMessageToParent(type, data = {}) {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type, data }, '*');
         }
       }
 
-      // Message listener
+      // Message listener for parent communication
       window.addEventListener('message', function(event) {
         const { type, success, message } = event.data;
-        if (type === 'SAVE_RESPONSE') {
-          if (success) {
-            // Blockchain ready, drawing already saved in action handler
-          }
-          saveDrawing();
-        }
+        // Handle messages from parent window if needed
       });
       
-      // Initialize on load
+      // Application initialization
       window.addEventListener('load', function() {
         updateCoordinateFactors();
         loadDrawing();
-
-        // console.log('has window.ethereum?', !!window.ethereum);
         
-        // Initialize brush slider position based on current brush size
+        // Initialize brush slider position
         const initialBrushSize = currentBrushSize;
-        const sliderX = 305 + ((initialBrushSize - 1) / 39) * 110;
-        brushSlider.setAttribute('cx', sliderX);
-        
-        // Initialize slider handle size
+        const sliderX = 305 + ((initialBrushSize - 8) / 32) * 110;
         const initialHandleRadius = Math.max(4, Math.min(20, initialBrushSize * 0.5));
+        
+        // Batch initial slider setup
+        brushSlider.setAttribute('cx', sliderX);
         brushSlider.setAttribute('r', initialHandleRadius);
       });
     ]]>
