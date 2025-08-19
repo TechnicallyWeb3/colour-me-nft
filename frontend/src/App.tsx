@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
-import MintingPanel from './components/MintingPanel'
+import UnifiedActionButton from './components/UnifiedActionButton'
 import SVGDisplay from './components/SVGDisplay'
 import BlockchainControls from './components/BlockchainControls'
 import DebugPage from './components/DebugPage'
@@ -51,34 +51,12 @@ function HomePage() {
         setReadOnlyContract(contract);
       }
 
-      // Get current account if connected
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            setAccount(accounts[0]);
-          }
-        } catch (error) {
-          console.log('No wallet connected');
-        }
-      }
-
       // Get token ID from hash
       const hashTokenId = getTokenIdFromHash();
       setTokenId(hashTokenId);
     };
 
     initializeApp();
-
-    // Listen for account changes
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        setAccount(accounts.length > 0 ? accounts[0] : '');
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      return () => window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-    }
   }, []);
 
   // Check token ownership and load preview when account or tokenId changes
@@ -130,6 +108,11 @@ function HomePage() {
     window.location.hash = `#${newTokenId}`;
     setTokenId(newTokenId);
     setSvgKey(prev => prev + 1); // Force SVG reload
+  };
+
+  // Handle account changes from UnifiedActionButton
+  const handleAccountChange = (newAccount: string) => {
+    setAccount(newAccount);
   };
 
   // Handle successful save
@@ -345,8 +328,25 @@ function HomePage() {
       }}>
         {/* Left Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Minting Panel */}
-          <MintingPanel onMintSuccess={handleMintSuccess} />
+          {/* Unified Action Button */}
+          <div style={{
+            padding: '20px',
+            border: '2px solid #ddd',
+            borderRadius: '12px',
+            backgroundColor: '#f9f9f9'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 20px 0', 
+              textAlign: 'center',
+              color: '#333'
+            }}>
+              🎨 Paint NFT dApp
+            </h2>
+            <UnifiedActionButton 
+              onMintSuccess={handleMintSuccess}
+              onAccountChange={handleAccountChange}
+            />
+          </div>
           
           {/* Token Info */}
           {tokenId && (

@@ -155,8 +155,8 @@ const DebugPage: React.FC = () => {
                   data: parsed
                 });
                 
-                // Update state for display (use token 0 for main display)
-                if (tokenId === '0') {
+                // Update state for display (use token 1 for test display)
+                if (tokenId === '1') {
                   setColourMeArtData(storageData);
                 }
               } catch (error) {
