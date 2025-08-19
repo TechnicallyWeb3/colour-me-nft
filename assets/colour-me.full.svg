@@ -154,11 +154,7 @@
 
   <script type="text/javascript">
     <![CDATA[
-      // Application constants - Canvas boundaries and namespaces
-      const CANVAS_X = 10;
-      const CANVAS_Y = 90;
-      const CANVAS_WIDTH = 980;
-      const CANVAS_HEIGHT = 900;
+      // Application constants - namespaces
       const SVG_NS = 'http://www.w3.org/2000/svg';
       const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 
@@ -280,8 +276,8 @@
 
       // Canvas boundary validation for drawing operations
       function isWithinCanvas(pos) {
-        return pos.x >= CANVAS_X && pos.x <= CANVAS_X + CANVAS_WIDTH && 
-               pos.y >= CANVAS_Y && pos.y <= CANVAS_Y + CANVAS_HEIGHT;
+        return pos.x >= 10 && pos.x <= 10 + 980 && 
+               pos.y >= 90 && pos.y <= 90 + 900;
       }
 
       // **OPTIMIZATION: Unified distance calculation for brush radius filtering**
@@ -293,12 +289,7 @@
         return distance < currentBrushSize / 2;
       }
 
-      // **OPTIMIZATION: Unified canvas boundary checking for mouse/touch events**
-      function isOutsideCanvas(x, y) {
-        const canvasRect = canvas.getBoundingClientRect();
-        return x < canvasRect.left || x > canvasRect.right || 
-               y < canvasRect.top || y > canvasRect.bottom;
-      }
+      // removed isOutsideCanvas and replaced with !isWithinCanvas
 
       // **OPTIMIZATION: Unified polyline cleanup function**
       function resetPolylineState() {
@@ -410,6 +401,7 @@
       });
 
       // **OPTIMIZATION: Enhanced saveDrawing function with improved object creation**
+      // passing in a null storageKey will not save to localStorage, but will return the drawingElements
       function saveDrawing(storageKey = localStorageKey) {
         const drawingElements = Array.from(drawingArea.children).map(element => {
           // Optimized color extraction and object creation
@@ -427,7 +419,7 @@
 
         // Efficient localStorage operations
         if (drawingElements.length > 0) {
-          localStorage.setItem(storageKey, JSON.stringify(drawingElements));
+          if (storageKey) localStorage.setItem(storageKey, JSON.stringify(drawingElements));
         } else {
           localStorage.removeItem(storageKey);
         }
@@ -535,7 +527,7 @@
         const tokenData = saveDrawing('tokenArt');
 
         if (tokenData) {
-          sendMessageToParent('LOAD_DATA', { artData: tokenData });
+          sendMessageToParent('LOAD_DATA', { loadType: 'token', artData: tokenData });
         }
 
         if (savedData) {
@@ -551,7 +543,7 @@
             }
           });
 
-          sendMessageToParent('LOAD_DATA', { artData: savedObjects });
+          sendMessageToParent('LOAD_DATA', { loadType: 'local', artData: savedObjects });
         }
       }
 
@@ -650,8 +642,8 @@
         }).join('');
         
         const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}">
-  <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="white" />
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="900" viewBox="0 0 980 900">
+  <rect width="980" height="900" fill="white" />
   ${svgElements}
 </svg>`;
         
@@ -660,6 +652,21 @@
         link.href = dataUrl;
         link.download = 'painting.svg';
         link.click();
+      }
+
+      function getDiff(baseArt = localStorage.getItem('tokenArt'), currentArt = localStorage.getItem(localStorageKey)) {
+        if (!baseArt) {
+          return { saveType: 'set', diff: currentArt };
+        } else if (baseArt === currentArt) {
+          return { saveType: 'append', diff: "[]" };
+        } else if (currentArt.startsWith(baseArt.slice(0, -2))) { // -2 to remove the trailing }]
+          const baseArtJson = baseArt ? JSON.parse(baseArt) : [];
+          const currentArtJson = currentArt ? JSON.parse(currentArt) : [];
+          const diff = currentArtJson.slice(baseArtJson.length);
+          return { saveType: 'append', diff: JSON.stringify(diff) };
+        }
+        // implied else
+        return { saveType: 'set', diff: currentArt };
       }
 
       // Action button handlers with optimized save logic
@@ -677,19 +684,9 @@
               const saveData = saveDrawing();
 
               if (saveData) {
-                const saveArtString = JSON.stringify(saveData);
-                
-                if (tokenArtString !== saveArtString) {
-                  if (tokenArtString && saveArtString.startsWith(tokenArtString.slice(0, -1))) {
-                    const tokenElements = JSON.parse(tokenArtString);
-                    const appendElements = saveData.slice(tokenElements.length);
-                    sendMessageToParent('SAVE_REQUEST', { artData: appendElements, saveType: 'append' });
-                    console.log('saveRequest: append', appendElements);
-                  } else {
-                    sendMessageToParent('SAVE_REQUEST', { artData: saveData, saveType: 'set' });
-                    console.log('saveRequest: set', saveData);
-                  }
-                }
+                const { saveType, diff } = getDiff();
+                sendMessageToParent('SAVE_REQUEST', { saveType: saveType, artData: diff });
+                console.log('saveRequest: ', saveType, diff.length);
               }
             },
             () => exportDrawing() // Export
@@ -706,10 +703,11 @@
           drawingArea.innerHTML = '';
           paths = [];
           const fillRect = createSVGElement('rect', {
-            x: CANVAS_X, y: CANVAS_Y, width: CANVAS_WIDTH, height: CANVAS_HEIGHT, fill: currentColor
+            x: 10, y: 90, width: 980, height: 900, fill: currentColor
           });
           drawingArea.appendChild(fillRect);
           paths.push(fillRect);
+          sendObjectAddedMessage('bucket');
           return;
         }
         
@@ -835,16 +833,26 @@
         }
       }
 
+      // Unified function to send object added message
+      function sendObjectAddedMessage(objectType) {
+        const currentArt = JSON.stringify(saveDrawing(null));
+        const diff = getDiff(localStorage.getItem('tokenArt'), currentArt);
+        sendMessageToParent('OBJECT_ADDED', { objectType: objectType, artData: diff });
+        console.log('object added: ', objectType, diff);
+      }
+
       function finalizeShape() {
-        if (currentShapeElement) {
-          paths.push(currentShapeElement);
+        const shape = currentShapeElement;
+        if (shape) {
+          paths.push(shape);
+          sendObjectAddedMessage(currentShape);
         }
         if (polylinePreview) {
           polylinePreview.remove();
           polylinePreview = null;
         }
         // Reset polyline state when finalizing
-        if (currentShapeElement && currentShapeElement.tagName === 'polyline') {
+        if (shape && shape.tagName === 'polyline') {
           polylinePoints = [];
           currentShapeElement = null;
         }
@@ -880,6 +888,9 @@
           });
           drawingArea.appendChild(currentPath);
           paths.push(currentPath);
+
+          // Send message for the completed path segment
+          sendObjectAddedMessage(currentTool);
         } else {
           currentPath.setAttribute('d', currentD + `L${pos.x} ${pos.y}`);
         }
@@ -887,8 +898,12 @@
 
       function stopDrawing() {
         if (currentTool === 'shape' && currentShapeElement && startPos) {
-          finalizeShape();
+          finalizeShape(); // Message sent in finalizeShape
+        } else if (isDrawing && currentPath && currentTool !== 'shape') {
+          // Send message for completed brush/eraser/bucket paths
+          sendObjectAddedMessage(currentTool);
         }
+        
         isDrawing = false;
         currentPath = null;
         startPos = null;
@@ -912,15 +927,19 @@
           // **OPTIMIZATION: Use unified brush radius check**
           if (isWithinBrushRadius(currentPos, lastDrawPos)) {
             return;
+          } else {
+            draw(currentPos);
+            lastDrawPos = currentPos;
           }
           
           // Throttle with requestAnimationFrame for smooth performance
-          if (mouseMoveThrottle) return;
-          mouseMoveThrottle = requestAnimationFrame(() => {
-            draw(currentPos);
-            lastDrawPos = currentPos;
-            mouseMoveThrottle = null;
-          });
+          // try without to reduce choppiness
+          // if (mouseMoveThrottle) return;
+          // mouseMoveThrottle = requestAnimationFrame(() => {
+            // draw(currentPos);
+            // lastDrawPos = currentPos;
+            // mouseMoveThrottle = null;
+          // });
         }
         
         // Polyline preview line
@@ -978,7 +997,7 @@
       // **OPTIMIZATION: Unified polyline finalization for click events**
       document.addEventListener('click', function(evt) {
         if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
-          if (isOutsideCanvas(evt.clientX, evt.clientY)) {
+          if (!isWithinCanvas(getMousePos(evt))) {
             resetPolylineState();
           }
         }
@@ -988,7 +1007,7 @@
       document.addEventListener('touchend', function(evt) {
         if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
           const touch = evt.changedTouches[0];
-          if (isOutsideCanvas(touch.clientX, touch.clientY)) {
+          if (!isWithinCanvas(getTouchPos(evt))) {
             resetPolylineState();
           }
         }
@@ -1010,10 +1029,11 @@
       }
 
       // Message listener for parent communication
-      window.addEventListener('message', function(event) {
-        const { type, success, message } = event.data;
-        // Handle messages from parent window if needed
-      });
+      // was planned for use with saving/updating tokenArt, but we're just refreshing the image for now
+      // window.addEventListener('message', function(event) {
+      //   const { type, success, message } = event.data;
+      //   // Handle messages from parent window if needed
+      // });
       
       // Application initialization
       window.addEventListener('load', function() {

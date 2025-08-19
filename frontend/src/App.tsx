@@ -7,7 +7,10 @@ import DebugPage from './components/DebugPage'
 import { 
   connectToProvider,
   getOwnerOf,
-  getTokenSVG
+  getTokenSVG,
+  estimateTransactionGas,
+  calculateOptimalChunkSize,
+  type ContractObject
 } from './utils/blockchain'
 import type { ColourMeNFT } from './typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT'
 import './App.css'
@@ -24,6 +27,13 @@ function HomePage() {
     artData: any[];
     saveType: 'set' | 'append';
   } | null>(null);
+  const [currentObjects, setCurrentObjects] = useState<ContractObject[]>([]);
+  const [transactionEstimate, setTransactionEstimate] = useState<{
+    objectCount: number;
+    estimatedGas: number;
+    willUseQueue: boolean;
+    estimatedChunks: number;
+  }>({ objectCount: 0, estimatedGas: 0, willUseQueue: false, estimatedChunks: 0 });
 
   // Extract token ID from URL hash
   const getTokenIdFromHash = (): number | null => {
@@ -78,7 +88,7 @@ function HomePage() {
         const { owner, result } = await getOwnerOf(readOnlyContract, tokenId);
         if (result.success) {
           setTokenOwner(owner);
-          setIsOwner(account && owner.toLowerCase() === account.toLowerCase());
+          setIsOwner(Boolean(account && owner.toLowerCase() === account.toLowerCase()));
           
           // Load SVG preview for sidebar
           const { svg: svgContent, result: svgResult } = await getTokenSVG(readOnlyContract, tokenId);
@@ -146,10 +156,115 @@ function HomePage() {
     }
   };
 
-  // Handle save request from SVG
-  const handleSaveRequest = (data: { artData: any[], saveType: 'set' | 'append' }) => {
-    setSaveRequestData(data);
+  // Update transaction estimates based on current objects
+  const updateTransactionEstimate = (objects: ContractObject[]) => {
+    if (objects.length === 0) {
+      setTransactionEstimate({
+        objectCount: 0,
+        estimatedGas: 0,
+        willUseQueue: false,
+        estimatedChunks: 0
+      });
+      return;
+    }
+
+    const estimatedGas = estimateTransactionGas(objects);
+    const gasLimit = 500000; // Conservative gas limit
+    const willUseQueue = estimatedGas > gasLimit;
+    
+    let estimatedChunks = 1;
+    if (willUseQueue) {
+      const { estimatedChunks: chunks } = calculateOptimalChunkSize(objects, gasLimit);
+      estimatedChunks = chunks;
+    }
+
+    setTransactionEstimate({
+      objectCount: objects.length,
+      estimatedGas,
+      willUseQueue,
+      estimatedChunks
+    });
   };
+
+  // Handle save request from SVG
+  const handleSaveRequest = (data: { artData: any[] | string, saveType: 'set' | 'append' }) => {
+    // Parse artData if it's a JSON string
+    let parsedArtData: any[] = [];
+    
+    if (typeof data.artData === 'string') {
+      try {
+        parsedArtData = JSON.parse(data.artData);
+      } catch (error) {
+        console.error('Failed to parse artData JSON:', error);
+        parsedArtData = [];
+      }
+    } else if (Array.isArray(data.artData)) {
+      parsedArtData = data.artData;
+    } else {
+      console.warn('artData is neither string nor array:', data.artData);
+      parsedArtData = [];
+    }
+    
+    setSaveRequestData({
+      artData: parsedArtData,
+      saveType: data.saveType
+    });
+  };
+
+  // Handle messages from SVG
+  useEffect(() => {
+    // Debug: Track current objects count
+    console.debug('Current objects in canvas:', currentObjects.length);
+    
+    const handleMessage = (event: MessageEvent) => {
+      const { type, data } = event.data;
+      
+      if (type === 'SAVE_REQUEST') {
+        handleSaveRequest(data);
+      } else if (type === 'OBJECT_ADDED') {
+        // Update current objects when new object is added
+        const { artData } = data;
+        if (artData && artData.diff) {
+          try {
+            const diffObjects = typeof artData.diff === 'string' 
+              ? JSON.parse(artData.diff) 
+              : artData.diff;
+            
+            if (Array.isArray(diffObjects) && diffObjects.length > 0) {
+              // For append operations, add to current objects
+              if (artData.saveType === 'append') {
+                setCurrentObjects(prev => {
+                  const newObjects = [...prev, ...diffObjects];
+                  updateTransactionEstimate(newObjects);
+                  return newObjects;
+                });
+              } else {
+                // For set operations, replace current objects
+                setCurrentObjects(diffObjects);
+                updateTransactionEstimate(diffObjects);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to parse OBJECT_ADDED data:', error);
+          }
+        }
+      } else if (type === 'CLEAR_REQUEST') {
+        // Reset objects when canvas is cleared
+        setCurrentObjects([]);
+        updateTransactionEstimate([]);
+      } else if (type === 'LOAD_DATA') {
+        // Update objects when data is loaded
+        const { artData } = data;
+        if (Array.isArray(artData)) {
+          setCurrentObjects(artData);
+          updateTransactionEstimate(artData);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []); // Empty dependency - currentObjects is used in callback
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -199,6 +314,8 @@ function HomePage() {
                 setTokenId(null);
                 setSvgKey(prev => prev + 1);
                 setSaveRequestData(null);
+                setCurrentObjects([]);
+                updateTransactionEstimate([]);
               }}
               style={{ 
                 color: '#61dafb', 
@@ -350,6 +467,56 @@ function HomePage() {
 
         {/* Main Content Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Transaction Estimation Panel */}
+          {transactionEstimate.objectCount > 0 && (
+            <div style={{
+              background: 'white',
+              padding: '15px',
+              borderRadius: '12px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              border: `2px solid ${transactionEstimate.willUseQueue ? '#FF9800' : '#4CAF50'}`
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '20px' }}>
+                  {transactionEstimate.willUseQueue ? '⚠️' : '✅'}
+                </span>
+                <h3 style={{ margin: 0, color: transactionEstimate.willUseQueue ? '#F57C00' : '#2E7D32' }}>
+                  Transaction Estimate
+                </h3>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '20px', fontSize: '14px' }}>
+                <div>
+                  <strong>Objects:</strong> {transactionEstimate.objectCount}
+                </div>
+                <div>
+                  <strong>Estimated Gas:</strong> {transactionEstimate.estimatedGas.toLocaleString()}
+                </div>
+                <div>
+                  <strong>Transactions:</strong> {transactionEstimate.estimatedChunks}
+                  {transactionEstimate.willUseQueue && (
+                    <span style={{ color: '#F57C00', marginLeft: '8px' }}>
+                      (Will use queue)
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {transactionEstimate.willUseQueue && (
+                <div style={{ 
+                  marginTop: '8px', 
+                  padding: '8px', 
+                  backgroundColor: '#FFF3E0',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#E65100'
+                }}>
+                  ⚠️ Your artwork has many objects and will require multiple transactions to save on-chain.
+                </div>
+              )}
+            </div>
+          )}
+
           {/* SVG Display */}
           <div style={{ 
             display: 'flex', 

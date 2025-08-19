@@ -148,33 +148,26 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         // pass
     }
 
-    function setArt(uint256 tokenId, Object[] memory _art) external {
-        delete art[tokenId];
-
+    function _updateArt(uint256 tokenId, uint256 startIndex, Object[] calldata _art) internal {
         for (uint256 i = 0; i < _art.length; i++) {
             _objectAllowed(tokenId, _art[i]);
             art[tokenId].push();
-            art[tokenId][i].color = _art[i].color; 
-            art[tokenId][i].shape = _art[i].shape;
-            art[tokenId][i].stroke = _art[i].stroke;
+            art[tokenId][startIndex + i].color = _art[i].color; 
+            art[tokenId][startIndex + i].shape = _art[i].shape;
+            art[tokenId][startIndex + i].stroke = _art[i].stroke;
             for (uint256 j = 0; j < _art[i].points.length; j++) {
-                art[tokenId][i].points.push(_art[i].points[j]);
+                art[tokenId][startIndex + i].points.push(_art[i].points[j]);
             }
         }
     }
 
-    function appendArt(uint256 tokenId, Object[] memory _object) external {
-        uint256 artLength = art[tokenId].length;
-        for (uint256 i = 0; i < _object.length; i++) {
-            _objectAllowed(tokenId, _object[i]);
-            art[tokenId].push();
-            art[tokenId][i + artLength].color = _object[i].color; 
-            art[tokenId][i + artLength].shape = _object[i].shape;
-            art[tokenId][i + artLength].stroke = _object[i].stroke;
-            for (uint256 j = 0; j < _object[i].points.length; j++) {
-                art[tokenId][i + artLength].points.push(_object[i].points[j]);
-            }
-        }
+    function setArt(uint256 tokenId, Object[] calldata _art) external {
+        delete art[tokenId];
+        _updateArt(tokenId, 0, _art);
+    }
+
+    function appendArt(uint256 tokenId, Object[] calldata _object) external {
+        _updateArt(tokenId, art[tokenId].length, _object);
     }
 
     function tokenSVG(uint256 tokenId) public view returns (bytes memory) {
@@ -194,7 +187,7 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
-        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IColourMeNFT).interfaceId || super.supportsInterface(interfaceId);
     }
 
 }

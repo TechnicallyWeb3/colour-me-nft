@@ -8,7 +8,6 @@ export const dappConfig = {
   // Network Configuration
   network: {
     chainId: '0x7A69', // 31337 in hex (Hardhat default)
-    chainIdDecimal: 31337,
     chainName: 'Hardhat Local',
     rpcUrls: ['http://127.0.0.1:8545'],
     nativeCurrency: {
@@ -16,7 +15,7 @@ export const dappConfig = {
       symbol: 'ETH',
       decimals: 18,
     },
-    blockExplorerUrls: null, // No block explorer for local network
+    blockExplorerUrls: [], // No block explorer for local network
   },
   // Contract Configuration  
   contracts: {
@@ -62,6 +61,79 @@ export const convertToObjectStruct = (obj: ContractObject): ObjectStruct => ({
   points: obj.points.map(p => ({ x: p.x, y: p.y }))
 });
 
+// Transaction size estimation
+export const estimateObjectGasSize = (obj: ContractObject): number => {
+  // Base gas for object structure (shape, color, stroke)
+  let gasEstimate = 100; // Base cost for object
+  
+  // Points cost more based on quantity and coordinate size
+  gasEstimate += obj.points.length * 80; // ~80 gas per point
+  
+  // Additional cost for complex shapes
+  if (obj.shape === 4 || obj.shape === 5) { // polyline or polygon
+    gasEstimate += obj.points.length * 20; // Extra for complex rendering
+  }
+  
+  return gasEstimate;
+};
+
+export const estimateTransactionGas = (objects: ContractObject[]): number => {
+  const baseTransactionGas = 21000; // Base Ethereum transaction
+  const contractCallGas = 25000; // Base contract interaction
+  
+  // Defensive programming: ensure objects is an array
+  if (!Array.isArray(objects)) {
+    console.warn('estimateTransactionGas received non-array objects:', objects);
+    return baseTransactionGas + contractCallGas;
+  }
+  
+  const objectsGas = objects.reduce((total, obj) => {
+    return total + estimateObjectGasSize(obj);
+  }, 0);
+  
+  return baseTransactionGas + contractCallGas + objectsGas;
+};
+
+export const calculateOptimalChunkSize = (
+  objects: ContractObject[], 
+  maxGasLimit: number = 500000 // Conservative limit for complex transactions
+): { chunkSize: number; estimatedChunks: number } => {
+  if (objects.length === 0) {
+    return { chunkSize: 0, estimatedChunks: 0 };
+  }
+  
+  // Find the largest single object to ensure we can fit at least one per transaction
+  const maxSingleObjectGas = Math.max(...objects.map(estimateObjectGasSize));
+  const baseGas = 46000; // Base transaction + contract call gas
+  
+  if (baseGas + maxSingleObjectGas > maxGasLimit) {
+    throw new Error('Single object too large for any transaction');
+  }
+  
+  // Binary search to find optimal chunk size
+  let minChunk = 1;
+  let maxChunk = objects.length;
+  let optimalChunk = 1;
+  
+  while (minChunk <= maxChunk) {
+    const midChunk = Math.floor((minChunk + maxChunk) / 2);
+    const testObjects = objects.slice(0, midChunk);
+    const estimatedGas = estimateTransactionGas(testObjects);
+    
+    if (estimatedGas <= maxGasLimit) {
+      optimalChunk = midChunk;
+      minChunk = midChunk + 1;
+    } else {
+      maxChunk = midChunk - 1;
+    }
+  }
+  
+  return {
+    chunkSize: optimalChunk,
+    estimatedChunks: Math.ceil(objects.length / optimalChunk)
+  };
+};
+
 // Network Management
 export const getCurrentNetwork = async (): Promise<string | null> => {
   if (!window.ethereum) return null;
@@ -91,9 +163,15 @@ export const addNetwork = async (): Promise<ConnectionResult> => {
   }
 
   try {
+    const { chainId, chainName, rpcUrls, nativeCurrency, blockExplorerUrls } = dappConfig.network;
+    const params: any = { chainId, chainName, rpcUrls, nativeCurrency };
+    if (Array.isArray(blockExplorerUrls) && blockExplorerUrls.length > 0) {
+      params.blockExplorerUrls = blockExplorerUrls;
+    }
+
     await window.ethereum.request({
       method: 'wallet_addEthereumChain',
-      params: [dappConfig.network],
+      params: [params],
     });
     return { success: true, data: dappConfig.network };
   } catch (error) {
@@ -265,6 +343,203 @@ const getGasEstimateForAppendArt = async (
     console.warn('Gas estimation failed for appendArt, using fallback:', error);
     return 300000n;
   }
+};
+
+// Transaction Queue Types
+export interface TransactionChunk {
+  id: string;
+  chunkIndex: number;
+  totalChunks: number;
+  objects: ContractObject[];
+  type: 'set' | 'append';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
+  txHash?: string;
+  gasUsed?: string;
+}
+
+export interface TransactionQueue {
+  tokenId: number;
+  chunks: TransactionChunk[];
+  isProcessing: boolean;
+  currentChunkIndex: number;
+}
+
+// Helper function to chunk array
+const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+};
+
+// Create transaction queue from art data
+export const createTransactionQueue = (
+  tokenId: number,
+  artData: ContractObject[],
+  saveType: 'set' | 'append' = 'set',
+  maxGasLimit: number = 500000
+): TransactionQueue => {
+  if (artData.length === 0) {
+    return {
+      tokenId,
+      chunks: [],
+      isProcessing: false,
+      currentChunkIndex: 0
+    };
+  }
+
+  const { chunkSize } = calculateOptimalChunkSize(artData, maxGasLimit);
+  const chunkedData = chunkArray(artData, chunkSize);
+  
+  const chunks: TransactionChunk[] = chunkedData.map((chunkObjects, index) => ({
+    id: `${tokenId}-${index}-${Date.now()}`,
+    chunkIndex: index,
+    totalChunks: chunkedData.length,
+    objects: chunkObjects,
+    type: index === 0 ? saveType : 'append', // First chunk uses saveType, rest use append
+    status: 'pending'
+  }));
+
+  return {
+    tokenId,
+    chunks,
+    isProcessing: false,
+    currentChunkIndex: 0
+  };
+};
+
+// Execute a single chunk transaction
+export const executeTransactionChunk = async (
+  contract: ColourMeNFT,
+  tokenId: number,
+  chunk: TransactionChunk
+): Promise<ConnectionResult & { chunk: TransactionChunk }> => {
+  try {
+    let result: ConnectionResult;
+    
+    if (chunk.type === 'set') {
+      result = await setArt(contract, tokenId, chunk.objects);
+    } else {
+      result = await appendArt(contract, tokenId, chunk.objects);
+    }
+    
+    const updatedChunk: TransactionChunk = {
+      ...chunk,
+      status: result.success ? 'completed' : 'failed',
+      error: result.success ? undefined : result.error,
+      txHash: result.success ? result.data?.hash : undefined,
+      gasUsed: result.success ? result.data?.gasUsed : undefined
+    };
+    
+    return {
+      ...result,
+      chunk: updatedChunk
+    };
+  } catch (error) {
+    const updatedChunk: TransactionChunk = {
+      ...chunk,
+      status: 'failed',
+      error: `Transaction execution failed: ${error}`
+    };
+    
+    return {
+      success: false,
+      error: `Transaction execution failed: ${error}`,
+      chunk: updatedChunk
+    };
+  }
+};
+
+// Execute transaction queue (all chunks in sequence)
+export const executeTransactionQueue = async (
+  contract: ColourMeNFT,
+  queue: TransactionQueue,
+  onChunkUpdate?: (chunk: TransactionChunk, queueProgress: { completed: number; total: number }) => void
+): Promise<ConnectionResult & { finalQueue: TransactionQueue }> => {
+  const updatedQueue: TransactionQueue = {
+    ...queue,
+    isProcessing: true
+  };
+  
+  let completedCount = 0;
+  
+  for (let i = 0; i < updatedQueue.chunks.length; i++) {
+    const chunk = updatedQueue.chunks[i];
+    
+    // Skip already completed chunks
+    if (chunk.status === 'completed') {
+      completedCount++;
+      continue;
+    }
+    
+    // Update chunk status to processing
+    updatedQueue.chunks[i] = { ...chunk, status: 'processing' };
+    updatedQueue.currentChunkIndex = i;
+    
+    if (onChunkUpdate) {
+      onChunkUpdate(updatedQueue.chunks[i], { completed: completedCount, total: updatedQueue.chunks.length });
+    }
+    
+    // Execute the chunk
+    const result = await executeTransactionChunk(contract, updatedQueue.tokenId, chunk);
+    updatedQueue.chunks[i] = result.chunk;
+    
+    if (result.success) {
+      completedCount++;
+      if (onChunkUpdate) {
+        onChunkUpdate(result.chunk, { completed: completedCount, total: updatedQueue.chunks.length });
+      }
+    } else {
+      // Stop on first failure
+      updatedQueue.isProcessing = false;
+      return {
+        success: false,
+        error: `Transaction ${i + 1} failed: ${result.error}`,
+        finalQueue: updatedQueue
+      };
+    }
+  }
+  
+  updatedQueue.isProcessing = false;
+  
+  return {
+    success: true,
+    data: {
+      totalChunks: updatedQueue.chunks.length,
+      completedChunks: completedCount
+    },
+    finalQueue: updatedQueue
+  };
+};
+
+// Execute single chunk from queue (for retry functionality)
+export const executeQueueChunk = async (
+  contract: ColourMeNFT,
+  queue: TransactionQueue,
+  chunkIndex: number
+): Promise<ConnectionResult & { updatedQueue: TransactionQueue }> => {
+  if (chunkIndex < 0 || chunkIndex >= queue.chunks.length) {
+    return {
+      success: false,
+      error: 'Invalid chunk index',
+      updatedQueue: queue
+    };
+  }
+  
+  const chunk = queue.chunks[chunkIndex];
+  const result = await executeTransactionChunk(contract, queue.tokenId, chunk);
+  
+  const updatedQueue: TransactionQueue = {
+    ...queue,
+    chunks: queue.chunks.map((c, i) => i === chunkIndex ? result.chunk : c)
+  };
+  
+  return {
+    ...result,
+    updatedQueue
+  };
 };
 
 // Contract Write Methods

@@ -5,7 +5,6 @@ import ColourMe from './ColourMe';
 import {
   dappConfig,
   getCurrentNetwork,
-  getNetworkStatus,
   addNetwork,
   switchNetwork,
   connectToProvider,
@@ -16,10 +15,7 @@ import {
   getTokenURI,
   getTokenSVG,
   getTokenCount,
-  setupNetworkListeners,
-  type ContractObject,
-  type NetworkStatus,
-  type ConnectionResult
+  setupNetworkListeners
 } from '../utils/blockchain';
 
 interface LogEntry {
@@ -54,7 +50,6 @@ const DebugPage: React.FC = () => {
   const [tokenArtData, setTokenArtData] = useState<StorageData | null>(null);
   
   // Storage refs for change detection
-  const lastColourMeRef = useRef<string>('');
   const lastTokenRef = useRef<string>('');
   
   // Contract state
@@ -221,29 +216,69 @@ const DebugPage: React.FC = () => {
       const { type, data } = event.data;
       
       // Only handle SVG-specific messages
-      if (type === 'SAVE_REQUEST' || type === 'LOAD_DATA' || type === 'CLEAR_REQUEST') {
-        addSvgLog(type, `SVG message: ${type}`, { type, data });
+      if (
+        type === 'SAVE_REQUEST' || 
+        type === 'LOAD_DATA' || 
+        type === 'CLEAR_REQUEST' || 
+        type === 'OBJECT_ADDED'
+      ) {
         
         if (type === 'SAVE_REQUEST') {
-          const { artData, saveType } = data;
-          addSvgLog('SAVE_REQUEST', `Save request: ${saveType}`, {
-            saveType,
-            elementCount: artData?.length || 0,
-            artData
-          });
+          const { saveType, artData } = data;
+          const artDataParsed = typeof artData === 'string' ? JSON.parse(artData || '[]') : artData;
+          const elementCount = Array.isArray(artDataParsed) ? artDataParsed.length : 0;
           
-          // Send response back to SVG
-          if (event.source && event.source !== window) {
-            (event.source as Window).postMessage({
-              type: 'SAVE_RESPONSE',
-              success: true,
-              message: 'Debug page processed save request'
-            }, '*');
-          }
+          addSvgLog(
+            `SAVE_${saveType.toUpperCase()}`, 
+            `Save request: ${saveType} (${elementCount} elements)`, 
+            {
+              saveType,
+              elementCount,
+              artData: artDataParsed,
+              rawData: artData
+            }
+          );
+          
+          // // Send response back to SVG
+          // if (event.source && event.source !== window) {
+          //   (event.source as Window).postMessage({
+          //     type: 'SAVE_RESPONSE',
+          //     success: true,
+          //     message: 'Debug page processed save request'
+          //   }, '*');
+          // }
         } else if (type === 'LOAD_DATA') {
-          addSvgLog('LOAD_DATA', 'SVG loaded data', data);
+          const { loadType, artData } = data;
+          const elementCount = Array.isArray(artData) ? artData.length : 0;
+          
+          addSvgLog(
+            `LOAD_${loadType.toUpperCase()}`, 
+            `Load data: ${loadType} (${elementCount} elements)`, 
+            {
+              loadType,
+              elementCount,
+              artData
+            }
+          );
+        } else if (type === 'OBJECT_ADDED') {
+          const { objectType, artData } = data;
+          const { saveType, diff } = artData;
+          const diffParsed = typeof diff === 'string' ? JSON.parse(diff || '[]') : diff;
+          const elementCount = Array.isArray(diffParsed) ? diffParsed.length : 0;
+          
+          addSvgLog(
+            `ADDED_${objectType.toUpperCase().replace('-', '_')}`, 
+            `Object added: ${objectType} (${saveType}, ${elementCount} elements)`, 
+            {
+              objectType,
+              saveType,
+              elementCount,
+              diff: diffParsed,
+              rawDiff: diff
+            }
+          );
         } else if (type === 'CLEAR_REQUEST') {
-          addSvgLog('CLEAR_REQUEST', 'SVG requested clear');
+          addSvgLog('CLEAR', 'Canvas cleared');
         }
       }
       // Handle MetaMask and other blockchain messages
@@ -487,6 +522,47 @@ const DebugPage: React.FC = () => {
     }
   };
 
+  // Get message type specific color for better visual distinction
+  const getMessageTypeColor = (category: string) => {
+    if (category.startsWith('SAVE_')) return '#9C27B0'; // Purple for save operations
+    if (category.startsWith('LOAD_')) return '#2196F3'; // Blue for load operations
+    if (category.startsWith('OBJECT_')) {
+      // Tool objects
+      if (category.includes('BRUSH') || category.includes('ERASER') || category.includes('BUCKET')) {
+        return '#FF9800'; // Orange for tools
+      }
+      // Shape objects
+      return '#FF5722'; // Deep orange for shapes
+    }
+    if (category === 'CLEAR') return '#F44336'; // Red for clear operations
+    return '#4CAF50'; // Default green
+  };
+
+  // Get emoji icon for message type
+  const getMessageTypeIcon = (category: string) => {
+    if (category === 'SAVE_SET') return '💾'; // Save/Set operation
+    if (category === 'SAVE_APPEND') return '➕'; // Append operation
+    if (category === 'LOAD_TOKEN') return '🎨'; // Load from token
+    if (category === 'LOAD_LOCAL') return '📂'; // Load from local storage
+    if (category === 'CLEAR') return '💣'; // Clear operation
+    
+    // Tool objects
+    if (category === 'OBJECT_BRUSH') return '🖌️'; // Brush tool
+    if (category === 'OBJECT_ERASER') return '🧽'; // Eraser tool
+    if (category === 'OBJECT_BUCKET') return '🪣'; // Bucket fill tool
+    
+    // Shape objects
+    if (category === 'OBJECT_LINE') return '―'; // Line shape
+    if (category === 'OBJECT_POLYLINE') return 'ϟ'; // Polyline shape
+    if (category === 'OBJECT_POLYGON_3') return '△'; // Triangle
+    if (category === 'OBJECT_POLYGON_5') return '⬠'; // Pentagon
+    if (category === 'OBJECT_POLYGON_6') return '⬡'; // Hexagon
+    if (category === 'OBJECT_RECT') return '▯'; // Rectangle
+    if (category === 'OBJECT_ELLIPSE') return '⬭'; // Ellipse/Circle
+    
+    return '📝'; // Default
+  };
+
   // Format data for display
   const formatData = (data: any, maxLength = 200) => {
     if (!data) return 'null';
@@ -568,8 +644,11 @@ const DebugPage: React.FC = () => {
                 <span style={{ color: '#666', fontSize: '12px' }}>
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
-                <span style={{ fontWeight: 'bold', color: getSectionColor(section) }}>
-                  {log.category}
+                <span style={{ 
+                  fontWeight: 'bold', 
+                  color: section === 'svg' ? getMessageTypeColor(log.category) : getSectionColor(section)
+                }}>
+                  {section === 'svg' && getMessageTypeIcon(log.category)} {log.category}
                 </span>
                 <span>{log.message}</span>
               </div>
@@ -625,6 +704,16 @@ const DebugPage: React.FC = () => {
             <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666' }}>
               Paint below to generate SVG messages. Use Save/Clear buttons in the canvas to test message logging.
             </p>
+            <div style={{ fontSize: '11px', color: '#888', marginBottom: '10px' }}>
+              <strong>Message Types:</strong> 
+              💾 SAVE_SET (new art), ➕ SAVE_APPEND (add to existing), 
+              🎨 LOAD_TOKEN (from blockchain), 📂 LOAD_LOCAL (from storage), 
+              💣 CLEAR (canvas cleared)
+              <br />
+              <strong>Objects:</strong> 
+              🖌️ BRUSH, 🧽 ERASER, 🪣 BUCKET, ➖ LINE, 〰️ POLYLINE, 
+              🔺 TRIANGLE, ⭐ PENTAGON, ⬡ HEXAGON, ⬜ RECT, ⭕ ELLIPSE
+            </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '10px', backgroundColor: 'white', borderRadius: '4px' }}>
             <ColourMe width={600} />
