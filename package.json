@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
-    "deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts"
+    "deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts",
+    "reset": "npx hardhat run ./scripts/reset-svg.ts --network localhost",
+    "local:node": "npx hardhat node",
+    "local:deploy": "wait-on tcp:127.0.0.1:8545 && npx hardhat ignition deploy ./ignition/modules/NFT.ts --network localhost",
+    "local:ui": "npm run dev --prefix frontend",
+    "local": "concurrently --success=all --kill-others-on-fail -n NODE,DEPLOY,WEB -c blue,green,magenta \"npm:local:node\" \"npm:local:deploy\" \"npm:local:ui\""
   },
   "repository": {
     "type": "git",
@@ -27,9 +32,11 @@
   "homepage": "https://github.com/technicallyweb3/colour-me-nft#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "concurrently": "^9.2.0",
     "create-vite": "^7.1.1",
     "dotenv": "^17.2.1",
-    "hardhat": "^2.26.1"
+    "hardhat": "^2.26.1",
+    "wait-on": "^8.0.4"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
