@@ -2,11 +2,11 @@ import { ethers } from 'ethers';
 import { ColourMeNFT__factory } from '../typechain-types/factories/contracts/ColourMeNFT.sol/ColourMeNFT__factory';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import type { ObjectStruct } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
+import { encodeObject, encodeObjects, type ObjectStruct as FrontendObject } from './encoding';
 
-// dApp Configuration
-export const dappConfig = {
-  // Network Configuration
-  network: {
+// Network Configurations
+export const networkConfigs = {
+  local: {
     chainId: '0x7A69', // 31337 in hex (Hardhat default)
     chainName: 'Hardhat Local',
     rpcUrls: ['http://127.0.0.1:8545'],
@@ -16,20 +16,88 @@ export const dappConfig = {
       decimals: 18,
     },
     blockExplorerUrls: [], // No block explorer for local network
+    contracts: {
+      ColourMeNFT: {
+        address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Local hardhat deployment
+        deployedBlock: 0,
+      }
+    }
+  },
+  testnet: {
+    chainId: '0xaa36a7', // 11155111 in hex (Sepolia testnet)
+    chainName: 'Sepolia Testnet',
+    rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+    nativeCurrency: {
+      name: 'Sepolia Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+    contracts: {
+      ColourMeNFT: {
+        address: "0x2219278fB3fFB912f64f64C3Dd2FbD74976E6aC0", // Live testnet deployment
+        deployedBlock: 0,
+      }
+    }
+  },
+  mainnet: {
+    chainId: '0x2105', // 8453 in hex (Base mainnet)
+    chainName: 'Base',
+    rpcUrls: ['https://mainnet.base.org'],
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    blockExplorerUrls: ['https://basescan.org'],
+    contracts: {
+      ColourMeNFT: {
+        address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Base mainnet
+        deployedBlock: 0,
+      }
+    }
+  }
+};
+
+// Get active network configuration based on environment variable
+const getActiveNetwork = (): keyof typeof networkConfigs => {
+  const env = import.meta.env.VITE_NETWORK || 'local';
+  if (env in networkConfigs) {
+    return env as keyof typeof networkConfigs;
+  }
+  console.warn(`⚠️ Unknown network: ${env}, falling back to local`);
+  return 'local';
+};
+
+const activeNetwork = getActiveNetwork();
+const activeConfig = networkConfigs[activeNetwork];
+
+// dApp Configuration
+export const dappConfig = {
+  // Network Configuration
+  network: {
+    chainId: activeConfig.chainId,
+    chainName: activeConfig.chainName,
+    rpcUrls: activeConfig.rpcUrls,
+    nativeCurrency: activeConfig.nativeCurrency,
+    blockExplorerUrls: activeConfig.blockExplorerUrls,
   },
   // Contract Configuration  
   contracts: {
     ColourMeNFT: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      deployedBlock: 0, // Start block for event filtering
+      address: activeConfig.contracts.ColourMeNFT.address,
+      deployedBlock: activeConfig.contracts.ColourMeNFT.deployedBlock,
     }
   },
   // App Configuration
   app: {
     name: 'Paint dApp',
-    description: 'On-chain collaborative painting',
+    description: `On-chain collaborative painting on ${activeConfig.chainName}`,
     icon: '🎨',
-  }
+  },
+  // Active network info
+  activeNetwork,
+  allNetworks: networkConfigs
 };
 
 // Types
@@ -38,6 +106,12 @@ export interface ContractObject {
   color: string;
   stroke: number;
   points: { x: number; y: number }[];
+}
+
+// New packed contract object (matches the updated Object struct)
+export interface PackedContractObject {
+  base: bigint;
+  additionalPoints: Uint8Array;
 }
 
 export interface NetworkStatus {
@@ -54,27 +128,89 @@ export interface ConnectionResult {
 }
 
 // Helper Functions
-export const convertToObjectStruct = (obj: ContractObject): ObjectStruct => ({
-  shape: obj.shape,
-  color: obj.color,
-  stroke: obj.stroke,
-  points: obj.points.map(p => ({ x: p.x, y: p.y }))
-});
 
-// Transaction size estimation
+// Legacy function for backwards compatibility
+export const convertToObjectStruct = (obj: ContractObject): ObjectStruct => {
+  // Convert to frontend object first, then encode to packed format
+  const frontendObj: FrontendObject = {
+    shape: obj.shape,
+    color: obj.color,
+    stroke: obj.stroke,
+    points: obj.points
+  };
+  
+  const packed = encodeObject(frontendObj);
+  
+  return {
+    base: packed.base,
+    additionalPoints: packed.additionalPoints
+  };
+};
+
+// New function for converting multiple objects with packed encoding
+export const convertToPackedObjects = (objects: ContractObject[]): ObjectStruct[] => {
+  const frontendObjects: FrontendObject[] = objects.map(obj => ({
+    shape: obj.shape,
+    color: obj.color,
+    stroke: obj.stroke,
+    points: obj.points
+  }));
+  
+  const packedObjects = encodeObjects(frontendObjects);
+  
+  return packedObjects.map(packed => ({
+    base: packed.base,
+    additionalPoints: packed.additionalPoints
+  }));
+};
+
+// Transaction size estimation with packed encoding benefits
 export const estimateObjectGasSize = (obj: ContractObject): number => {
-  // Base gas for object structure (shape, color, stroke)
-  let gasEstimate = 100; // Base cost for object
+  // Base gas for packed object structure (much more efficient)
+  let gasEstimate = 60; // Reduced base cost due to packed encoding
   
-  // Points cost more based on quantity and coordinate size
-  gasEstimate += obj.points.length * 80; // ~80 gas per point
+  // First 6 points are packed into the base uint256 (very efficient)
+  const basePoints = Math.min(obj.points.length, 6);
+  gasEstimate += basePoints * 20; // Much cheaper for packed points
   
-  // Additional cost for complex shapes
+  // Additional points beyond 6 (stored as bytes)
+  const additionalPoints = Math.max(0, obj.points.length - 6);
+  gasEstimate += additionalPoints * 30; // Still cheaper than unpacked
+  
+  // Additional cost for complex shapes (reduced due to packed encoding)
   if (obj.shape === 4 || obj.shape === 5) { // polyline or polygon
-    gasEstimate += obj.points.length * 20; // Extra for complex rendering
+    gasEstimate += obj.points.length * 10; // Reduced from 20
   }
   
   return gasEstimate;
+};
+
+// New function to estimate packed encoding savings
+export const estimatePackedSavings = (objects: ContractObject[]): {
+  unpackedGas: number;
+  packedGas: number;
+  gasSavings: number;
+  savingsPercent: number;
+} => {
+  const unpackedGas = objects.reduce((total, obj) => {
+    // Old unpacked estimation
+    return total + 100 + (obj.points.length * 80) + 
+           ((obj.shape === 4 || obj.shape === 5) ? obj.points.length * 20 : 0);
+  }, 0);
+  
+  const packedGas = objects.reduce((total, obj) => {
+    return total + estimateObjectGasSize(obj);
+  }, 0);
+  
+  const gasSavings = unpackedGas - packedGas;
+  const savingsPercent = unpackedGas > 0 ? (gasSavings / unpackedGas) * 100 : 0;
+  
+  return {
+    unpackedGas,
+    packedGas,
+    gasSavings,
+    savingsPercent
+  };
 };
 
 export const estimateTransactionGas = (objects: ContractObject[]): number => {
@@ -96,7 +232,7 @@ export const estimateTransactionGas = (objects: ContractObject[]): number => {
 
 export const calculateOptimalChunkSize = (
   objects: ContractObject[], 
-  maxGasLimit: number = 500000 // Conservative limit for complex transactions
+  maxGasLimit: number = 800000 // Increased limit due to packed encoding efficiency
 ): { chunkSize: number; estimatedChunks: number } => {
   if (objects.length === 0) {
     return { chunkSize: 0, estimatedChunks: 0 };
@@ -273,10 +409,10 @@ export const connectToWallet = async (): Promise<{
     const web3Provider = new ethers.BrowserProvider(window.ethereum);
     const web3Signer = await web3Provider.getSigner();
     
-    const address = await web3Signer.getAddress();
-    const writeContract = ColourMeNFT__factory.connect(dappConfig.contracts.ColourMeNFT.address, web3Signer);
-    
-    return {
+          const address = await web3Signer.getAddress();
+      const writeContract = ColourMeNFT__factory.connect(dappConfig.contracts.ColourMeNFT.address, web3Signer);
+      
+      return {
       signer: web3Signer,
       contract: writeContract,
       account: address,
@@ -548,6 +684,7 @@ export const mintToken = async (
   toAddress: string
 ): Promise<ConnectionResult> => {
   try {
+    console.log('🪙 Minting token:', toAddress);
     // Pre-flight checks
     const tokenCount = await contract.tokenCount();
     const maxSupply = await contract.maxSupply();
@@ -562,7 +699,7 @@ export const mintToken = async (
       gasLimit: gasLimit
     });
     
-    console.log('Mint transaction sent:', tx.hash);
+    console.log('🪙 Mint transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {
@@ -608,7 +745,7 @@ export const setArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
-    const contractObjects: ObjectStruct[] = artData.map(convertToObjectStruct);
+    const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
     
     // Pre-flight check - verify token ownership
     try {
@@ -631,7 +768,7 @@ export const setArt = async (
       gasLimit: gasLimit
     });
     
-    console.log('SetArt transaction sent:', tx.hash);
+    console.log('🎨 SetArt transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {
@@ -673,7 +810,7 @@ export const appendArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
-    const contractObjects: ObjectStruct[] = artData.map(convertToObjectStruct);
+    const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
     
     // Pre-flight check - verify token ownership
     try {
@@ -696,7 +833,7 @@ export const appendArt = async (
       gasLimit: gasLimit
     });
     
-    console.log('AppendArt transaction sent:', tx.hash);
+    console.log('➕ AppendArt transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {

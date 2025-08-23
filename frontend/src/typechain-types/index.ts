@@ -42,3 +42,5 @@ export type { ColourMeRenderer } from "./contracts/ColourMeRenderer";
 export { ColourMeRenderer__factory } from "./factories/contracts/ColourMeRenderer__factory";
 export type { IColourMeRenderer } from "./contracts/interfaces/IColourMeRenderer";
 export { IColourMeRenderer__factory } from "./factories/contracts/interfaces/IColourMeRenderer__factory";
+export type { EncodingTest } from "./contracts/test/EncodingTest";
+export { EncodingTest__factory } from "./factories/contracts/test/EncodingTest__factory";

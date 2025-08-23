@@ -5,12 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "cross-env VITE_NETWORK=local vite",
+    "dev:testnet": "cross-env VITE_NETWORK=testnet vite",
+    "dev:mainnet": "cross-env VITE_NETWORK=mainnet vite",
     "build": "tsc -b && vite build",
+    "build:local": "cross-env VITE_NETWORK=local tsc -b && vite build",
+    "build:testnet": "cross-env VITE_NETWORK=testnet tsc -b && vite build",
+    "build:mainnet": "cross-env VITE_NETWORK=mainnet tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
+    "colour-me-nft": "file:..",
     "ethers": "^6.15.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -21,6 +28,7 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

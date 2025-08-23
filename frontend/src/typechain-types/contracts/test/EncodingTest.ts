@@ -20,37 +20,6 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export type TraitStruct = {
-  color0: BytesLike;
-  color1: BytesLike;
-  color2: BytesLike;
-  color3: BytesLike;
-  color4: BytesLike;
-  shape0: BigNumberish;
-  shape1: BigNumberish;
-  polygon: BigNumberish;
-};
-
-export type TraitStructOutput = [
-  color0: string,
-  color1: string,
-  color2: string,
-  color3: string,
-  color4: string,
-  shape0: bigint,
-  shape1: bigint,
-  polygon: bigint
-] & {
-  color0: string;
-  color1: string;
-  color2: string;
-  color3: string;
-  color4: string;
-  shape0: bigint;
-  shape1: bigint;
-  polygon: bigint;
-};
-
 export type ObjectStruct = { base: BigNumberish; additionalPoints: BytesLike };
 
 export type ObjectStructOutput = [base: bigint, additionalPoints: string] & {
@@ -79,76 +48,79 @@ export type PointStructOutput = [x: bigint, y: bigint] & {
   y: bigint;
 };
 
-export interface IColourMeRendererInterface extends Interface {
+export interface EncodingTestInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "getAttributes"
-      | "getURI"
-      | "renderObjects"
-      | "renderPath"
-      | "renderPolygon"
-      | "renderShapeTool"
-      | "renderTrait"
+      | "getArt"
+      | "storeArt"
+      | "testDecodeColor"
+      | "testDecodePointsLength"
+      | "testDecodeShape"
+      | "testDecodeStroke"
+      | "unpackArt"
+      | "userArt"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "getAttributes",
-    values: [TraitStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getURI",
-    values: [string, BigNumberish, string, string, TraitStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renderObjects",
-    values: [ObjectStruct[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renderPath",
-    values: [BaseObjectStruct, PointStruct[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renderPolygon",
+    functionFragment: "getArt",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "renderShapeTool",
+    functionFragment: "storeArt",
+    values: [BigNumberish, ObjectStruct[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "testDecodeColor",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "renderTrait",
-    values: [TraitStruct]
+    functionFragment: "testDecodePointsLength",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "testDecodeShape",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "testDecodeStroke",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "unpackArt",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "userArt",
+    values: [BigNumberish, BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "getArt", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "storeArt", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getAttributes",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getURI", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renderObjects",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "renderPath", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renderPolygon",
+    functionFragment: "testDecodeColor",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renderShapeTool",
+    functionFragment: "testDecodePointsLength",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "renderTrait",
+    functionFragment: "testDecodeShape",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "testDecodeStroke",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "unpackArt", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "userArt", data: BytesLike): Result;
 }
 
-export interface IColourMeRenderer extends BaseContract {
-  connect(runner?: ContractRunner | null): IColourMeRenderer;
+export interface EncodingTest extends BaseContract {
+  connect(runner?: ContractRunner | null): EncodingTest;
   waitForDeployment(): Promise<this>;
 
-  interface: IColourMeRendererInterface;
+  interface: EncodingTestInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -187,85 +159,98 @@ export interface IColourMeRenderer extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getAttributes: TypedContractMethod<[_trait: TraitStruct], [string], "view">;
+  getArt: TypedContractMethod<
+    [tokenId: BigNumberish],
+    [ObjectStructOutput[]],
+    "view"
+  >;
 
-  getURI: TypedContractMethod<
-    [
-      _name: string,
-      _tokenId: BigNumberish,
-      _baseURL: string,
-      _svg: string,
-      _trait: TraitStruct
-    ],
+  storeArt: TypedContractMethod<
+    [tokenId: BigNumberish, art: ObjectStruct[]],
+    [void],
+    "nonpayable"
+  >;
+
+  testDecodeColor: TypedContractMethod<
+    [object: BigNumberish],
     [string],
     "view"
   >;
 
-  renderObjects: TypedContractMethod<
-    [_objects: ObjectStruct[]],
-    [string],
+  testDecodePointsLength: TypedContractMethod<
+    [object: BigNumberish],
+    [bigint],
     "view"
   >;
 
-  renderPath: TypedContractMethod<
-    [_object: BaseObjectStruct, _points: PointStruct[]],
-    [string],
+  testDecodeShape: TypedContractMethod<
+    [object: BigNumberish],
+    [bigint],
     "view"
   >;
 
-  renderPolygon: TypedContractMethod<
-    [_polygon: BigNumberish],
-    [string],
+  testDecodeStroke: TypedContractMethod<
+    [object: BigNumberish],
+    [bigint],
     "view"
   >;
 
-  renderShapeTool: TypedContractMethod<
-    [_shape: BigNumberish],
-    [string],
+  unpackArt: TypedContractMethod<
+    [tokenId: BigNumberish],
+    [[BaseObjectStructOutput[], PointStructOutput[][]]],
     "view"
   >;
 
-  renderTrait: TypedContractMethod<[_traits: TraitStruct], [string], "view">;
+  userArt: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
+    "view"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "getAttributes"
-  ): TypedContractMethod<[_trait: TraitStruct], [string], "view">;
-  getFunction(
-    nameOrSignature: "getURI"
+    nameOrSignature: "getArt"
   ): TypedContractMethod<
-    [
-      _name: string,
-      _tokenId: BigNumberish,
-      _baseURL: string,
-      _svg: string,
-      _trait: TraitStruct
-    ],
-    [string],
+    [tokenId: BigNumberish],
+    [ObjectStructOutput[]],
     "view"
   >;
   getFunction(
-    nameOrSignature: "renderObjects"
-  ): TypedContractMethod<[_objects: ObjectStruct[]], [string], "view">;
-  getFunction(
-    nameOrSignature: "renderPath"
+    nameOrSignature: "storeArt"
   ): TypedContractMethod<
-    [_object: BaseObjectStruct, _points: PointStruct[]],
-    [string],
+    [tokenId: BigNumberish, art: ObjectStruct[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "testDecodeColor"
+  ): TypedContractMethod<[object: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "testDecodePointsLength"
+  ): TypedContractMethod<[object: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "testDecodeShape"
+  ): TypedContractMethod<[object: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "testDecodeStroke"
+  ): TypedContractMethod<[object: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "unpackArt"
+  ): TypedContractMethod<
+    [tokenId: BigNumberish],
+    [[BaseObjectStructOutput[], PointStructOutput[][]]],
     "view"
   >;
   getFunction(
-    nameOrSignature: "renderPolygon"
-  ): TypedContractMethod<[_polygon: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "renderShapeTool"
-  ): TypedContractMethod<[_shape: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "renderTrait"
-  ): TypedContractMethod<[_traits: TraitStruct], [string], "view">;
+    nameOrSignature: "userArt"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
+    "view"
+  >;
 
   filters: {};
 }

@@ -23,30 +23,11 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export type PointStruct = { x: BigNumberish; y: BigNumberish };
+export type ObjectStruct = { base: BigNumberish; additionalPoints: BytesLike };
 
-export type PointStructOutput = [x: bigint, y: bigint] & {
-  x: bigint;
-  y: bigint;
-};
-
-export type ObjectStruct = {
-  shape: BigNumberish;
-  color: BytesLike;
-  stroke: BigNumberish;
-  points: PointStruct[];
-};
-
-export type ObjectStructOutput = [
-  shape: bigint,
-  color: string,
-  stroke: bigint,
-  points: PointStructOutput[]
-] & {
-  shape: bigint;
-  color: string;
-  stroke: bigint;
-  points: PointStructOutput[];
+export type ObjectStructOutput = [base: bigint, additionalPoints: string] & {
+  base: bigint;
+  additionalPoints: string;
 };
 
 export interface ColourMeNFTInterface extends Interface {
@@ -382,13 +363,7 @@ export interface ColourMeNFT extends BaseContract {
 
   art: TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [bigint, string, bigint] & {
-        shape: bigint;
-        color: string;
-        stroke: bigint;
-      }
-    ],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
     "view"
   >;
 
@@ -530,13 +505,7 @@ export interface ColourMeNFT extends BaseContract {
     nameOrSignature: "art"
   ): TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [bigint, string, bigint] & {
-        shape: bigint;
-        color: string;
-        stroke: bigint;
-      }
-    ],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
     "view"
   >;
   getFunction(

@@ -68,8 +68,8 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
 
       // Check if token is valid and owned
       const [tokenCountResult, ownerResult] = await Promise.all([
-        getTokenCount(contract),
-        getOwnerOf(contract, effectiveTokenId)
+        getTokenCount(contract!),
+        getOwnerOf(contract!, effectiveTokenId)
       ]);
 
       if (!tokenCountResult.result.success) {
@@ -80,7 +80,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
 
       // Check if token ID is within valid range
       if (effectiveTokenId > tokenCountResult.count) {
-        console.log(`Token #${effectiveTokenId} does not exist yet`);
+        console.log(`📄 Token #${effectiveTokenId} does not exist yet (${tokenCountResult.count} total tokens)`);
         loadLocalSVG();
         clearUrlHash();
         return;
@@ -88,7 +88,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
 
       // Check if token is owned (not address(0))
       if (!ownerResult.result.success || ownerResult.owner === '0x0000000000000000000000000000000000000000') {
-        console.log(`Token #${effectiveTokenId} is not owned`);
+        console.log(`👤 Token #${effectiveTokenId} is not owned`);
         loadLocalSVG();
         clearUrlHash();
         return;
@@ -97,7 +97,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
       // Token exists and is owned - load from contract
       setTokenOwner(ownerResult.owner);
       setIsValidToken(true);
-      await loadTokenSVG(contract, effectiveTokenId);
+      await loadTokenSVG(contract!, effectiveTokenId);
     };
 
     initializeAndLoad();
@@ -167,7 +167,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
             const drawingArea = svgDoc.getElementById('drawing-area');
             if (drawingArea) {
               drawingArea.setAttribute('data-token', tokenForStorage.toString());
-              console.log(`Set data-token to: ${tokenForStorage} (localStorage key: colourMeArt.${tokenForStorage})`);
+              console.log(`🎯 SVG configured for token: ${tokenForStorage}`);
             }
           }
         } catch (error) {
@@ -207,7 +207,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
         if (canSave) {
           onSaveRequest({ artData, saveType });
         } else {
-          console.log('Save blocked: User does not own this token');
+          console.log(`🚫 Save blocked: User does not own token #${effectiveTokenId || 0}`);
           // Send response back to SVG
           if (event.source && event.source !== window) {
             (event.source as Window).postMessage({

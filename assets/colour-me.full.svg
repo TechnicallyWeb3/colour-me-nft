@@ -258,7 +258,7 @@
         }),
         'polygon-6': (pos) => ({
           fill: currentColor,
-          points: `${pos.x},${pos.y - 0.5} ${pos.x + 0.5},${pos.y - 0.25} ${pos.x + 0.5},${pos.y + 0.25} ${pos.x},${pos.y + 0.5} ${pos.x - 0.5},${pos.y + 0.25} ${pos.x - 0.5},${pos.y - 0.25}`
+          points: `${pos.x + 0.5},${pos.y} ${pos.x + 0.25},${pos.y + 0.5} ${pos.x - 0.25},${pos.y + 0.5} ${pos.x - 0.5},${pos.y} ${pos.x - 0.25},${pos.y - 0.5} ${pos.x + 0.25},${pos.y - 0.5}`
         })
       };
 
@@ -794,7 +794,11 @@
           case 'polygon-5':
           case 'polygon-6':
             const sides = parseInt(currentShape.split('-')[1]);
-            const offset = pos.y > startPos.y ? Math.PI : 0;
+            let offset = pos.y > startPos.y ? Math.PI : 0;
+            // For hexagons, add π/2 to rotate so points are at 3 and 9 o'clock
+            if (sides === 6) {
+              offset += Math.PI / 2;
+            }
             const points = generatePolygonPoints(centerX, centerY, absWidth, absHeight, sides, offset);
             currentShapeElement.setAttribute('points', points);
             break;

@@ -85,6 +85,10 @@ declare module "hardhat/types/runtime" {
       name: "IColourMeRenderer",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IColourMeRenderer__factory>;
+    getContractFactory(
+      name: "EncodingTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.EncodingTest__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -176,6 +180,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IColourMeRenderer>;
+    getContractAt(
+      name: "EncodingTest",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.EncodingTest>;
 
     deployContract(
       name: "Ownable",
@@ -249,6 +258,10 @@ declare module "hardhat/types/runtime" {
       name: "IColourMeRenderer",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IColourMeRenderer>;
+    deployContract(
+      name: "EncodingTest",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EncodingTest>;
 
     deployContract(
       name: "Ownable",
@@ -340,6 +353,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IColourMeRenderer>;
+    deployContract(
+      name: "EncodingTest",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.EncodingTest>;
 
     // default types
     getContractFactory(

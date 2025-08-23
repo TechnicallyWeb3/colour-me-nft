@@ -93,92 +93,116 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
     }
 
     function _objectAllowed(uint256 tokenId, Object memory object) internal view {
-        // do we make this less restrictive? Let hackers make dope art?
+        // Decode essential fields for validation (minimal decoding strategy)
+        bytes3 color = decodeColor(object.base);
+        
+        // Early exit: validate color first (cheapest check)
         if (!(
-            object.shape == traits[tokenId].shape0 || 
-            object.shape == traits[tokenId].shape1 ||
-            object.shape == Path.polygon ||
-            object.shape == Path.path ||
-            object.shape > Path.path
+            color == 0x000000 ||
+            color == 0xffffff ||
+            color == traits[tokenId].color0 || 
+            color == traits[tokenId].color1 || 
+            color == traits[tokenId].color2 || 
+            color == traits[tokenId].color3 || 
+            color == traits[tokenId].color4
         )) {
-            if (!(
-                object.shape == Path.rect && 
-                object.points.length == 2 &&
-                object.points[0].x == 10 &&
-                object.points[0].y == 90 &&
-                object.points[1].x == 980 &&
-                object.points[1].y == 900
-            )) {
-                revert InvalidShape(object.shape);
+            revert InvalidColor(color);
+        }
+
+        Path shape = decodeShape(object.base);
+
+        // Check if shape is allowed for this token
+        bool shapeAllowed = (
+            shape == traits[tokenId].shape0 || 
+            shape == traits[tokenId].shape1 ||
+            shape == Path.polygon ||
+            shape == Path.path
+        );
+        
+        // Special case: bucket tool rect (only if token doesn't allow rect)
+        if (!shapeAllowed && shape == Path.rect) {
+            // Decode first 2 points to check bucket tool dimensions
+            Point[2] memory basePoints = getBasePoints(object.base);
+            if (
+                basePoints[0].x == 10 &&
+                basePoints[0].y == 90 &&
+                basePoints[1].x == 980 &&
+                basePoints[1].y == 900
+            ) {
+                shapeAllowed = true; // Allow bucket tool rect
             }
         }
-        if (!(
-            object.color == 0x000000 ||
-            object.color == 0xffffff ||
-            object.color == traits[tokenId].color0 || 
-            object.color == traits[tokenId].color1 || 
-            object.color == traits[tokenId].color2 || 
-            object.color == traits[tokenId].color3 || 
-            object.color == traits[tokenId].color4
-        )) {
-            revert InvalidColor(object.color);
+        
+        if (!shapeAllowed) {
+            revert InvalidShape(uint8(shape));
         }
-        if (
-            object.shape == Path.polyline ||
-            object.shape == Path.path
-        ) { 
-            if (object.points.length < 2) {
-                revert InvalidPoints(object.points.length);
-            }
-        }
-        // find MAX_POINTS for ethereum transaction limits
-        if (
-            object.shape == Path.rect || 
-            object.shape == Path.ellipse || 
-            object.shape == Path.line
+        
+        // Additional validation for specific shapes
+        uint16 pointsLength = decodePointsLength(object.base);
+
+        if (pointsLength < 2) {
+            revert InvalidPoints(pointsLength);
+        } else if (
+            (
+                shape == Path.rect || 
+                shape == Path.ellipse || 
+                shape == Path.line
+            ) &&
+            pointsLength != 2
         ) {
-            if (object.points.length != 2) {
-                revert InvalidPoints(object.points.length);
-            }
-        } else if (object.shape == Path.polygon) {
-            if (object.points.length != traits[tokenId].polygon) {
-                revert InvalidPoints(object.points.length);
+            revert InvalidPoints(pointsLength);
+        }
+
+        // Additional validation for specific shapes
+        if (shape == Path.polygon) {
+            if (pointsLength != traits[tokenId].polygon) {
+                revert InvalidPoints(pointsLength);
             }
         }
-        // pass
+
+        // Additional validation for specific shapes
+        uint8 stroke = decodeStroke(object.base);
+
+        if (
+            stroke == 0 &&
+            (
+                shape == Path.line ||
+                shape == Path.polyline ||
+                shape == Path.path
+            )
+        ) {
+            revert InvalidStroke(stroke);
+        }
+        
+        // pass - object is allowed
     }
 
-    function _updateArt(uint256 tokenId, uint256 startIndex, Object[] calldata _art) internal {
+    function _updateArt(uint256 tokenId, Object[] calldata _art) internal {
         for (uint256 i = 0; i < _art.length; i++) {
+            // Token-specific validation
             _objectAllowed(tokenId, _art[i]);
-            art[tokenId].push();
-            art[tokenId][startIndex + i].color = _art[i].color; 
-            art[tokenId][startIndex + i].shape = _art[i].shape;
-            art[tokenId][startIndex + i].stroke = _art[i].stroke;
-            for (uint256 j = 0; j < _art[i].points.length; j++) {
-                art[tokenId][startIndex + i].points.push(_art[i].points[j]);
-            }
+            art[tokenId].push(_art[i]);
         }
     }
 
     function setArt(uint256 tokenId, Object[] calldata _art) external {
         delete art[tokenId];
-        _updateArt(tokenId, 0, _art);
+        _updateArt(tokenId, _art);
     }
 
     function appendArt(uint256 tokenId, Object[] calldata _object) external {
-        _updateArt(tokenId, art[tokenId].length, _object);
+        _updateArt(tokenId, _object);
     }
 
-    function tokenSVG(uint256 tokenId) public view returns (bytes memory) {
-        return abi.encodePacked(
+    function tokenSVG(uint256 tokenId) public view returns (string memory) {
+        return string(abi.encodePacked(
             svgStart, 
             traitSVG[tokenId],
             '<g id="drawing-area" clip-path="url(#canvas-clip)" data-token="', tokenId.toString(), '">',
                 cmr.renderObjects(art[tokenId]),
             '</g>',
             svgEnd
-        );
+        ));
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -189,5 +213,4 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
         return interfaceId == type(IColourMeNFT).interfaceId || super.supportsInterface(interfaceId);
     }
-
 }

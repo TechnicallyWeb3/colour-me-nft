@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { 
   dappConfig,
   connectToProvider,
@@ -6,12 +7,10 @@ import {
   getTokenCount,
   getMaxSupply,
   mintToken,
-  addNetwork,
   switchNetwork,
   setupNetworkListeners,
   getCurrentNetwork,
-  type ConnectionResult,
-  type NetworkStatus
+  addNetwork
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
@@ -28,6 +27,7 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
   const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
   const [account, setAccount] = useState<string>('');
+  const [walletProvider, setWalletProvider] = useState<ethers.BrowserProvider | null>(null);
   
   // Network state
   const [currentChainId, setCurrentChainId] = useState<string>('');
@@ -60,30 +60,44 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
     return chainId.toLowerCase() === dappConfig.network.chainId.toLowerCase();
   };
   
-  const isMintingAvailable = account && tokenCount < maxSupply && isOnCorrectNetwork();
   const isSoldOut = tokenCount >= maxSupply;
 
   // Initialize app
   useEffect(() => {
     const initializeApp = async () => {
+      console.log(`🔗 Connecting to ${dappConfig.network.chainName} (${dappConfig.activeNetwork})...`);
+      
       // Connect to provider first
       const { contract: readContract, result } = await connectToProvider();
       if (result.success && readContract) {
+        console.log(`✅ Connected to contract at ${dappConfig.contracts.ColourMeNFT.address}`);
         setReadOnlyContract(readContract);
         
         // Get contract data
+        console.log('📊 Loading contract data...');
         const [tokenCountResult, maxSupplyResult] = await Promise.all([
           getTokenCount(readContract),
           getMaxSupply(readContract)
         ]);
         
-        if (tokenCountResult.result.success) setTokenCount(tokenCountResult.count);
-        if (maxSupplyResult.result.success) setMaxSupply(maxSupplyResult.maxSupply);
+        if (tokenCountResult.result.success) {
+          setTokenCount(tokenCountResult.count);
+          console.log(`📈 Token count: ${tokenCountResult.count}`);
+        }
+        if (maxSupplyResult.result.success) {
+          setMaxSupply(maxSupplyResult.maxSupply);
+          console.log(`🎯 Max supply: ${maxSupplyResult.maxSupply}`);
+        }
+      } else {
+        console.error('❌ Failed to connect to contract:', result.error);
       }
 
       // Get current network
       const chainId = await getCurrentNetwork();
-      if (chainId) setCurrentChainId(chainId.toLowerCase());
+      if (chainId) {
+        setCurrentChainId(chainId.toLowerCase());
+        console.log(`🌐 Current network: ${chainId} (Required: ${dappConfig.network.chainId})`);
+      }
 
       // Attempt to connect wallet automatically
       if (window.ethereum) {
@@ -93,19 +107,12 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
             handleConnectWallet();
           }
         } catch (error) {
-          console.log('No auto-connect available');
+          // Silent fail for auto-connect
         }
       }
     };
 
     initializeApp();
-
-    // Test if MetaMask events are working
-    if (window.ethereum) {
-      console.log('Testing MetaMask event setup...');
-      console.log('MetaMask object exists:', !!window.ethereum);
-      console.log('MetaMask.on method exists:', typeof window.ethereum.on === 'function');
-    }
 
     // Setup network change listeners
     const cleanup = setupNetworkListeners(
@@ -117,19 +124,14 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
         }
       },
       (accounts: string[]) => {
-        console.log('MetaMask accountsChanged event fired with accounts:', accounts);
-        console.log('Current stored account:', account);
-        
         if (accounts.length === 0) {
-          console.log('Account disconnected');
           setAccount('');
           setWriteContract(null);
+          setWalletProvider(null);
           if (onAccountChange) onAccountChange('');
           showMessage('Wallet disconnected', true);
         } else if (accounts[0] !== account) {
           const newAccount = accounts[0];
-          console.log('Account changed from', account, 'to', newAccount);
-          
           setAccount(newAccount);
           if (onAccountChange) onAccountChange(newAccount);
           showMessage(`Switched to ${newAccount.slice(0, 6)}...${newAccount.slice(-4)}`);
@@ -137,42 +139,12 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
           setTimeout(() => {
             handleConnectWallet();
           }, 100);
-        } else {
-          console.log('No account change detected');
         }
       }
     );
 
     return cleanup || undefined;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Manual account check function
-  const checkAccountManually = async () => {
-    if (!window.ethereum) return;
-    
-    try {
-      const currentAccounts = await window.ethereum.request({ method: 'eth_accounts' });
-      console.log('MetaMask current accounts:', currentAccounts);
-      console.log('App stored account:', account);
-      
-      if (currentAccounts.length > 0 && currentAccounts[0] !== account) {
-        console.log('Manual check detected account change from', account, 'to', currentAccounts[0]);
-        const newAccount = currentAccounts[0];
-        setAccount(newAccount);
-        if (onAccountChange) onAccountChange(newAccount);
-        showMessage(`Switched to ${newAccount.slice(0, 6)}...${newAccount.slice(-4)}`);
-        setTimeout(() => {
-          handleConnectWallet();
-        }, 100);
-      } else if (currentAccounts.length === 0) {
-        console.log('No accounts found in MetaMask');
-      } else {
-        console.log('No account change detected');
-      }
-    } catch (error) {
-      console.error('Error in manual account check:', error);
-    }
-  };
 
   // Update account in parent when it changes
   useEffect(() => {
@@ -181,14 +153,18 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
     }
   }, [account, onAccountChange]);
 
-
-
   // Update token count when needed
   useEffect(() => {
     if (readOnlyContract) {
       const updateTokenCount = async () => {
-        const { count } = await getTokenCount(readOnlyContract);
-        setTokenCount(count);
+        console.log('🔄 Updating token count...');
+        const { count, result } = await getTokenCount(readOnlyContract);
+        if (result.success) {
+          setTokenCount(count);
+          console.log(`📈 Updated token count: ${count}`);
+        } else {
+          console.error('❌ Failed to update token count:', result.error);
+        }
       };
       updateTokenCount();
     }
@@ -199,10 +175,15 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
     try {
       const { signer, contract, account: walletAccount, result } = await connectToWallet();
       
-      if (result.success && walletAccount) {
-        console.log('Wallet connected to', walletAccount);
+      if (result.success && walletAccount && signer) {
         setAccount(walletAccount);
         setWriteContract(contract);
+        
+        // Store the provider from the signer for potential future use
+        if (signer.provider && signer.provider instanceof ethers.BrowserProvider) {
+          setWalletProvider(signer.provider);
+        }
+        
         showMessage(`Connected to ${walletAccount.slice(0, 6)}...${walletAccount.slice(-4)}`);
       } else {
         showMessage(result.error || 'Failed to connect wallet', true);
@@ -247,57 +228,63 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
   };
 
   const handleMint = async () => {
+    console.log('🪙 Mint button clicked');
+    
     if (!account) {
+      console.log('🔗 No account connected, attempting to connect wallet...');
       await handleConnectWallet();
       return;
     }
 
+    console.log(`👤 Account: ${account}`);
+    console.log(`🌐 Current network: ${currentChainId}`);
+    console.log(`🎯 Required network: ${dappConfig.network.chainId}`);
+    console.log(`📍 Target contract: ${dappConfig.contracts.ColourMeNFT.address}`);
+
     if (!isOnCorrectNetwork()) {
+      console.log('❌ Wrong network detected, attempting to switch...');
       await handleSwitchNetwork();
       return;
     }
 
     if (!writeContract) {
+      console.log('⚠️ Write contract not available, reconnecting...');
       showMessage('Write contract not available - reconnecting...', true);
       await handleConnectWallet();
       return;
     }
 
     if (isSoldOut) {
+      console.log('🚫 Collection sold out');
       showMessage('Collection is sold out', true);
       return;
     }
 
-    // Double-check current account before minting
-    try {
-      const currentAccounts = await window.ethereum.request({ method: 'eth_accounts' });
-      if (currentAccounts.length > 0 && currentAccounts[0] !== account) {
-        setAccount(currentAccounts[0]);
-        await handleConnectWallet();
-        showMessage('Account updated, please try minting again', true);
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking current account:', error);
-    }
-
     setIsLoading(true);
     try {
+      console.log(`🚀 Starting mint process for token #${tokenCount + 1}`);
+      console.log(`📝 Minting to address: ${account}`);
+      console.log(`📋 Using contract: ${writeContract.target}`);
+      
       showMessage(`Minting token to ${account.slice(0, 6)}...${account.slice(-4)}...`);
       const result = await mintToken(writeContract, account);
       
       if (result.success) {
         const newTokenId = tokenCount + 1;
         setTokenCount(newTokenId);
+        console.log(`✅ Mint successful! Token ID: ${newTokenId}`);
+        console.log(`📊 Transaction hash: ${result.data?.hash}`);
         showMessage(`Token #${newTokenId} minted successfully!`);
         
         if (onMintSuccess) {
           onMintSuccess(newTokenId);
         }
       } else {
+        console.error('❌ Mint failed:', result.error);
         showMessage(result.error || 'Minting failed', true);
       }
     } catch (error) {
+      console.error('💥 Mint error:', error);
       showMessage(`Minting failed: ${error}`, true);
     } finally {
       setIsLoading(false);
@@ -325,11 +312,15 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
     }
 
     if (!isOnCorrectNetwork()) {
-      // Check if we should show "Add Network" or "Switch Network"
-      // For simplicity, we'll show "Switch Network" and handle adding if needed
       return {
         text: '🔄 Switch Network',
-        action: handleSwitchNetwork,
+        action: async () => {
+          // Try switching first, if that fails, try adding the network
+          const switchResult = await switchNetwork();
+          if (!switchResult.success) {
+            await handleAddNetwork();
+          }
+        },
         disabled: false,
         color: '#FF9800'
       };
@@ -394,29 +385,8 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
           textAlign: 'center',
           border: `2px solid ${isOnCorrectNetwork() ? '#4CAF50' : '#FF9800'}`
         }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginBottom: '4px'
-          }}>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              Connected Account
-            </div>
-            <button
-              onClick={checkAccountManually}
-              style={{
-                background: 'none',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                padding: '2px 6px'
-              }}
-              title="Check for Account Changes"
-            >
-              🔄
-            </button>
+          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+            Connected Account
           </div>
           <div style={{ 
             fontSize: '14px', 

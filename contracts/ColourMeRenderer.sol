@@ -10,7 +10,7 @@ import "./types.sol";
 
 contract ColourMeRenderer {
     using Strings for uint8;
-    using Strings for uint16;
+    using Strings for int16;
     using Strings for uint256;
     using Base64 for bytes;
 
@@ -44,7 +44,7 @@ contract ColourMeRenderer {
                 shapeSuffix
             );
         } else {
-            revert InvalidShape(_shape);
+            revert InvalidShape(uint8(_shape));
         }
     }
 
@@ -96,8 +96,8 @@ contract ColourMeRenderer {
         
         for (uint256 i = 0; i < _points.length; i++) {
             // Convert each point to "x,y " format
-            bytes memory xStr = bytes(Strings.toString(_points[i].x));
-            bytes memory yStr = bytes(Strings.toString(_points[i].y));
+            bytes memory xStr = bytes(_points[i].x.toStringSigned());
+            bytes memory yStr = bytes(_points[i].y.toStringSigned());
             
             // Format: "x,y " (comma + space = 2 bytes)
             pointStrings[i] = new bytes(xStr.length + 1 + yStr.length + 1);
@@ -153,8 +153,8 @@ contract ColourMeRenderer {
         
         for (uint256 i = 1; i < _points.length; i++) {
             // Convert each segment to " L x y" format
-            bytes memory xStr = bytes(Strings.toString(_points[i].x));
-            bytes memory yStr = bytes(Strings.toString(_points[i].y));
+            bytes memory xStr = bytes(_points[i].x.toStringSigned());
+            bytes memory yStr = bytes(_points[i].y.toStringSigned());
             
             // Format: " Lx y" (space + L + x + space + y = 3 bytes + x + y lengths)
             segmentStrings[i - 1] = new bytes(3 + xStr.length + yStr.length);
@@ -200,34 +200,34 @@ contract ColourMeRenderer {
         return result;
     }
 
-    function renderPath(Object memory _object) public view returns (bytes memory path) {
+    function renderPath(BaseObject memory _object, Point[] memory _points) public view returns (bytes memory path) {
         if (_object.shape == Path.rect) {
             path = abi.encodePacked(
                 '<rect fill="#', toRGBString_(_object.color),
-                '" x="', _object.points[0].x.toString(),
-                '" y="', _object.points[0].y.toString(),
-                '" width="', _object.points[1].x.toString(),
-                '" height="', _object.points[1].y.toString(), '"/>'
+                '" x="', _points[0].x.toStringSigned(),
+                '" y="', _points[0].y.toStringSigned(),
+                '" width="', _points[1].x.toStringSigned(),
+                '" height="', _points[1].y.toStringSigned(), '"/>'
             );
         } else if (_object.shape == Path.ellipse) {
             path = abi.encodePacked(
                 '<ellipse fill="#', toRGBString_(_object.color),
-                '" cx="', _object.points[0].x.toString(),
-                '" cy="', _object.points[0].y.toString(),
-                '" rx="', _object.points[1].x.toString(),
-                '" ry="', _object.points[1].y.toString(), '"/>'
+                '" cx="', _points[0].x.toStringSigned(),
+                '" cy="', _points[0].y.toStringSigned(),
+                '" rx="', _points[1].x.toStringSigned(),
+                '" ry="', _points[1].y.toStringSigned(), '"/>'
             );
         } else if (_object.shape == Path.line) {
             path = abi.encodePacked(
                 '<line fill="none" stroke="#', toRGBString_(_object.color),
                 '" stroke-width="', _object.stroke.toString(),
-                '" x1="', _object.points[0].x.toString(),
-                '" y1="', _object.points[0].y.toString(),
-                '" x2="', _object.points[1].x.toString(),
-                '" y2="', _object.points[1].y.toString(), '"/>'
+                '" x1="', _points[0].x.toStringSigned(),
+                '" y1="', _points[0].y.toStringSigned(),
+                '" x2="', _points[1].x.toStringSigned(),
+                '" y2="', _points[1].y.toStringSigned(), '"/>'
             );
         } else if (_object.shape == Path.polyline || _object.shape == Path.polygon) {
-            bytes memory pointsString = _getPolyPoints(_object.points);
+            bytes memory pointsString = _getPolyPoints(_points);
             
             if (_object.shape == Path.polyline) {
                 path = abi.encodePacked(
@@ -242,12 +242,12 @@ contract ColourMeRenderer {
                 );
             }
         } else if (_object.shape == Path.path) {
-            bytes memory pathSegments = _getPathSegments(_object.points);
+            bytes memory pathSegments = _getPathSegments(_points);
             
             path = abi.encodePacked(
                 '<path stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="#', 
                 toRGBString_(_object.color), '" stroke-width="', _object.stroke.toString(), '" d="M',
-                _object.points[0].x.toString(), ' ', _object.points[0].y.toString(), pathSegments, '"/>'
+                _points[0].x.toStringSigned(), ' ', _points[0].y.toStringSigned(), pathSegments, '"/>'
             );
         }
         return path;
@@ -263,7 +263,11 @@ contract ColourMeRenderer {
         bytes[] memory renderedObjects = new bytes[](_objects.length);
         
         for (uint256 i = 0; i < _objects.length; i++) {
-            renderedObjects[i] = renderPath(_objects[i]);
+            // Decode packed object to regular object for rendering
+            BaseObject memory baseObj = getBaseObject(_objects[i].base);
+            Point[] memory points = getObjectPoints(_objects[i]);
+            
+            renderedObjects[i] = renderPath(baseObj, points);
             totalSize += renderedObjects[i].length;
         }
         
@@ -304,14 +308,14 @@ contract ColourMeRenderer {
         string memory _name, 
         uint256 _tokenId, 
         string memory _baseURL, 
-        bytes memory _svg, 
+        string memory _svg, 
         Trait memory _trait
     ) external pure returns (bytes memory) {
         return abi.encodePacked(
             '{"name":"', _name, ' #', _tokenId.toString(), '",',
                 '"description":"Colour your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
                 '"external_url":"', _baseURL,'#', _tokenId.toString(), '",',
-                '"image_data":"data:image/svg+xml;base64,', _svg.encode(), '",'
+                '"image_data":"data:image/svg+xml;base64,', bytes(_svg).encode(), '",'
                 '"attributes":', getAttributes(_trait),
             '}'
         );
