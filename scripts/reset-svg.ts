@@ -39,8 +39,8 @@ export default async function resetSvgData(
     }
 
     const tokenCount = await contractInstance.tokenCount();
-    if (tokenCount > 0) {
-      const svgExample = await contractInstance.tokenSVG(1);
+    if (tokenCount > 0n) {
+      const svgExample = await contractInstance.tokenSVG(1n);
       if (!svgExample.startsWith(svgStart) || !svgExample.endsWith(svgEnd)) {
     
         console.log("Calling setSVG function...");
@@ -71,7 +71,8 @@ export default async function resetSvgData(
         console.log("Skipping reset, SVG data already set correctly");
       }
     } else {
-      console.log("Skipping reset, no tokens minted yet");
+      console.log("Skipping reset, no tokens minted yet: ", tokenCount);
+      return { svgStart: svgStart, svgEnd: svgEnd };
     }
     
   } catch (error) {

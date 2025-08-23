@@ -91,19 +91,50 @@ function updateFrontendConfig(network, nftAddress, rendererAddress) {
   
   let content = fs.readFileSync(configPath, 'utf8');
   
+  // Debug: log what we're looking for
+  log(`Attempting to update ${network} network config...`, 'cyan');
+  log(`Looking for address to replace with: ${nftAddress}`, 'cyan');
+  
   // Update the specific network configuration
+  // More precise regex that handles whitespace and comments better
   const networkConfigRegex = new RegExp(
-    `(${network}:\\s*\\{[\\s\\S]*?contracts:\\s*\\{[\\s\\S]*?ColourMeNFT:\\s*\\{[\\s\\S]*?address:\\s*")([^"]+)(")`
+    `(${network}:\\s*\\{[\\s\\S]*?contracts:\\s*\\{[\\s\\S]*?ColourMeNFT:\\s*\\{[\\s\\S]*?address:\\s*")([^"]+)("[\\s\\S]*?,)`
   );
+  
+  // Debug: check if pattern matches
+  const match = content.match(networkConfigRegex);
+  if (match) {
+    log(`Found existing address: ${match[2]}`, 'yellow');
+    log(`Replacing with: ${nftAddress}`, 'yellow');
+  } else {
+    log(`Pattern not found for network: ${network}`, 'red');
+    log(`Trying alternative regex patterns...`, 'yellow');
+    
+    // Try simpler pattern
+    const simpleRegex = new RegExp(
+      `(${network}:[\\s\\S]*?address:\\s*")([^"]+)(")`
+    );
+    const simpleMatch = content.match(simpleRegex);
+    if (simpleMatch) {
+      log(`Found with simple pattern. Current address: ${simpleMatch[2]}`, 'green');
+      const updated = content.replace(simpleRegex, `$1${nftAddress}$3`);
+      fs.writeFileSync(configPath, updated);
+      log(`✅ Updated ${network} contract address to: ${nftAddress}`, 'green');
+      return true;
+    } else {
+      log(`❌ No pattern found for network ${network}`, 'red');
+      return false;
+    }
+  }
   
   const updated = content.replace(networkConfigRegex, `$1${nftAddress}$3`);
   
   if (updated !== content) {
     fs.writeFileSync(configPath, updated);
-    log(`Updated ${network} contract address to: ${nftAddress}`, 'green');
+    log(`✅ Updated ${network} contract address to: ${nftAddress}`, 'green');
     return true;
   } else {
-    log(`Could not update ${network} config - pattern not found`, 'yellow');
+    log(`❌ Could not update ${network} config - no changes made`, 'yellow');
     return false;
   }
 }
@@ -150,6 +181,11 @@ function getDeployedAddresses(network) {
       log('Contract addresses not found in deployment file', 'yellow');
       return null;
     }
+    log(`Found deployment:`, 'green');
+    log(`  Network: ${network}`, 'green');
+    log(`  Deployment file: ${deploymentFile}`, 'green');
+    log(`  NFT: ${nftAddress}`, 'green');
+    log(`  Renderer: ${rendererAddress}`, 'green');
     
     return { nftAddress, rendererAddress };
   } catch (error) {

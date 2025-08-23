@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
+import Home from './components/Home'
 import UnifiedActionButton from './components/UnifiedActionButton'
 import SVGDisplay from './components/SVGDisplay'
 import BlockchainControls from './components/BlockchainControls'
@@ -603,7 +604,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/app" element={<HomePage />} />
         <Route path="/debug" element={<DebugPage />} />
       </Routes>
     </Router>

@@ -5,6 +5,15 @@
   text-align: center;
 }
 
+/* Override root padding for compact mobile view */
+@media (max-width: 480px) {
+  #root {
+    padding: 2rem 0 !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+  }
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
