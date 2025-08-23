@@ -117,7 +117,7 @@ describe("Transaction Limits", function () {
       const count = await nft.tokenCount();
       expect(count).to.be.greaterThanOrEqual(0n);
       if (count > 0n) {
-        expect(ethers.toUtf8String(await nft.tokenSVG(0n))).to.include('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">');
+        expect(await nft.tokenSVG(1n)).to.include('<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">');
       }
       console.log("Attached to existing nft");
     } catch (error: any) {

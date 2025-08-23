@@ -896,13 +896,12 @@ export const getTokenSVG = async (
   tokenId: number
 ): Promise<{ svg: string; result: ConnectionResult }> => {
   try {
-    const svgBytes = await contract.tokenSVG(tokenId);
-    const svgString = ethers.toUtf8String(svgBytes);
+    const svg = await contract.tokenSVG(tokenId);
     return {
-      svg: svgString,
+      svg,
       result: {
         success: true,
-        data: { tokenId, svgLength: svgString.length }
+        data: { tokenId, svgLength: svg.length }
       }
     };
   } catch (error) {
