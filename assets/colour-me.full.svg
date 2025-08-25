@@ -54,12 +54,19 @@
       .shape-btn { cursor: pointer; }
       .action-bg {fill: #f0f0f0; stroke: #ccc; stroke-width: 1; rx: 5; ry: 5;}
       .action-bg:hover {fill: #e0e0e0; stroke: #999;}
+      .action-bg.undo {fill: #fff3e0; stroke: #ffcc02;}
+      .action-bg.undo:hover {fill: #ffcc02; stroke: #ffa000;}
+      .action-bg.redo {fill: #f3e5f5; stroke: #ce93d8;}
+      .action-bg.redo:hover {fill: #ce93d8; stroke: #ba68c8;}
       .action-bg.clear {fill: #ffebee; stroke: #ffcdd2;}
       .action-bg.clear:hover {fill: #ffcdd2; stroke: #ef9a9a;}
       .action-bg.save {fill: #e8f5e8; stroke: #c8e6c9;}
       .action-bg.save:hover {fill: #c8e6c9; stroke: #a5d6a7;}
       .action-bg.export {fill: #e3f2fd; stroke: #bbdefb;}
       .action-bg.export:hover {fill: #bbdefb; stroke: #90caf9;}
+      .action-bg.inactive {fill: #f5f5f5 !important; stroke: #e0e0e0 !important;}
+      .action-bg.inactive:hover {fill: #f5f5f5 !important; stroke: #e0e0e0 !important;}
+      .button-text.inactive {fill: #bdbdbd !important;}
     </style>
     <rect id="canvas-bg" x="10" y="90" width="980" height="900" rx="5"/>
     <clipPath id="canvas-clip">
@@ -128,16 +135,29 @@
   </g>
   
   <!-- Action buttons -->
+  <!-- Action buttons -->
   <g class="action-group">
-    <rect x="800" y="20" width="40" height="30" class="action-bg clear"/>
-    <text x="820" y="40" text-anchor="middle" class="button-text">💣</text>
-    <text x="820" y="65" text-anchor="middle" class="toolbar-text">Clear</text>
+    <rect x="720" y="20" width="40" height="30" class="action-bg undo inactive"/>
+    <text x="740" y="40" text-anchor="middle" class="button-text inactive">↶</text>
+    <text x="740" y="65" text-anchor="middle" class="toolbar-text">Undo</text>
   </g>
   
   <g class="action-group">
-    <rect x="860" y="20" width="40" height="30" class="action-bg save"/>
-    <text x="880" y="40" text-anchor="middle" class="button-text">💾</text>
-    <text x="880" y="65" text-anchor="middle" class="toolbar-text">Save</text>
+    <rect x="770" y="20" width="40" height="30" class="action-bg redo inactive"/>
+    <text x="790" y="40" text-anchor="middle" class="button-text inactive">↷</text>
+    <text x="790" y="65" text-anchor="middle" class="toolbar-text">Redo</text>
+  </g>
+  
+  <g class="action-group">
+    <rect x="820" y="20" width="40" height="30" class="action-bg clear"/>
+    <text x="840" y="40" text-anchor="middle" class="button-text">💣</text>
+    <text x="840" y="65" text-anchor="middle" class="toolbar-text">Clear</text>
+  </g>
+  
+  <g class="action-group">
+    <rect x="870" y="20" width="40" height="30" class="action-bg save"/>
+    <text x="890" y="40" text-anchor="middle" class="button-text">💾</text>
+    <text x="890" y="65" text-anchor="middle" class="toolbar-text">Save</text>
   </g>
   
   <g class="action-group">
@@ -188,6 +208,9 @@
       let svgHeight = 1000;
       let displayWidth = 1000;
       let displayHeight = 1000;
+
+      let redoStack = [];
+      const MAX_REDO_STACK = 100;
 
       // Update coordinate conversion factors when window resizes
       function updateCoordinateFactors() {
@@ -400,24 +423,64 @@
         });
       });
 
+      function isFillCanvas(element) {
+        // Check if element is a rect that covers the entire canvas
+        if (element.tagName.toLowerCase() !== 'rect') return false;
+        
+        const x = parseInt(element.getAttribute('x'));
+        const y = parseInt(element.getAttribute('y'));
+        const width = parseInt(element.getAttribute('width'));
+        const height = parseInt(element.getAttribute('height'));
+        
+        return x === 10 && y === 90 && width === 980 && height === 900;
+      }
+
+      function onlyPathIsClear() {
+        return paths.length === 1 && 
+               isFillCanvas(paths[0]) && 
+               paths[0].getAttribute('fill') === '#ffffff';
+      }
+
       // **OPTIMIZATION: Enhanced saveDrawing function with improved object creation**
       // passing in a null storageKey will not save to localStorage, but will return the drawingElements
+      // Now processes from newest to oldest and stops at first canvas-covering element
       function saveDrawing(storageKey = localStorageKey) {
-        const drawingElements = Array.from(drawingArea.children).map(element => {
-          // Optimized color extraction and object creation
+        const drawingElements = [];
+        const children = Array.from(drawingArea.children);
+        let fillElement = null;
+        
+        // Process from newest to oldest, stop at first canvas-covering element
+        for (let i = children.length - 1; i >= 0; i--) {
+          const element = children[i];
+          
+          // Create the element data
           const stroke = element.getAttribute('stroke') ? hexToBytes3(element.getAttribute('stroke')) : null;
           const fill = element.getAttribute('fill') !== '#none' ? hexToBytes3(element.getAttribute('fill')) : null;
           const color = stroke || fill || '0x000000';
-          
-          return {
+
+          const elementData = {
             shape: getElementShape(element),
             color: color,
             stroke: parseInt(element.getAttribute('stroke-width') || '0'),
             points: extractPoints(element)
           };
-        });
 
-        // Efficient localStorage operations
+          // Add to beginning of array (maintains newest-first order)
+          drawingElements.unshift(elementData);
+          
+          if (isFillCanvas(element)) {
+            console.log('Canvas-covering element found, stopping processing at index:', i);
+            fillElement = element;
+            if (element.getAttribute('fill') === '#ffffff') {
+              drawingElements.shift(); // remove fill element if it's white
+            }
+            break;
+          }
+        }
+
+        console.log('Final drawingElements:', drawingElements);
+
+        // Store or delete drawingElements from localStorage
         if (drawingElements.length > 0) {
           if (storageKey) localStorage.setItem(storageKey, JSON.stringify(drawingElements));
         } else {
@@ -433,7 +496,7 @@
         const shapeMap = {
           'rect': 0, 'line': 1, 'ellipse': 2, 'polyline': 3, 'polygon': 4, 'path': 5
         };
-        return shapeMap[tagName] || 5; // Default to path
+        return shapeMap[tagName] || 0; // Default to rect
       }
 
       // Color format conversion for contract compatibility
@@ -555,15 +618,18 @@
         switch (obj.shape) {
           case 0: // rect
             const [pos, size] = obj.points;
-            Object.assign(element, {
-              x: { baseVal: { value: pos.x } },
-              y: { baseVal: { value: pos.y } },
-              width: { baseVal: { value: size.x } },
-              height: { baseVal: { value: size.y } }
+            rectAttrs = {
+              x: pos.x,
+              y: pos.y,
+              width: size.x,
+              height: size.y,
+              fill: bytes3ToHex(obj.color)
+            };
+            Object.entries(rectAttrs).forEach(([key, value]) => {
+              element.setAttribute(key, value);
             });
-            element.setAttribute('fill', bytes3ToHex(obj.color));
             break;
-            
+
           case 1: // line
             const [start, end] = obj.points;
             const lineAttrs = {
@@ -656,27 +722,74 @@
 
       function getDiff(baseArt = localStorage.getItem('tokenArt'), currentArt = localStorage.getItem(localStorageKey)) {
         if (!baseArt) {
-          return { saveType: 'set', diff: currentArt };
+          const saveType = currentArt ? 'set' : 'none';
+          return { saveType, diff: currentArt };
         } else if (baseArt === currentArt) {
-          return { saveType: 'append', diff: "[]" };
+          return { saveType: 'none', diff: "" };
         } else if (currentArt.startsWith(baseArt.slice(0, -2))) { // -2 to remove the trailing }]
           const baseArtJson = baseArt ? JSON.parse(baseArt) : [];
           const currentArtJson = currentArt ? JSON.parse(currentArt) : [];
           const diff = currentArtJson.slice(baseArtJson.length);
           return { saveType: 'append', diff: JSON.stringify(diff) };
         }
-        // implied else
+        // implied else for replace art
         return { saveType: 'set', diff: currentArt };
+      }
+
+      function undo() {
+        if (paths.length > 0) {
+          // remove last path from paths array
+          const lastPath = paths.pop();
+          drawingArea.removeChild(lastPath);
+          sendArtModifiedMessage('undo');
+
+          // if no redo paths previous, enable redo button
+          if (redoStack.length === 0) {
+            document.querySelector('.action-bg.redo').classList.remove('inactive');
+          }
+
+          // add last path to redo stack
+          redoStack.push(lastPath);
+
+          // if redo stack is too long, remove first path
+          if (redoStack.length > MAX_REDO_STACK) {
+            redoStack.shift();
+          }
+
+          // if no paths, disable undo button
+          if (paths.length === 0 || onlyPathIsClear()) {
+            document.querySelector('.action-bg.undo').classList.add('inactive');
+          }
+        }
+      }
+
+      function redo() {
+        if (redoStack.length > 0) {
+          const lastPath = redoStack.pop();
+          drawingArea.appendChild(lastPath);
+
+          // if no paths, re-enable the undo button
+          if (paths.length === 0 || onlyPathIsClear()) {
+            document.querySelector('.action-bg.undo').classList.remove('inactive');
+          }
+          paths.push(lastPath);
+          sendArtModifiedMessage('redo');
+
+        }
+        if (redoStack.length === 0) {
+          document.querySelector('.action-bg.redo').classList.add('inactive');
+        }
       }
 
       // Action button handlers with optimized save logic
       document.querySelectorAll('.action-group').forEach((group, index) => {
         group.addEventListener('click', function() {
           const actions = [
+            () => undo(), // Undo
+            () => redo(), // Redo
             () => { // Clear
-              drawingArea.innerHTML = '';
-              paths = [];
-              saveDrawing();
+              fillCanvas('#ffffff');
+              localStorage.removeItem(localStorageKey);
               sendMessageToParent('CLEAR_REQUEST');
             },
             () => { // Save
@@ -695,19 +808,24 @@
         });
       });
 
+      function fillCanvas(color) {
+        const fillRect = createSVGElement('rect', {
+          x: 10, y: 90, width: 980, height: 900, fill: color
+        });
+        drawingArea.appendChild(fillRect);
+        paths.push(fillRect);
+        sendArtModifiedMessage('fill');
+      }
+
       // Drawing state management functions
       function startDrawing(pos) {
         if (!isWithinCanvas(pos)) return;
-        
+        if (redoStack.length > 0) {
+          redoStack = [];
+          document.querySelector('.action-bg.redo').classList.add('inactive');
+        }
         if (currentTool === 'bucket') {
-          drawingArea.innerHTML = '';
-          paths = [];
-          const fillRect = createSVGElement('rect', {
-            x: 10, y: 90, width: 980, height: 900, fill: currentColor
-          });
-          drawingArea.appendChild(fillRect);
-          paths.push(fillRect);
-          sendObjectAddedMessage('bucket');
+          fillCanvas(currentColor);
           return;
         }
         
@@ -838,18 +956,18 @@
       }
 
       // Unified function to send object added message
-      function sendObjectAddedMessage(objectType) {
+      function sendArtModifiedMessage(message) {
         const currentArt = JSON.stringify(saveDrawing(null));
         const diff = getDiff(localStorage.getItem('tokenArt'), currentArt);
-        sendMessageToParent('OBJECT_ADDED', { objectType: objectType, artData: diff });
-        console.log('object added: ', objectType, diff);
+        sendMessageToParent('ART_MODIFIED', { message, artData: diff });
+        console.log('art modified: ', message, diff);
       }
 
       function finalizeShape() {
         const shape = currentShapeElement;
         if (shape) {
           paths.push(shape);
-          sendObjectAddedMessage(currentShape);
+          sendArtModifiedMessage(currentShape);
         }
         if (polylinePreview) {
           polylinePreview.remove();
@@ -894,10 +1012,18 @@
           paths.push(currentPath);
 
           // Send message for the completed path segment
-          sendObjectAddedMessage(currentTool);
+          sendArtModifiedMessage(currentTool);
         } else {
           currentPath.setAttribute('d', currentD + `L${pos.x} ${pos.y}`);
         }
+      }
+
+      function setRedoButtonState() {
+          if (redoStack.length === 0) {
+            document.querySelector('.action-bg.redo').classList.add('inactive');
+          } else {
+            document.querySelector('.action-bg.redo').classList.remove('inactive');
+          }
       }
 
       function stopDrawing() {
@@ -905,7 +1031,7 @@
           finalizeShape(); // Message sent in finalizeShape
         } else if (isDrawing && currentPath && currentTool !== 'shape') {
           // Send message for completed brush/eraser/bucket paths
-          sendObjectAddedMessage(currentTool);
+          sendArtModifiedMessage(currentTool);
         }
         
         isDrawing = false;
@@ -916,6 +1042,12 @@
         // Don't reset currentShapeElement for polyline - continue building
         if (currentTool !== 'shape' || currentShape !== 'polyline') {
           currentShapeElement = null;
+        }
+        
+        if (paths.length === 0 || onlyPathIsClear()) {
+          document.querySelector('.action-bg.undo').classList.add('inactive');
+        } else {
+          document.querySelector('.action-bg.undo').classList.remove('inactive');
         }
       }
 
@@ -1043,6 +1175,10 @@
       window.addEventListener('load', function() {
         updateCoordinateFactors();
         loadDrawing();
+
+        if (paths.length > 0 && !onlyPathIsClear()) {
+          document.querySelector('.action-bg.undo').classList.remove('inactive');
+        }
         
         // Initialize brush slider position
         const initialBrushSize = currentBrushSize;
