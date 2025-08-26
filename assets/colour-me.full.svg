@@ -64,8 +64,8 @@
       .action-bg.save:hover {fill: #c8e6c9; stroke: #a5d6a7;}
       .action-bg.export {fill: #e3f2fd; stroke: #bbdefb;}
       .action-bg.export:hover {fill: #bbdefb; stroke: #90caf9;}
-      .action-bg.inactive {fill: #f5f5f5 !important; stroke: #e0e0e0 !important;}
-      .action-bg.inactive:hover {fill: #f5f5f5 !important; stroke: #e0e0e0 !important;}
+      .action-bg.inactive {fill: #f5f5f5 !important; stroke: #e0e0e0 !important; pointer-events: none;}
+      .action-bg.inactive:hover {fill: #f5f5f5 !important; stroke: #e0e0e0 !important; pointer-events: none;}
       .button-text.inactive {fill: #bdbdbd !important;}
     </style>
     <rect id="canvas-bg" x="10" y="90" width="980" height="900" rx="5"/>
@@ -469,7 +469,7 @@
           drawingElements.unshift(elementData);
           
           if (isFillCanvas(element)) {
-            console.log('Canvas-covering element found, stopping processing at index:', i);
+            // console.log('Canvas-covering element found, stopping processing at index:', i);
             fillElement = element;
             if (element.getAttribute('fill') === '#ffffff') {
               drawingElements.shift(); // remove fill element if it's white
@@ -478,7 +478,7 @@
           }
         }
 
-        console.log('Final drawingElements:', drawingElements);
+        // console.log('Final drawingElements:', drawingElements);
 
         // Store or delete drawingElements from localStorage
         if (drawingElements.length > 0) {
@@ -722,10 +722,9 @@
 
       function getDiff(baseArt = localStorage.getItem('tokenArt'), currentArt = localStorage.getItem(localStorageKey)) {
         if (!baseArt) {
-          const saveType = currentArt ? 'set' : 'none';
-          return { saveType, diff: currentArt };
+          return { saveType: 'set', diff: currentArt };
         } else if (baseArt === currentArt) {
-          return { saveType: 'none', diff: "" };
+          return { saveType: 'set', diff: null };
         } else if (currentArt.startsWith(baseArt.slice(0, -2))) { // -2 to remove the trailing }]
           const baseArtJson = baseArt ? JSON.parse(baseArt) : [];
           const currentArtJson = currentArt ? JSON.parse(currentArt) : [];
@@ -784,23 +783,25 @@
       // Action button handlers with optimized save logic
       document.querySelectorAll('.action-group').forEach((group, index) => {
         group.addEventListener('click', function() {
+          // Finalize any active polyline before any action
+          if (currentTool === 'shape' && currentShape === 'polyline' && currentShapeElement) {
+            finalizeShape();
+          }
+          
           const actions = [
             () => undo(), // Undo
             () => redo(), // Redo
             () => { // Clear
               fillCanvas('#ffffff');
-              localStorage.removeItem(localStorageKey);
-              sendMessageToParent('CLEAR_REQUEST');
+              saveDrawing();
+              // sendMessageToParent('CLEAR_REQUEST'); // ART_MODIFIED triggered by fillCanvas
             },
             () => { // Save
               const tokenArtString = localStorage.getItem('tokenArt');
               const saveData = saveDrawing();
-
-              if (saveData) {
-                const { saveType, diff } = getDiff();
-                sendMessageToParent('SAVE_REQUEST', { saveType: saveType, artData: diff });
-                console.log('saveRequest: ', saveType, diff.length);
-              }
+              const { saveType, diff } = getDiff();
+              sendMessageToParent('SAVE_REQUEST', { saveType: saveType, artData: diff });
+              // console.log('saveRequest: ', saveType);
             },
             () => exportDrawing() // Export
           ];
@@ -814,7 +815,7 @@
         });
         drawingArea.appendChild(fillRect);
         paths.push(fillRect);
-        sendArtModifiedMessage('fill');
+        sendArtModifiedMessage(color === '#ffffff' ? 'clear' : 'fill');
       }
 
       // Drawing state management functions
@@ -960,7 +961,7 @@
         const currentArt = JSON.stringify(saveDrawing(null));
         const diff = getDiff(localStorage.getItem('tokenArt'), currentArt);
         sendMessageToParent('ART_MODIFIED', { message, artData: diff });
-        console.log('art modified: ', message, diff);
+        // console.log('art modified: ', message, diff);
       }
 
       function finalizeShape() {
@@ -977,6 +978,10 @@
         if (shape && shape.tagName === 'polyline') {
           polylinePoints = [];
           currentShapeElement = null;
+          // Update undo button state after adding shape
+          if (paths.length > 0 && !onlyPathIsClear()) {
+            document.querySelector('.action-bg.undo').classList.remove('inactive');
+          }
         }
       }
 
@@ -1159,6 +1164,7 @@
 
       // Parent window communication
       function sendMessageToParent(type, data = {}) {
+        console.log('sent message to parent: ', type, data);
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type, data }, '*');
         }
