@@ -234,7 +234,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
   const isOwner = isValidToken && account && tokenOwner.toLowerCase() === account.toLowerCase();
 
   return (
-    <div style={{ position: 'relative' }}>
+    <>
       {/* Loading indicator */}
       {isLoading && (
         <div style={{
@@ -289,7 +289,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
           <p>Your browser does not support SVG</p>
         </object>
       )}
-    </div>
+    </>
   );
 };
 

@@ -12,6 +12,7 @@ body {
   background: #008080;
   min-height: 100vh;
   padding: 0;
+  padding-top: 60px; /* Account for fixed navbar height */
 }
 
 /* Navigation Bar */
@@ -19,12 +20,17 @@ body {
   background: linear-gradient(to bottom, #4a9eff, #0054e3);
   border-bottom: 1px solid #0054e3;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  border-radius: 0 0 10px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1004px;
   z-index: 1000;
 }
 
@@ -52,6 +58,8 @@ body {
 .os-social-links {
   display: flex;
   gap: 10px;
+  background: #5aaeff;
+  height: 100%;
 }
 
 .os-social-link {
@@ -145,8 +153,12 @@ body {
   }
   
   .os-navbar {
-    position: relative;
+    position: fixed;
     z-index: 1000;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-width: 100vw;
   }
 }
 
@@ -274,9 +286,6 @@ body {
 }
 
 .app-content-area {
-  width: 100%;
-  max-width: 1000px;
-  aspect-ratio: 1/1;
   background: white;
   border: 1px solid #c0c0c0;
   display: flex;
@@ -314,9 +323,8 @@ html, body {
 .os-window,
 .section-content,
 .nft-controls,
-.main-app-window,
 .token-explorer {
-  max-width: 100%;
+  max-width: 1004px;
   overflow-x: hidden;
 }
 
@@ -394,15 +402,13 @@ html, body {
 
 /* Token Explorer */
 .token-explorer {
-  max-width: 800px;
   margin: 20px auto;
-  max-height: 400px;
+  max-height: 800px
 }
 
 .explorer-content {
   padding: 15px;
   background: white;
-  max-height: 300px;
   overflow-y: auto;
   border: 1px solid #c0c0c0;
 }
@@ -489,7 +495,6 @@ html, body {
   border-radius: 8px;
   padding: 30px;
   margin: 20px;
-  max-width: 800px;
   margin-left: auto;
   margin-right: auto;
   box-shadow: 0 4px 8px rgba(0,0,0,0.3);
@@ -826,6 +831,7 @@ html, body {
   
   .home-container {
     padding: 0 !important;
+    padding-top: 50px !important; /* Account for fixed navbar on mobile */
     margin: 0 !important;
     width: 100vw;
     max-width: 100vw;
@@ -841,6 +847,10 @@ html, body {
   .os-navbar {
     padding: 6px 8px;
     margin: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-width: 100vw;
   }
   
   .os-nav-mobile {

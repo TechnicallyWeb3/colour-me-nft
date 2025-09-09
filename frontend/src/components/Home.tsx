@@ -211,10 +211,6 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
             ) : (
               /* Show message when no tokens are minted */
               <div className="token-item" style={{ opacity: 0.6, cursor: 'default' }}>
-                <div className="token-thumbnail">
-                  <span style={{ fontSize: '10px' }}>📭</span>
-                </div>
-                <div className="token-filename">No tokens yet</div>
               </div>
             )}
           </div>
@@ -592,8 +588,8 @@ const Home: React.FC = () => {
             <SVGDisplay
               key={svgKey}
               tokenId={activeToken || undefined}
-              width={800}
-              height={800}
+              width={1000}
+              height={1000}
             />
           </div>
         </div>
