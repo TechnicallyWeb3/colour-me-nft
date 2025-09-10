@@ -623,31 +623,46 @@ const Home: React.FC = () => {
       </section>
 
       {/* Help Section */}
-      <section id="help" className="section-content">
-        <h2 className="section-header">How to Use</h2>
-        <div style={{ background: 'rgba(255,255,255,0.95)', padding: '30px', borderRadius: '8px' }}>
-          <h3>Getting Started:</h3>
-          <ul>
-            <li><strong>Connect Your Wallet:</strong> Click the "Connect Wallet" button and connect your MetaMask or compatible wallet</li>
-            <li><strong>Switch to Base:</strong> Make sure you're on the Base network for low-cost transactions</li>
-            <li><strong>Create Art:</strong> Use the painting tools in the main application window to create your masterpiece</li>
-            <li><strong>Mint NFT:</strong> Once you're happy with your creation, click "Mint NFT" to create your token</li>
-          </ul>
+      <section id="help">
+        <div className="os-window" style={{ width: '100%', height: '100%' }}>
+          <div className="os-titlebar">
+            <div className="os-titlebar-text">
+              <div className="os-titlebar-icon">❓</div>
+              How to Use - Help
+            </div>
+            <div className="os-control-buttons">
+              <div className="os-btn minimize"></div>
+              <div className="os-btn maximize"></div>
+              <div className="os-btn close"></div>
+            </div>
+          </div>
           
-          <h3>Advanced Features:</h3>
-          <ul>
-            <li><strong>Token Explorer:</strong> Browse existing tokens, double-click to load them into the editor</li>
-            <li><strong>Right-click Menu:</strong> Right-click on tokens for additional options like viewing attributes</li>
-            <li><strong>Collaborative Art:</strong> Token owners can modify their existing NFTs (costs gas)</li>
-            <li><strong>Export:</strong> Save your artwork as SVG files for external use</li>
-          </ul>
-          
-          <h3>Tips:</h3>
-          <ul>
-            <li>Complex artworks may require multiple transactions due to gas limits</li>
-            <li>Simpler designs with fewer objects are more gas-efficient</li>
-            <li>All artwork is stored on-chain as SVG, ensuring permanence</li>
-          </ul>
+          <div className="os-content">
+            <div style={{ padding: '20px', lineHeight: '1.6' }}>
+              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Getting Started:</h3>
+              <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
+                <li style={{ marginBottom: '8px' }}><strong>Connect Your Wallet:</strong> Click the "Connect Wallet" button and connect your MetaMask or compatible wallet</li>
+                <li style={{ marginBottom: '8px' }}><strong>Switch to Base:</strong> Make sure you're on the Base network for low-cost transactions</li>
+                <li style={{ marginBottom: '8px' }}><strong>Create Art:</strong> Use the painting tools in the main application window to create your masterpiece</li>
+                <li style={{ marginBottom: '8px' }}><strong>Mint NFT:</strong> Once you're happy with your creation, click "Mint NFT" to create your token</li>
+              </ul>
+              
+              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Advanced Features:</h3>
+              <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
+                <li style={{ marginBottom: '8px' }}><strong>Token Explorer:</strong> Browse existing tokens, double-click to load them into the editor</li>
+                <li style={{ marginBottom: '8px' }}><strong>Right-click Menu:</strong> Right-click on tokens for additional options like viewing attributes</li>
+                <li style={{ marginBottom: '8px' }}><strong>Collaborative Art:</strong> Token owners can modify their existing NFTs (costs gas)</li>
+                <li style={{ marginBottom: '8px' }}><strong>Export:</strong> Save your artwork as SVG files for external use</li>
+              </ul>
+              
+              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Tips:</h3>
+              <ul style={{ paddingLeft: '20px' }}>
+                <li style={{ marginBottom: '8px' }}>Complex artworks may require multiple transactions due to gas limits</li>
+                <li style={{ marginBottom: '8px' }}>Simpler designs with fewer objects are more gas-efficient</li>
+                <li style={{ marginBottom: '8px' }}>All artwork is stored on-chain as SVG, ensuring permanence</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
