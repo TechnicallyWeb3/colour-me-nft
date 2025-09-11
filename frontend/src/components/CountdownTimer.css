@@ -1,0 +1,146 @@
+/* Countdown Timer Component Styles */
+.countdown-timer {
+  text-align: center;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+}
+
+.countdown-title {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000080;
+}
+
+.countdown-display {
+  background: #000;
+  color: #00ff00;
+  padding: 20px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  border: 2px inset #c0c0c0;
+  box-shadow: inset -1px -1px 1px #ffffff, inset 1px 1px 1px #808080;
+}
+
+.countdown-segments {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.countdown-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.countdown-number {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+.countdown-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.countdown-compact {
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+/* Completed state */
+.countdown-display.completed {
+  background: #004000;
+  color: #ffff00;
+  font-size: 24px;
+  font-weight: bold;
+  animation: celebration 2s ease-in-out infinite alternate;
+}
+
+@keyframes celebration {
+  from {
+    text-shadow: 0 0 10px #ffff00;
+  }
+  to {
+    text-shadow: 0 0 20px #ffff00, 0 0 30px #ffff00;
+  }
+}
+
+/* Pulsing animation for low time */
+.countdown-timer.urgent .countdown-number {
+  animation: urgentPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes urgentPulse {
+  from {
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+  }
+  to {
+    color: #ff0000;
+    text-shadow: 0 0 15px #ff0000;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .countdown-segments {
+    gap: 15px;
+  }
+  
+  .countdown-segment {
+    min-width: 50px;
+  }
+  
+  .countdown-number {
+    font-size: 24px;
+  }
+  
+  .countdown-label {
+    font-size: 10px;
+  }
+  
+  .countdown-compact {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .countdown-display {
+    padding: 15px;
+  }
+  
+  .countdown-segments {
+    gap: 10px;
+  }
+  
+  .countdown-number {
+    font-size: 20px;
+  }
+  
+  .countdown-compact {
+    font-size: 18px;
+  }
+}
+
+/* Theme variants */
+.countdown-timer.retro .countdown-display {
+  background: #001100;
+  color: #00ff41;
+  border: 2px solid #00ff41;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.countdown-timer.classic .countdown-display {
+  background: #c0c0c0;
+  color: #000;
+  border: 2px inset #c0c0c0;
+}

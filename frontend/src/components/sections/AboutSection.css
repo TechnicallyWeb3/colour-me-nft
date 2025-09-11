@@ -1,0 +1,240 @@
+/* About Section Component Styles */
+.about-section {
+  margin: 40px 20px;
+}
+
+.notepad-content {
+  background: white;
+  font-family: 'Courier New', monospace;
+  padding: 16px;
+  line-height: 1.4;
+  color: #000;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.notepad-formatted {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.notepad-header-section {
+  border-bottom: 2px solid #000;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.notepad-main-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  color: #000080;
+  text-decoration: underline;
+}
+
+.notepad-subtitle {
+  font-size: 16px;
+  font-style: italic;
+  margin: 0 0 16px 0;
+  color: #333;
+}
+
+.notepad-meta-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border: 1px solid #999;
+}
+
+.meta-label {
+  font-weight: bold;
+  color: #000080;
+}
+
+.meta-value {
+  color: #000;
+}
+
+.meta-value.highlight {
+  color: #008000;
+  font-weight: bold;
+}
+
+.notepad-section {
+  margin: 20px 0;
+  padding: 12px 0;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  color: #000080;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 4px;
+}
+
+.section-description {
+  margin: 8px 0;
+  text-align: justify;
+  color: #333;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.feature-list li {
+  margin: 6px 0;
+  padding: 4px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.feature-list li:last-child {
+  border-bottom: none;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.feature-item {
+  padding: 8px;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  text-align: center;
+}
+
+.steps-list {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.steps-list li {
+  margin: 8px 0;
+}
+
+.tech-specs {
+  margin: 12px 0;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  margin: 4px 0;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.spec-label {
+  font-weight: bold;
+  color: #000080;
+}
+
+.spec-value {
+  color: #000;
+}
+
+.social-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.social-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #e8f4fd;
+  border: 1px solid #b3d9ff;
+  font-size: 12px;
+}
+
+.social-icon {
+  font-size: 16px;
+}
+
+.social-text {
+  color: #000080;
+  font-weight: bold;
+}
+
+.notepad-footer {
+  border-top: 2px solid #000;
+  padding-top: 16px;
+  margin-top: 24px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+}
+
+.copyright {
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notepad-main-title {
+    font-size: 20px;
+  }
+  
+  .notepad-subtitle {
+    font-size: 14px;
+  }
+  
+  .notepad-meta-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .social-links {
+    grid-template-columns: 1fr;
+  }
+  
+  .spec-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-section {
+    margin: 20px 10px;
+  }
+  
+  .notepad-content {
+    padding: 12px;
+    font-size: 11px;
+  }
+  
+  .notepad-main-title {
+    font-size: 18px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+  }
+}

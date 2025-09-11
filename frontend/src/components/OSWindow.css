@@ -1,0 +1,156 @@
+/* OS Window Component Styles - Original Millennial OS Theme */
+.os-window {
+  background: #ece9d8;
+  border: 1px solid #0054e3;
+  border-radius: 8px;
+  box-shadow: 
+    0 0 0 1px #ffffff,
+    0 0 0 2px #0054e3,
+    0 4px 8px rgba(0,0,0,0.3);
+  margin: 20px auto;
+  max-width: 1004px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.os-titlebar {
+  background: linear-gradient(to right, #0054e3, #4a9eff);
+  color: white;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 11px;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  cursor: default;
+  user-select: none;
+}
+
+.os-titlebar-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.os-titlebar-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.os-control-buttons {
+  display: flex;
+  gap: 3px;
+}
+
+.os-btn {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #7a7a7a;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #000;
+  transition: all 0.1s ease;
+}
+
+.os-btn.minimize,
+.os-btn.maximize {
+  background: linear-gradient(to bottom, #e1e1e1, #c0c0c0);
+}
+
+.os-btn.close {
+  background: linear-gradient(to bottom, #ff6b6b, #ff5252);
+  border-color: #d32f2f;
+  color: white;
+}
+
+.os-btn:hover {
+  transform: translateY(-1px);
+}
+
+.os-content {
+  padding: 12px;
+  background: #ece9d8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .os-window {
+    margin: 10px;
+    max-width: 100%;
+    width: calc(100% - 20px);
+  }
+  
+  .os-titlebar {
+    padding: 4px 8px;
+    min-height: 24px;
+  }
+  
+  .os-titlebar-text {
+    font-size: 12px;
+  }
+  
+  .os-btn {
+    width: 20px;
+    height: 18px;
+  }
+  
+  .os-content {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .os-window {
+    margin: 5px;
+    width: calc(100% - 10px);
+    max-width: none;
+  }
+}
+
+/* Special window types */
+.os-window.notepad-window .os-content {
+  background: white;
+  font-family: 'Courier New', monospace;
+  padding: 16px;
+  line-height: 1.4;
+}
+
+.os-window.token-explorer {
+  width: 100%;
+  height: 400px;
+  margin: 0;
+}
+
+.os-window.token-explorer .os-content {
+  padding: 4px;
+}
+
+/* Popup window styles */
+.os-window.popup-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  min-width: 300px;
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+}
+
+.os-window.popup-window .os-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}

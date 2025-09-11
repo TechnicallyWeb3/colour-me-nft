@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import './Home.css';
+import Navigation from './Navigation';
+import AboutSection from './sections/AboutSection';
+import HelpSection from './sections/HelpSection';
+import NFTControlsSection from './sections/NFTControlsSection';
+import TokenExplorerSection from './sections/TokenExplorerSection';
+import OSWindow from './OSWindow';
 import SVGDisplay from './SVGDisplay';
 import { 
   connectToProvider,
@@ -14,236 +19,12 @@ const getMintTimestamp = (): number => {
   return Date.now() + (30 * 24 * 60 * 60 * 1000);
 };
 
-interface TokenExplorerProps {
-  activeToken: number;
-  onTokenSelect: (tokenId: number) => void;
-  tokenCount: number;
-  tokenPreviews: Map<number, string>;
-}
-
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  tokenId: number;
-  onClose: () => void;
-  onAction: (action: string, tokenId: number) => void;
-}
-
-interface AttributesPopupProps {
-  tokenId: number;
-  onClose: () => void;
-}
-
-const AttributesPopup: React.FC<AttributesPopupProps> = ({ tokenId, onClose }) => {
-  // Mock attributes - in a real app these would come from the blockchain
-  const attributes = [
-    { label: 'Token ID', value: tokenId.toString() },
-    { label: 'Type', value: tokenId === 0 ? 'Example' : 'Minted NFT' },
-    { label: 'Created', value: tokenId === 0 ? 'N/A' : 'On Base Network' },
-    { label: 'Objects', value: Math.floor(Math.random() * 50) + 10 },
-    { label: 'Colors Used', value: Math.floor(Math.random() * 10) + 3 },
-    { label: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary'][Math.floor(Math.random() * 4)] }
-  ];
-
-  return (
-    <>
-      <div className="popup-overlay" onClick={onClose} />
-      <div className="attributes-popup os-window">
-        <div className="os-titlebar">
-          <div className="os-titlebar-text">
-            <div className="os-titlebar-icon">📋</div>
-            Token #{tokenId} Attributes
-          </div>
-          <div className="os-control-buttons">
-            <div className="os-btn close" onClick={onClose}></div>
-          </div>
-        </div>
-        <div className="os-content">
-          {attributes.map((attr, index) => (
-            <div key={index} className="attribute-row">
-              <span className="attribute-label">{attr.label}:</span>
-              <span className="attribute-value">{attr.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
-
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, tokenId, onClose, onAction }) => {
-  useEffect(() => {
-    const handleClickOutside = () => onClose();
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [onClose]);
-
-  return (
-    <div className="context-menu" style={{ left: x, top: y }}>
-      <div className="context-menu-item" onClick={() => onAction('open', tokenId)}>
-        Open in app
-      </div>
-      <div className="context-menu-item" onClick={() => onAction('explorer', tokenId)}>
-        View in explorer
-      </div>
-      <div className="context-menu-item" onClick={() => onAction('attributes', tokenId)}>
-        Attributes
-      </div>
-    </div>
-  );
-};
-
-const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews }) => {
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tokenId: number } | null>(null);
-  const [showAttributes, setShowAttributes] = useState<number | null>(null);
-
-  const handleRightClick = (e: React.MouseEvent, tokenId: number) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, tokenId });
-  };
-
-  const handleContextAction = (action: string, tokenId: number) => {
-    setContextMenu(null);
-    
-    switch (action) {
-      case 'open':
-        onTokenSelect(tokenId);
-        // Scroll to the app section
-        document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
-        break;
-      case 'explorer':
-        // Open Base blockchain explorer in new tab
-        const baseUrl = 'https://basescan.org/token/0x'; // Replace with actual contract address
-        window.open(`${baseUrl}CONTRACT_ADDRESS?a=${tokenId}`, '_blank');
-        break;
-      case 'attributes':
-        setShowAttributes(tokenId);
-        break;
-    }
-  };
-
-  const handleIconClick = (tokenId: number) => {
-    onTokenSelect(tokenId);
-    // Scroll to the app section
-    document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Only show tokens if there are actually tokens minted (tokenCount > 0)
-  // Create array of token IDs from 1 to tokenCount, but only if tokenCount > 0
-  const tokens = tokenCount > 0 ? Array.from({ length: tokenCount }, (_, i) => i + 1) : [];
-
-  return (
-    <>
-      <div className="os-window token-explorer">
-        <div className="os-titlebar">
-          <div className="os-titlebar-text">
-            <div className="os-titlebar-icon">📁</div>
-            Token Explorer
-          </div>
-          <div className="os-control-buttons">
-            <div className="os-btn minimize"></div>
-            <div className="os-btn maximize"></div>
-            <div className="os-btn close"></div>
-          </div>
-        </div>
-        
-        <div className="explorer-content">
-          <div className="token-grid">
-            {/* Always show example.svg */}
-            <div 
-              className={`token-item ${activeToken === 0 ? 'active' : ''}`}
-              onClick={() => onTokenSelect(0)}
-              onContextMenu={(e) => handleRightClick(e, 0)}
-            >
-              <div 
-                className="token-thumbnail"
-                onDoubleClick={() => handleIconClick(0)}
-              >
-                <span>🎨</span>
-              </div>
-              <div className="token-filename">example.svg</div>
-            </div>
-            
-            {/* Show minted tokens only if they exist */}
-            {tokens.length > 0 ? (
-              tokens.map(tokenId => {
-                const previewUrl = tokenPreviews.get(tokenId);
-                return (
-                  <div 
-                    key={tokenId}
-                    className={`token-item ${activeToken === tokenId ? 'active' : ''}`}
-                    onClick={() => onTokenSelect(tokenId)}
-                    onContextMenu={(e) => handleRightClick(e, tokenId)}
-                  >
-                    <div 
-                      className="token-thumbnail"
-                      onDoubleClick={() => handleIconClick(tokenId)}
-                    >
-                      {previewUrl ? (
-                        <img 
-                          src={previewUrl}
-                          alt={`Token #${tokenId}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            borderRadius: '2px'
-                          }}
-                        />
-                      ) : (
-                        <div style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          height: '100%',
-                          fontSize: '10px'
-                        }}>
-                          <span style={{ marginBottom: '2px' }}>⏳</span>
-                          <span>#{tokenId}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="token-filename">{tokenId}.svg</div>
-                  </div>
-                );
-              })
-            ) : (
-              /* Show message when no tokens are minted */
-              <div className="token-item" style={{ opacity: 0.6, cursor: 'default' }}>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          tokenId={contextMenu.tokenId}
-          onClose={() => setContextMenu(null)}
-          onAction={handleContextAction}
-        />
-      )}
-      
-      {showAttributes !== null && (
-        <AttributesPopup
-          tokenId={showAttributes}
-          onClose={() => setShowAttributes(null)}
-        />
-      )}
-    </>
-  );
-};
-
 const Home: React.FC = () => {
   const [isLaunched, setIsLaunched] = useState(false);
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mintCount, setMintCount] = useState(0); // Start with 0, will be loaded from blockchain
   const [totalSupply] = useState(1000);
   const [activeToken, setActiveToken] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [launchTimestamp] = useState(getMintTimestamp());
 
   const [svgKey, setSvgKey] = useState(0); // For forcing SVG reload like in App.tsx
   
@@ -251,35 +32,6 @@ const Home: React.FC = () => {
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
   const [isLoadingTokenCount, setIsLoadingTokenCount] = useState(false);
-
-  // Initialize countdown from mock timestamp
-  useEffect(() => {
-    const launchTime = getMintTimestamp();
-    
-    const updateCountdown = () => {
-      const now = Date.now();
-      const timeLeft = launchTime - now;
-      
-      if (timeLeft <= 0) {
-        setIsLaunched(true);
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      } else {
-        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-        
-        setCountdown({ days, hours, minutes, seconds });
-      }
-    };
-    
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-
 
   // Initialize blockchain connection
   useEffect(() => {
@@ -386,87 +138,24 @@ const Home: React.FC = () => {
     };
   }, [tokenPreviews]);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    element?.scrollIntoView({ behavior: 'smooth' });
-    setIsMobileMenuOpen(false); // Close mobile menu after navigation
-  };
-
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isMobileMenuOpen && !target.closest('.os-navbar')) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isMobileMenuOpen]);
-
   const handleMint = () => {
     // Implement minting logic here
     console.log('Minting NFT...');
     setMintCount(prev => prev + 1);
   };
 
+  const handleLaunchComplete = () => {
+    setIsLaunched(true);
+  };
+
+  const handleTokenSelect = (tokenId: number) => {
+    setActiveToken(tokenId);
+  };
+
   return (
     <div className="home-container">
       {/* Navigation */}
-      <nav className="os-navbar">
-        <div className="os-nav-links">
-          <a href="#title" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('title'); }}>
-            Home
-          </a>
-          <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
-            About
-          </a>
-          <a href="#help" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('help'); }}>
-            Help
-          </a>
-          <a href="#app" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('app'); }}>
-            App
-          </a>
-          <a href="#explorer" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('explorer'); }}>
-            Explorer
-          </a>
-        </div>
-        
-        <div className={`os-hamburger ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        
-        <div className="os-social-links">
-          <a href="https://twitter.com/ColourMeNFT" target="_blank" rel="noopener noreferrer" className="os-social-link">
-            𝕏
-          </a>
-          <a href="https://tiktok.com/@TechnicallyWeb3" target="_blank" rel="noopener noreferrer" className="os-social-link">
-            📱
-          </a>
-        </div>
-        
-        {/* Mobile Menu */}
-        <div className={`os-nav-mobile ${isMobileMenuOpen ? 'open' : ''}`}>
-          <a href="#title" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('title'); }}>
-            Home
-          </a>
-          <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
-            About
-          </a>
-          <a href="#help" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('help'); }}>
-            Help
-          </a>
-          <a href="#app" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('app'); }}>
-            App
-          </a>
-          <a href="#explorer" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('explorer'); }}>
-            Explorer
-          </a>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Title Section */}
       <section id="title" className="page-header">
@@ -475,258 +164,29 @@ const Home: React.FC = () => {
       </section>
 
       {/* About Section */}
-      <section id="about">
-        <div className="os-window">
-          <div className="os-titlebar">
-            <div className="os-titlebar-text">
-              <div className="os-titlebar-icon">📝</div>
-              About - Notepad
-            </div>
-            <div className="os-control-buttons">
-              <div className="os-btn minimize"></div>
-              <div className="os-btn maximize"></div>
-              <div className="os-btn close"></div>
-            </div>
-          </div>
-          
-                    <div className="os-content notepad-content">
-            <div className="notepad-formatted">
-              <div className="notepad-header-section">
-                <h1 className="notepad-main-title">🎨 ColourMeNFT</h1>
-                <p className="notepad-subtitle">Revolutionary Web3 Paint Platform</p>
-                
-                <div className="notepad-meta-info">
-                  <div className="meta-item">
-                    <span className="meta-label">Date:</span>
-                    <span className="meta-value">September 2025</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-label">Version:</span>
-                    <span className="meta-value">1.0</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-label">Platform:</span>
-                    <span className="meta-value">Base Network</span>
-                  </div>
-                  <div className="meta-item">
-                    <span className="meta-label">Mint Price:</span>
-                    <span className="meta-value highlight">$1 USD</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">📖 About This Project</h2>
-                <p className="section-description">
-                  Welcome to the future of digital art creation! ColourMeNFT combines the 
-                  nostalgia of retro computing with cutting-edge blockchain technology.
-                </p>
-                <p className="section-description">
-                  Our platform brings together artists, collectors, and Web3 enthusiasts in
-                  a unique creative ecosystem where every pixel tells a story.
-                </p>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">✨ What Makes Us Special</h2>
-                <ul className="feature-list">
-                  <li>🎨 Create stunning pixel art directly in your browser</li>
-                  <li>⛓️ Everything stored <strong>ON-CHAIN</strong> as SVG format</li>
-                  <li>💰 Mint your masterpieces on Base network for just <strong>$1</strong></li>
-                  <li>🤝 Collaborate and modify existing NFTs (living art!)</li>
-                  <li>👥 Community-driven creative platform</li>
-                  <li>🔒 No external dependencies - truly decentralized art</li>
-                </ul>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">🚀 Key Features</h2>
-                <div className="features-grid">
-                  <div className="feature-item">✅ Dynamic SVG rendering system</div>
-                  <div className="feature-item">🏆 Permanent ownership & provenance</div>
-                  <div className="feature-item">🌱 Living, evolving digital art</div>
-                  <div className="feature-item">⚡ Low-cost transactions on Base</div>
-                  <div className="feature-item">💻 Retro-style interface</div>
-                  <div className="feature-item">🖼️ Token gallery and explorer</div>
-                  <div className="feature-item">🔄 Real-time collaboration tools</div>
-                  <div className="feature-item">📤 Export functionality (SVG, PNG)</div>
-                </div>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">💡 How It Works</h2>
-                <ol className="steps-list">
-                  <li><strong>Connect</strong> your Web3 wallet (MetaMask, etc.)</li>
-                  <li><strong>Create</strong> amazing pixel art using our retro tools</li>
-                  <li><strong>Mint</strong> your creation as an NFT for $1</li>
-                  <li><strong>Share</strong> and trade with the community</li>
-                  <li><strong>Evolve</strong> your existing tokens (costs gas)</li>
-                </ol>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">⚙️ Technical Details</h2>
-                <div className="tech-specs">
-                  <div className="spec-row">
-                    <span className="spec-label">Blockchain:</span>
-                    <span className="spec-value">Base (Ethereum L2)</span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Token Standard:</span>
-                    <span className="spec-value">ERC-721</span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Storage:</span>
-                    <span className="spec-value">On-chain SVG</span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Rendering:</span>
-                    <span className="spec-value">Dynamic, client-side</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="notepad-section">
-                <h2 className="section-title">🌐 Community & Support</h2>
-                <p className="section-description">
-                  Join thousands of artists in this Web3 paint adventure! Experience the 
-                  perfect blend of nostalgia and innovation.
-                </p>
-                
-                <div className="social-links">
-                  <div className="social-item">
-                    <span className="social-icon">🌐</span>
-                    <span className="social-text">ColourMeNFT.xyz</span>
-                  </div>
-                  <div className="social-item">
-                    <span className="social-icon">🐦</span>
-                    <span className="social-text">@ColourMeNFT</span>
-                  </div>
-                  <div className="social-item">
-                    <span className="social-icon">📱</span>
-                    <span className="social-text">@TechnicallyWeb3</span>
-                  </div>
-                  <div className="social-item">
-                    <span className="social-icon">💬</span>
-                    <span className="social-text">Discord Coming Soon!</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="notepad-footer">
-                <p>Built with ❤️ by the TechnicallyWeb3 team</p>
-                <p className="copyright">© 2025 ColourMeNFT - Powered by Base Network</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <AboutSection />
 
       {/* Help Section */}
-      <section id="help">
-        <div className="os-window" style={{ width: '100%', height: '100%' }}>
-          <div className="os-titlebar">
-            <div className="os-titlebar-text">
-              <div className="os-titlebar-icon">❓</div>
-              How to Use - Help
-            </div>
-            <div className="os-control-buttons">
-              <div className="os-btn minimize"></div>
-              <div className="os-btn maximize"></div>
-              <div className="os-btn close"></div>
-            </div>
-          </div>
-          
-          <div className="os-content">
-            <div style={{ padding: '20px', lineHeight: '1.6' }}>
-              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Getting Started:</h3>
-              <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
-                <li style={{ marginBottom: '8px' }}><strong>Connect Your Wallet:</strong> Click the "Connect Wallet" button and connect your MetaMask or compatible wallet</li>
-                <li style={{ marginBottom: '8px' }}><strong>Switch to Base:</strong> Make sure you're on the Base network for low-cost transactions</li>
-                <li style={{ marginBottom: '8px' }}><strong>Create Art:</strong> Use the painting tools in the main application window to create your masterpiece</li>
-                <li style={{ marginBottom: '8px' }}><strong>Mint NFT:</strong> Once you're happy with your creation, click "Mint NFT" to create your token</li>
-              </ul>
-              
-              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Advanced Features:</h3>
-              <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
-                <li style={{ marginBottom: '8px' }}><strong>Token Explorer:</strong> Browse existing tokens, double-click to load them into the editor</li>
-                <li style={{ marginBottom: '8px' }}><strong>Right-click Menu:</strong> Right-click on tokens for additional options like viewing attributes</li>
-                <li style={{ marginBottom: '8px' }}><strong>Collaborative Art:</strong> Token owners can modify their existing NFTs (costs gas)</li>
-                <li style={{ marginBottom: '8px' }}><strong>Export:</strong> Save your artwork as SVG files for external use</li>
-              </ul>
-              
-              <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Tips:</h3>
-              <ul style={{ paddingLeft: '20px' }}>
-                <li style={{ marginBottom: '8px' }}>Complex artworks may require multiple transactions due to gas limits</li>
-                <li style={{ marginBottom: '8px' }}>Simpler designs with fewer objects are more gas-efficient</li>
-                <li style={{ marginBottom: '8px' }}>All artwork is stored on-chain as SVG, ensuring permanence</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HelpSection />
 
       {/* NFT Controls */}
-      <section id="controls" className="nft-controls">
-        <div className="os-window">
-          <div className="os-titlebar">
-            <div className="os-titlebar-text">
-              <div className="os-titlebar-icon">🎮</div>
-              NFT Controls
-            </div>
-            <div className="os-control-buttons">
-              <div className="os-btn minimize"></div>
-              <div className="os-btn maximize"></div>
-              <div className="os-btn close"></div>
-            </div>
-          </div>
-          
-          <div className="os-content">
-            {!isLaunched ? (
-              <div className="countdown-container">
-                <h3>Launch Countdown</h3>
-                <div className="countdown">
-                  {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
-                </div>
-                <p>Get ready for the most epic paint party in Web3!</p>
-              </div>
-            ) : (
-              <div className="mint-controls">
-                <div className="mint-counter">
-                  {isLoadingTokenCount ? (
-                    'Loading token count...'
-                  ) : (
-                    `Minted: ${mintCount} / ${totalSupply}`
-                  )}
-                </div>
-                <button 
-                  className="os-btn-large success"
-                  onClick={handleMint}
-                  disabled={mintCount >= totalSupply || isLoadingTokenCount}
-                >
-                  Mint NFT ($1)
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      <NFTControlsSection
+        isLaunched={isLaunched}
+        mintCount={mintCount}
+        totalSupply={totalSupply}
+        launchTimestamp={launchTimestamp}
+        isLoadingTokenCount={isLoadingTokenCount}
+        onMint={handleMint}
+        onLaunchComplete={handleLaunchComplete}
+      />
 
       {/* Main App Window */}
       <section id="app" className="main-app-window">
-        <div className="os-window">
-          <div className="os-titlebar">
-            <div className="os-titlebar-text">
-              <div className="os-titlebar-icon">🎨</div>
-              ColourMeNFT.xyz - {activeToken === 0 ? 'example.svg' : `${activeToken}.svg`}
-            </div>
-            <div className="os-control-buttons">
-              <div className="os-btn minimize"></div>
-              <div className="os-btn maximize"></div>
-              <div className="os-btn close"></div>
-            </div>
-          </div>
-          
+        <OSWindow
+          title={`ColourMeNFT.xyz - ${activeToken === 0 ? 'example.svg' : `${activeToken}.svg`}`}
+          icon="🎨"
+          showControls={true}
+        >
           <div className="app-content-area">
             <SVGDisplay
               key={svgKey}
@@ -735,26 +195,17 @@ const Home: React.FC = () => {
               height={1000}
             />
           </div>
-        </div>
+        </OSWindow>
       </section>
 
       {/* Token Explorer */}
-      <section id="explorer">
-        <h2 className="section-header">Token Gallery</h2>
-        {isLoadingTokenCount ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'white' }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-            <div>Loading token data from blockchain...</div>
-          </div>
-        ) : (
-          <TokenExplorer 
-            activeToken={activeToken}
-            onTokenSelect={setActiveToken}
-            tokenCount={mintCount}
-            tokenPreviews={tokenPreviews}
-          />
-        )}
-      </section>
+      <TokenExplorerSection
+        activeToken={activeToken}
+        onTokenSelect={handleTokenSelect}
+        tokenCount={mintCount}
+        tokenPreviews={tokenPreviews}
+        isLoading={isLoadingTokenCount}
+      />
 
       {/* Footer */}
       <footer className="footer">

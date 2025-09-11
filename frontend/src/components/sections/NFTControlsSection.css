@@ -1,0 +1,258 @@
+/* NFT Controls Section Component Styles */
+.nft-controls-section {
+  margin: 40px 20px;
+}
+
+.nft-controls-content {
+  padding: 20px;
+  text-align: center;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+}
+
+.countdown-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.countdown-message {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  font-style: italic;
+  text-align: center;
+}
+
+.mint-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.mint-counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.loading-spinner {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mint-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #000080;
+}
+
+.mint-current {
+  font-size: 32px;
+  color: #008000;
+}
+
+.mint-separator {
+  font-size: 24px;
+  color: #666;
+}
+
+.mint-total {
+  font-size: 20px;
+  color: #333;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #f0f0f0;
+  border: 2px inset #c0c0c0;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.1),
+    rgba(255,255,255,0.1) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+  animation: progressStripes 1s linear infinite;
+}
+
+@keyframes progressStripes {
+  from { background-position: 0 0; }
+  to { background-position: 16px 0; }
+}
+
+.mint-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px outset #c0c0c0;
+  background: linear-gradient(to bottom, #ffffff, #e0e0e0);
+  color: #000;
+  cursor: pointer;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+  border-radius: 4px;
+  transition: all 0.1s ease;
+  min-width: 150px;
+}
+
+.mint-button:hover:not(.disabled) {
+  background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
+  transform: translateY(-1px);
+}
+
+.mint-button:active:not(.disabled) {
+  border: 2px inset #c0c0c0;
+  background: #d0d0d0;
+  transform: translateY(0);
+}
+
+.mint-button.disabled {
+  background: #a0a0a0;
+  color: #666;
+  cursor: not-allowed;
+  border: 2px inset #a0a0a0;
+}
+
+.sold-out-message {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  line-height: 1.4;
+  max-width: 250px;
+}
+
+/* Success state animation */
+.mint-button:not(.disabled):active {
+  animation: mintSuccess 0.3s ease-out;
+}
+
+@keyframes mintSuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .nft-controls-section {
+    margin: 20px 10px;
+  }
+  
+  .nft-controls-content {
+    padding: 16px;
+  }
+  
+  .mint-controls {
+    max-width: 250px;
+    gap: 16px;
+  }
+  
+  .mint-stats {
+    font-size: 20px;
+  }
+  
+  .mint-current {
+    font-size: 28px;
+  }
+  
+  .mint-separator {
+    font-size: 20px;
+  }
+  
+  .mint-total {
+    font-size: 18px;
+  }
+  
+  .progress-bar {
+    height: 16px;
+  }
+  
+  .mint-button {
+    padding: 10px 20px;
+    font-size: 14px;
+    min-width: 130px;
+  }
+  
+  .countdown-message,
+  .sold-out-message {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nft-controls-content {
+    padding: 12px;
+  }
+  
+  .mint-controls {
+    max-width: 200px;
+    gap: 12px;
+  }
+  
+  .mint-stats {
+    font-size: 18px;
+  }
+  
+  .mint-current {
+    font-size: 24px;
+  }
+  
+  .mint-separator {
+    font-size: 18px;
+  }
+  
+  .mint-total {
+    font-size: 16px;
+  }
+  
+  .progress-bar {
+    height: 14px;
+  }
+  
+  .mint-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-width: 120px;
+  }
+}

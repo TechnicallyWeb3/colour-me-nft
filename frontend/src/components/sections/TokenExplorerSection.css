@@ -1,0 +1,245 @@
+/* Token Explorer Section Component Styles */
+.token-explorer-section {
+  margin: 40px 20px;
+}
+
+.section-header {
+  text-align: center;
+  color: white;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px;
+  color: white;
+}
+
+.loading-icon {
+  font-size: 24px;
+  margin-bottom: 10px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 16px;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+}
+
+.explorer-content {
+  padding: 4px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 12px;
+  padding: 8px;
+  max-height: 350px;
+  overflow-y: auto;
+  background: #c0c0c0;
+}
+
+.token-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.1s ease;
+  user-select: none;
+  min-height: 90px;
+}
+
+.token-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.token-item.active {
+  background: #316ac5;
+  color: white;
+}
+
+.token-item.active .token-filename {
+  color: white;
+}
+
+.token-thumbnail {
+  width: 60px;
+  height: 60px;
+  border: 2px outset #c0c0c0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.token-thumbnail:hover {
+  border: 2px inset #c0c0c0;
+}
+
+.token-thumbnail span {
+  font-size: 24px;
+}
+
+.token-preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.token-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 10px;
+  color: #666;
+}
+
+.placeholder-icon {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.placeholder-text {
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.token-filename {
+  font-size: 10px;
+  text-align: center;
+  color: #000;
+  font-weight: bold;
+  word-break: break-word;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-tokens-message {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.no-tokens-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-tokens-text {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling for token grid */
+.token-grid::-webkit-scrollbar {
+  width: 12px;
+}
+
+.token-grid::-webkit-scrollbar-track {
+  background: #a0a0a0;
+  border: 1px inset #a0a0a0;
+}
+
+.token-grid::-webkit-scrollbar-thumb {
+  background: #808080;
+  border: 1px outset #808080;
+}
+
+.token-grid::-webkit-scrollbar-thumb:hover {
+  background: #606060;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .token-explorer-section {
+    margin: 20px 10px;
+  }
+  
+  .section-header {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .token-grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 10px;
+    max-height: 300px;
+  }
+  
+  .token-thumbnail {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .token-thumbnail span {
+    font-size: 20px;
+  }
+  
+  .token-filename {
+    font-size: 9px;
+  }
+  
+  .no-tokens-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  
+  .no-tokens-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .token-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    max-height: 250px;
+  }
+  
+  .token-thumbnail {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .token-thumbnail span {
+    font-size: 18px;
+  }
+  
+  .token-filename {
+    font-size: 8px;
+  }
+  
+  .token-item {
+    min-height: 75px;
+    padding: 4px;
+  }
+}

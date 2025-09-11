@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import Home from './components/Home'
+import OSWindow from './components/OSWindow'
 import UnifiedActionButton from './components/UnifiedActionButton'
 import SVGDisplay from './components/SVGDisplay'
 import BlockchainControls from './components/BlockchainControls'
@@ -15,6 +16,7 @@ import {
   type ContractObject
 } from './utils/blockchain'
 import type { ColourMeNFT } from './typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT'
+import './styles/global.css'
 import './App.css'
 
 function HomePage() {
@@ -337,42 +339,33 @@ function HomePage() {
         {/* Left Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Unified Action Button */}
-          <div style={{
-            padding: '20px',
-            border: '2px solid #ddd',
-            borderRadius: '12px',
-            backgroundColor: '#f9f9f9'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 20px 0', 
-              textAlign: 'center',
-              color: '#333'
-            }}>
-              🎨 Paint NFT dApp
-            </h2>
+          <OSWindow
+            title="Paint NFT dApp"
+            icon="🎨"
+            showControls={false}
+          >
             <UnifiedActionButton 
               onMintSuccess={handleMintSuccess}
               onAccountChange={handleAccountChange}
             />
-          </div>
+          </OSWindow>
           
           {/* Token Info */}
           {tokenId && (
-            <div style={{
-              padding: '15px',
-              border: '2px solid #2196F3',
-              borderRadius: '8px',
-              backgroundColor: '#f3f9ff'
-            }}>
+            <OSWindow
+              title={`Viewing Token #${tokenId}`}
+              icon="🖼️"
+              showControls={false}
+            >
               <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
                 marginBottom: '10px'
               }}>
-                <h3 style={{ margin: '0', color: '#1976d2' }}>
-                  🖼️ Viewing Token #{tokenId}
-                </h3>
+                <span style={{ color: '#1976d2', fontWeight: 'bold' }}>
+                  Token Information
+                </span>
                 
                 <button
                   onClick={handleSaveSuccess} // This triggers SVG reload
@@ -452,24 +445,20 @@ function HomePage() {
                   Connect wallet to interact with tokens
                 </div>
               )}
-            </div>
+            </OSWindow>
           )}
 
           {/* Current Status */}
           {!tokenId && (
-            <div style={{
-              padding: '15px',
-              border: '2px solid #4CAF50',
-              borderRadius: '8px',
-              backgroundColor: '#f1f8e9'
-            }}>
-              <h3 style={{ margin: '0 0 10px 0', color: '#2e7d32' }}>
-                🎨 Create Mode
-              </h3>
+            <OSWindow
+              title="Create Mode"
+              icon="🎨"
+              showControls={false}
+            >
               <p style={{ margin: 0, fontSize: '14px', color: '#555' }}>
                 You're using the local canvas. Paint something amazing, then mint it as an NFT!
               </p>
-            </div>
+            </OSWindow>
           )}
         </div>
 
