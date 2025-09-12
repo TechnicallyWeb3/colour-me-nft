@@ -387,10 +387,9 @@ const Home: React.FC = () => {
   };
 
   const appWindowWidth = () => {
-    // get displayport width or 1000 whichever is smaller
-    const appElement = document.getElementById('app');
-    const appWidth = appElement ? appElement.offsetWidth : 1000;
-    return Math.min(appWidth, 1000);
+    // Use a fixed width to prevent dynamic resizing issues
+    // The CSS will handle responsive behavior through max-width and aspect-ratio
+    return 1000;
   };
 
   return (
