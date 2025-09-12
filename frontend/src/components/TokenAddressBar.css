@@ -1,0 +1,179 @@
+/* Token Address Bar Component Styles */
+.token-address-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 100;
+}
+
+.token-address-bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+  padding: 6px 12px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.token-address-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+}
+
+.address-label,
+.token-label {
+  color: #666;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.address-value {
+  color: #000;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  background: #f8f8f8;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.address-value:hover {
+  background: #f0f8ff;
+  border-color: #0054e3;
+}
+
+.token-value {
+  color: #0054e3;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* Button Styles */
+.token-address-copy-button,
+.token-address-explorer-button,
+.token-address-opensea-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 18px;
+  color: inherit;
+  cursor: pointer;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.token-address-copy-button:hover,
+.token-address-explorer-button:hover,
+.token-address-opensea-button:hover {
+  transform: scale(1.1);
+}
+
+.token-address-copy-button:active,
+.token-address-explorer-button:active,
+.token-address-opensea-button:active {
+  transform: scale(0.95);
+}
+
+.token-address-copy-button:disabled,
+.token-address-explorer-button:disabled,
+.token-address-opensea-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.token-address-copy-button:disabled:hover,
+.token-address-explorer-button:disabled:hover,
+.token-address-opensea-button:disabled:hover {
+  transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .token-address-bar-container {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .token-address-bar-wrapper {
+    padding: 4px 8px;
+  }
+  
+  .token-address-display {
+    font-size: 10px;
+    gap: 6px;
+  }
+  
+  .address-value {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  
+  .token-value {
+    font-size: 10px;
+  }
+  
+  .token-address-copy-button,
+  .token-address-explorer-button,
+  .token-address-opensea-button {
+    font-size: 16px;
+    min-width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .token-address-bar-container {
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .token-address-bar-wrapper {
+    padding: 3px 6px;
+    flex: 1;
+    min-width: 200px;
+  }
+  
+  .token-address-display {
+    font-size: 9px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .address-label,
+  .token-label {
+    font-size: 9px;
+  }
+  
+  .address-value {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+  
+  .token-value {
+    font-size: 9px;
+  }
+  
+  .token-address-copy-button,
+  .token-address-explorer-button,
+  .token-address-opensea-button {
+    font-size: 14px;
+    min-width: 18px;
+    height: 18px;
+  }
+}

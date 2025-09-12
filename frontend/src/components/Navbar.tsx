@@ -41,14 +41,17 @@ const Navbar: React.FC = () => {
           <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
             About
           </a>
-          <a href="#help" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('help'); }}>
-            Help
+          <a href="#mint" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('mint'); }}>
+            Mint
           </a>
           <a href="#app" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('app'); }}>
-            App
+            Colour Me NFT
           </a>
-          <a href="#explorer" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('explorer'); }}>
-            Explorer
+          <a href="#gallery" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('gallery'); }}>
+            Gallery
+          </a>
+          <a href="#overview" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('overview'); }}>
+            Overview
           </a>
         </div>
         
@@ -69,14 +72,17 @@ const Navbar: React.FC = () => {
           <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
             About
           </a>
-          <a href="#help" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('help'); }}>
-            Help
+          <a href="#mint" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('overview'); }}>
+            Mint
           </a>
           <a href="#app" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('app'); }}>
-            App
+            Colour Me NFT
           </a>
-          <a href="#explorer" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('explorer'); }}>
-            Explorer
+          <a href="#gallery" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('gallery'); }}>
+            Gallery
+          </a>
+          <a href="#overview" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('overview'); }}>
+            Overview
           </a>
         </div>
       </nav>
