@@ -21,7 +21,9 @@ body {
   border-bottom: 1px solid #0054e3;
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   border-radius: 0 0 10px 10px;
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 16px;
   position: fixed;
   top: 0;
@@ -33,6 +35,7 @@ body {
 }
 
 .os-nav-links {
+  display: flex;
   gap: 15px;
 }
 
@@ -53,6 +56,7 @@ body {
 }
 
 .os-social-links {
+  display: flex;
   gap: 10px;
   background: #5aaeff;
   height: 100%;
@@ -75,6 +79,7 @@ body {
 /* Hamburger Menu */
 .os-hamburger {
   display: none;
+  flex-direction: column;
   cursor: pointer;
   padding: 4px;
   z-index: 1001;
@@ -103,6 +108,7 @@ body {
 
 .os-nav-mobile {
   display: none;
+  flex-direction: column;
   position: absolute;
   top: 100%;
   left: 0;
@@ -117,6 +123,7 @@ body {
 }
 
 .os-nav-mobile.open {
+  display: flex;
   transform: translateY(0);
 }
 
@@ -203,7 +210,9 @@ body {
   background: linear-gradient(to right, #0054e3, #4a9eff);
   color: white;
   padding: 6px 12px;
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   font-weight: bold;
   font-size: 11px;
   text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
@@ -212,18 +221,23 @@ body {
 }
 
 .os-titlebar-text {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
 .os-titlebar-icon {
   width: 16px;
   height: 16px;
+  display: flex;
+  align-items: center;
   justify-content: center;
   font-size: 14px;
   cursor: pointer;
 }
 
 .os-control-buttons {
+  display: flex;
   gap: 3px;
 }
 
@@ -233,6 +247,8 @@ body {
   border: 1px solid #7a7a7a;
   border-radius: 3px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
   justify-content: center;
   font-size: 10px;
   font-weight: bold;
@@ -271,9 +287,13 @@ body {
 .app-content-area {
   background: white;
   border: 1px solid #c0c0c0;
+  display: flex;
+  align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  aspect-ratio: 1 / 1;
+  width: 100%;
 }
 
 .app-content-area svg {
@@ -331,7 +351,9 @@ html, body {
 }
 
 .mint-controls {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
   margin: 20px 0;
 }
 
@@ -400,6 +422,9 @@ html, body {
 }
 
 .token-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 10px;
   border: 2px solid transparent;
   border-radius: 6px;
@@ -426,6 +451,8 @@ html, body {
   border-radius: 4px;
   background: white;
   margin-bottom: 5px;
+  display: flex;
+  align-items: center;
   justify-content: center;
   font-size: 12px;
   color: #666;
@@ -492,9 +519,9 @@ html, body {
 
 /* Notepad About Section */
 .notepad-section {
-  justify-content: center;
-  padding: 40px 20px;
-  margin: 20px 0;
+  display: block;
+  padding: 20px 0;
+  margin: 10px 0;
 }
 
 .notepad-section .os-window {
@@ -555,6 +582,7 @@ html, body {
 }
 
 .meta-item {
+  display: flex;
   justify-content: space-between;
   font-size: 11px;
 }
@@ -585,7 +613,6 @@ html, body {
 }
 
 /* Special styling for About This Project section */
-}
 
 .section-title {
   font-size: 16px;
@@ -675,6 +702,8 @@ html, body {
   width: 18px;
   height: 18px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
   justify-content: center;
   font-size: 9px;
   font-weight: bold;
@@ -689,6 +718,7 @@ html, body {
 }
 
 .spec-row {
+  display: flex;
   justify-content: space-between;
   padding: 6px 12px;
   border-bottom: 1px solid #f0f0f0;
@@ -722,6 +752,8 @@ html, body {
 }
 
 .social-item {
+  display: flex;
+  align-items: center;
   gap: 8px;
   padding: 6px 10px;
   background: white;
@@ -856,6 +888,7 @@ html, body {
 }
 
 .attribute-row {
+  display: flex;
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #c0c0c0;
@@ -936,6 +969,10 @@ html, body {
 
 /* Responsive Design */
 @media (max-width: 1024px) {
+    /* Force everything to fit within viewport */
+  * {
+      max-width: 100vw !important;
+  }
   .main-app-window {
     max-width: 95vw;
     margin: 15px auto;
@@ -1105,10 +1142,6 @@ html, body {
 }
 
 @media (max-width: 480px) {
-  /* Force everything to fit within viewport */
-  * {
-    max-width: 100vw !important;
-  }
   
   /* Remove all root padding and hide scrollbars */
   html, body {

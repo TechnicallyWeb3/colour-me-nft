@@ -248,7 +248,7 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
           borderRadius: '8px',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+        <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
           <div>Loading SVG...</div>
         </div>
       )}
