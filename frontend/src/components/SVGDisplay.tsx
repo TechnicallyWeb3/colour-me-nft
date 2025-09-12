@@ -282,7 +282,6 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
           className={className}
           style={{
             border: '2px solid #ddd',
-            borderRadius: '8px',
             backgroundColor: 'white'
           }}
         >

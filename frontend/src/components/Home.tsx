@@ -383,7 +383,14 @@ const Home: React.FC = () => {
   };
 
   const appTitle = () => {
-    return `${activeToken}.svg`;
+    return `ColourMeNFT - ${activeToken}.svg`;
+  };
+
+  const appWindowWidth = () => {
+    // get displayport width or 1000 whichever is smaller
+    const appElement = document.getElementById('app');
+    const appWidth = appElement ? appElement.offsetWidth : 1000;
+    return Math.min(appWidth, 1000);
   };
 
   return (
@@ -610,8 +617,8 @@ const Home: React.FC = () => {
           <SVGDisplay
             key={svgKey}
             tokenId={activeToken || undefined}
-            width={1000}
-            height={1000}
+            width={appWindowWidth()}
+            height={appWindowWidth()}
           />
         </div>
       </Window>
