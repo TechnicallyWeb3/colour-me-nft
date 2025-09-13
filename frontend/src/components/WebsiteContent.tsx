@@ -17,6 +17,7 @@ interface WebsiteContentProps {
   contractData: ContractData | null;
   contract: ColourMeNFT | null;
   onMintSuccess?: (tokenId: number) => void;
+  onContractDataUpdate?: () => void;
 }
 
 interface EventMessage {
@@ -30,7 +31,8 @@ interface EventMessage {
 const WebsiteContent: React.FC<WebsiteContentProps> = ({
   contractData,
   contract,
-  onMintSuccess
+  onMintSuccess,
+  onContractDataUpdate
 }) => {
   // Wallet state
   const [account, setAccount] = useState<string>('');
@@ -215,8 +217,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       const result = await mintToken(writeContract, account, mintQuantity);
       
       if (result.success) {
-        const newTokenId = (contractData?.tokenCount || 0) + 1;
-        showMessage(`Token #${newTokenId} minted successfully!`);
+        showMessage(`Successfully minted ${mintQuantity} token${mintQuantity > 1 ? 's' : ''}!`);
         
         // Add event message
         const newEvent: EventMessage = {
@@ -228,7 +229,14 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
         };
         setEventMessages(prev => [newEvent, ...prev.slice(0, 9)]); // Keep only last 10
         
-        if (onMintSuccess) {
+        // Refresh contract data from blockchain to get accurate token count
+        if (onContractDataUpdate) {
+          onContractDataUpdate();
+        }
+        
+        // Set active token to the first newly minted token
+        if (onMintSuccess && contractData) {
+          const newTokenId = contractData.tokenCount + 1; // First new token
           onMintSuccess(newTokenId);
         }
       } else {
@@ -298,48 +306,29 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   const buttonState = getButtonState();
 
   const renderMintingStatus = () => {
-    if (!contractData) return <div className="loading-text">Loading...</div>;
+    if (!contractData) return 'Loading...';
 
     const now = new Date();
     const isActive = contractData.isMintActive;
     const mintEnd = contractData.mintEnd;
     const mintOpen = contractData.mintOpen;
 
-    if (isActive) {
+    if (contractData.tokenCount >= contractData.maxSupply) {
+      return 'Sold Out';
+    } else if (isActive) {
       const timeLeft = mintEnd.getTime() - now.getTime();
       const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
-      return (
-        <div className="minting-open">
-          <h3>Minting Open</h3>
-          <div className="countdown">
-            Ends in {days}d {hours}h {minutes}m
-          </div>
-        </div>
-      );
+      return `Ends in ${days}d ${hours}h ${minutes}m`;
     } else if (now < mintOpen) {
       const timeLeft = mintOpen.getTime() - now.getTime();
       const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
-      return (
-        <div className="minting-closed-future">
-          <h3>Minting Opens In</h3>
-          <div className="countdown">
-            {days}d {hours}h {minutes}m
-          </div>
-        </div>
-      );
+      return `Opens in ${days}d ${hours}h ${minutes}m`;
     } else {
-      return (
-        <div className="minting-closed">
-          <h3>Minting Closed</h3>
-          <p>Minting period has ended</p>
-        </div>
-      );
+      return 'Minting Closed';
     }
   };
 
@@ -347,101 +336,79 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     <div className="website-content">
       <div className="website-layout">
         
-        {/* Combined Minting Sidebar */}
-        <div className="minting-sidebar">
+        {/* 90s Style Sidebar */}
+        <div className="sidebar">
           <div className="sidebar-header">
             <h2>🎨 ColourMe NFT</h2>
             <div className="sidebar-subtitle">Mint Your Canvas</div>
           </div>
 
-          {/* Collection Stats */}
-          <div className="collection-stats">
-            <div className="stat-item">
-              <div className="stat-label">Collection Progress</div>
-              <div className="supply-counter">
-                <span className="count">{contractData?.tokenCount || 0}</span>
-                <span className="separator">/</span>
-                <span className="total">{contractData?.maxSupply || 0}</span>
-              </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ 
-                    width: `${contractData ? (contractData.tokenCount / contractData.maxSupply) * 100 : 0}%` 
-                  }}
-                ></div>
-              </div>
+          {/* Collection Details Section */}
+          <div className="section">
+            <h3>Collection Details</h3>
+            
+            <p><strong>Status:</strong> {contractData?.isMintActive ? 'Open' : 'Closed'}</p>
+            
+            <p>{renderMintingStatus()}</p>
+            
+            <p><strong>Minted:</strong> {contractData?.tokenCount || 0}/{contractData?.maxSupply || 0}</p>
+            
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ 
+                  width: `${contractData ? (contractData.tokenCount / contractData.maxSupply) * 100 : 0}%` 
+                }}
+              ></div>
             </div>
-
-            <div className="stat-item">
-              <div className="stat-label">Mint Price</div>
-              <div className="mint-price">
-                {contractData?.mintPrice || '0.0'} {contractData?.chain?.symbol || 'ETH'}
-              </div>
-            </div>
+            
+            <p><strong>Price:</strong> {contractData?.mintPrice}</p>
           </div>
 
-          {/* Minting Status */}
-          <div className="minting-status">
-            {renderMintingStatus()}
-          </div>
-
-          {/* Wallet Connection Info */}
-          {account && (
-            <div className="wallet-info">
-              <div className="wallet-header">Wallet Connected</div>
-              <div className="wallet-address">{formatAddress(account)}</div>
-              <div className={`network-indicator ${isOnCorrectNetwork() ? 'correct' : 'incorrect'}`}>
-                {isOnCorrectNetwork() ? '✅ Correct Network' : '❌ Wrong Network'}
-              </div>
-            </div>
-          )}
-
-          {/* Mint Controls */}
-          <div className="mint-controls">
-            {/* Mint quantity input - only show when connected and ready to mint */}
-            {account && isOnCorrectNetwork() && contractData?.isMintActive && !buttonState.disabled && buttonState.className === 'mint' && (
-              <div className="quantity-section">
-                <label htmlFor="mint-quantity">Quantity:</label>
-                <input
-                  id="mint-quantity"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={mintQuantity}
-                  onChange={(e) => setMintQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
-                  className="quantity-input"
-                />
+          {/* Login/Mint Section */}
+          <div className="section">
+            <h3>Login/Mint</h3>
+            
+            {!account ? (
+              <button onClick={buttonState.action} className="simple-button">
+                Connect Wallet
+              </button>
+            ) : (
+              <div>
+                <p><strong>Wallet Connected</strong></p>
+                <p>{formatAddress(account)}</p>
+                {!isOnCorrectNetwork() && (
+                  <p style={{ color: 'red' }}>Wrong Network</p>
+                )}
+                
+                {contractData?.isMintActive && isOnCorrectNetwork() && buttonState.className === 'mint' && (
+                  <p>
+                    Qty: <input 
+                      type="number" 
+                      min="1" 
+                      max="10" 
+                      value={mintQuantity}
+                      onChange={(e) => setMintQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                      style={{ width: '50px', marginLeft: '5px', marginRight: '10px' }}
+                    />
+                    <button onClick={handleMint} className="simple-button">
+                      Mint
+                    </button>
+                  </p>
+                )}
+                
+                {buttonState.className !== 'mint' && contractData?.isMintActive && (
+                  <button onClick={buttonState.action} className="simple-button">
+                    {buttonState.text}
+                  </button>
+                )}
               </div>
             )}
-
-            <button
-              onClick={buttonState.action}
-              disabled={buttonState.disabled}
-              className={`action-button ${buttonState.className}`}
-            >
-              {buttonState.text}
-            </button>
 
             {/* Status Messages */}
-            {statusMessage && (
-              <div className="status-message success">
-                {statusMessage}
-              </div>
-            )}
-
-            {errorMessage && (
-              <div className="status-message error">
-                {errorMessage}
-              </div>
-            )}
+            {statusMessage && <p style={{ color: 'green' }}>{statusMessage}</p>}
+            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
           </div>
-
-          {contractData && contractData.tokenCount >= contractData.maxSupply && (
-            <div className="sold-out-banner">
-              <span>🚫 SOLD OUT</span>
-            </div>
-          )}
         </div>
 
         {/* Event Messages Section */}

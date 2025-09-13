@@ -153,6 +153,7 @@ html, body {
 
 .explorer-content {
   padding: 15px;
+  max-height: 800px;
   background: white;
   overflow-y: auto;
   border: 1px solid #c0c0c0;
@@ -667,7 +668,6 @@ html, body {
     border-radius: 4px;
   }
   
-  
   .attribute-row {
     flex-direction: column;
     gap: 5px;
@@ -831,6 +831,7 @@ html, body {
   
   .explorer-content {
     padding: 10px;
+    max-height: 400px;
   }
   
   .footer {
@@ -959,23 +960,17 @@ html, body {
   
   .explorer-content {
     padding: 5px;
-    /* Hide scrollbars in explorer */
-    scrollbar-width: none;
+    overflow-y: auto;
     -ms-overflow-style: none;
   }
   
-  .explorer-content::-webkit-scrollbar {
+  /* .explorer-content::-webkit-scrollbar {
     display: none;
-  }
+  } */
   
   /* Hide scrollbars on all scrollable elements in compact mode */
   .token-grid {
-    scrollbar-width: none;
     -ms-overflow-style: none;
-  }
-  
-  .token-grid::-webkit-scrollbar {
-    display: none;
   }
   
   .footer {

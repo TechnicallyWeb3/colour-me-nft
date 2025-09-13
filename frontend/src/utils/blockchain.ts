@@ -148,8 +148,7 @@ export const getContractData = async (contract: ColourMeNFT | null): Promise<{ d
     const maxSupply = projectInfo.maxSupply;
     const mintOpen = new Date(projectInfo.mintStart * 1000); // convert to milliseconds
     const mintDuration = projectInfo.mintDuration * 1000; // convert to milliseconds
-    const mintPrice = ethers.formatEther(projectInfo.mintPrice); // convert wei to ETH
-    
+    const mintPrice = projectInfo?.mintPrice > 0n ? (ethers.formatEther(projectInfo.mintPrice) + ' ' + (chain?.symbol || 'ETH')) : 'FREE'; // convert wei to ETH
     // Calculate derived values
     const mintEnd = new Date(mintOpen.getTime() + mintDuration);
     const now = new Date();

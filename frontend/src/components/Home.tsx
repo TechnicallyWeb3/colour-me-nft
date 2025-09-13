@@ -243,6 +243,23 @@ const Home: React.FC = () => {
   const [isLoadingContract, setIsLoadingContract] = useState(false);
 
 
+  // Function to refresh contract data from blockchain
+  const refreshContractData = async () => {
+    if (!readOnlyContract) return;
+    
+    try {
+      const { data, result } = await getContractData(readOnlyContract);
+      if (result.success && data) {
+        setContractData(data);
+        console.log('Refreshed contract data:', data);
+      } else {
+        console.error('Failed to refresh contract data:', result.error);
+      }
+    } catch (error) {
+      console.error('Error refreshing contract data:', error);
+    }
+  };
+
   // Initialize blockchain connection and load contract data
   useEffect(() => {
     const initializeBlockchain = async () => {
@@ -379,11 +396,8 @@ const Home: React.FC = () => {
           contract={readOnlyContract}
           onMintSuccess={(tokenId) => {
             setActiveToken(tokenId);
-            // Update contract data to reflect new token count
-            if (contractData) {
-              setContractData(prev => prev ? { ...prev, tokenCount: prev.tokenCount + 1 } : null);
-            }
           }}
+          onContractDataUpdate={refreshContractData}
         />
       </Window>
 
@@ -464,7 +478,7 @@ const Home: React.FC = () => {
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Mint Price:</span>
-                  <span className="meta-value">{contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH'}</span>
+                  <span className="meta-value">{contractData?.mintPrice}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Contract Address:</span>
@@ -581,7 +595,7 @@ const Home: React.FC = () => {
       {/* Footer */}
       <footer className="footer">
         <p>
-          <strong>💰 Mint Price: {contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH'} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
+          <strong>💰 Mint Price: {contractData?.mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
         <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>
           Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base'}
