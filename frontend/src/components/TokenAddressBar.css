@@ -3,9 +3,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 15px;
   position: relative;
   z-index: 100;
+  padding: 4px;
 }
 
 .token-address-bar-wrapper {
@@ -50,6 +50,10 @@
 .address-value:hover {
   background: #f0f8ff;
   border-color: #0054e3;
+}
+
+.address-truncated {
+  display: none;
 }
 
 .token-value {
@@ -106,21 +110,10 @@
 @media (max-width: 600px) {
   .token-address-bar-container {
     gap: 6px;
-    margin-bottom: 10px;
   }
   
   .token-address-bar-wrapper {
     padding: 4px 8px;
-  }
-  
-  .token-address-display {
-    font-size: 10px;
-    gap: 6px;
-  }
-  
-  .address-value {
-    font-size: 9px;
-    padding: 1px 4px;
   }
   
   .token-value {
@@ -137,20 +130,13 @@
 }
 
 @media (max-width: 480px) {
-  .token-address-bar-container {
-    gap: 4px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-  }
   
   .token-address-bar-wrapper {
     padding: 3px 6px;
     flex: 1;
-    min-width: 200px;
   }
   
   .token-address-display {
-    font-size: 9px;
     gap: 4px;
     flex-wrap: wrap;
   }
@@ -160,8 +146,12 @@
     font-size: 9px;
   }
   
-  .address-value {
-    font-size: 8px;
+  .address-full {
+    display: none;
+  }
+
+  .address-truncated {
+    display: block;
     padding: 1px 3px;
   }
   
@@ -175,5 +165,15 @@
     font-size: 14px;
     min-width: 18px;
     height: 18px;
+  }
+}
+
+@media (max-width: 300px) {
+  .token-address-container {
+    gap: 0px;
+  }
+
+  .token-address-bar-wrapper {
+    min-width: 155px;
   }
 }

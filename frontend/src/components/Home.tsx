@@ -3,12 +3,15 @@ import './Home.css';
 import SVGDisplay from './SVGDisplay';
 import Navbar from './Navbar';
 import Window from './Window';
+import TokenAddressBar from './TokenAddressBar';
 import AddressBar from './AddressBar';
-import { 
+import WebsiteContent from './WebsiteContent';
+import {
   connectToProvider,
   getTokenSVG,
   getContractData,
-  type ContractData
+  type ContractData,
+  formatAddress
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
@@ -104,7 +107,7 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
 
   const handleContextAction = (action: string, tokenId: number) => {
     setContextMenu(null);
-    
+
     switch (action) {
       case 'open':
         onTokenSelect(tokenId);
@@ -143,12 +146,12 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
         />
         <div className="explorer-content token-grid">
           {/* Always show example.svg */}
-          <div 
+          <div
             className={`token-item ${activeToken === 0 ? 'active' : ''}`}
             onClick={() => onTokenSelect(0)}
             onContextMenu={(e) => handleRightClick(e, 0)}
           >
-            <div 
+            <div
               className="token-thumbnail"
               onDoubleClick={() => handleIconClick(0)}
             >
@@ -156,24 +159,24 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
             </div>
             <div className="token-filename">example.svg</div>
           </div>
-          
+
           {/* Show minted tokens only if they exist */}
           {tokens.length > 0 ? (
             tokens.map(tokenId => {
               const previewUrl = tokenPreviews.get(tokenId);
               return (
-                <div 
+                <div
                   key={tokenId}
                   className={`token-item ${activeToken === tokenId ? 'active' : ''}`}
                   onClick={() => onTokenSelect(tokenId)}
                   onContextMenu={(e) => handleRightClick(e, tokenId)}
                 >
-                  <div 
+                  <div
                     className="token-thumbnail"
                     onDoubleClick={() => handleIconClick(tokenId)}
                   >
                     {previewUrl ? (
-                      <img 
+                      <img
                         src={previewUrl}
                         alt={`Token #${tokenId}`}
                         style={{
@@ -184,10 +187,10 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
                         }}
                       />
                     ) : (
-                      <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         height: '100%',
                         fontSize: '10px'
@@ -208,7 +211,7 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
           )}
         </div>
       </Window>
-      
+
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -218,7 +221,7 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
           onAction={handleContextAction}
         />
       )}
-      
+
       {showAttributes !== null && (
         <AttributesPopup
           tokenId={showAttributes}
@@ -230,43 +233,14 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
 };
 
 const Home: React.FC = () => {
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [activeToken, setActiveToken] = useState(0);
   const [svgKey, setSvgKey] = useState(0); // For forcing SVG reload like in App.tsx
-  
+
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
   const [isLoadingContract, setIsLoadingContract] = useState(false);
-
-  // Initialize countdown from contract data
-  useEffect(() => {
-    if (!contractData) return;
-    
-    const updateCountdown = () => {
-      const now = Date.now();
-      const launchTime = contractData.mintOpen.getTime();
-      const timeLeft = launchTime - now;
-      
-      if (timeLeft <= 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      } else {
-        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-        
-        setCountdown({ days, hours, minutes, seconds });
-      }
-    };
-    
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
-    
-    return () => clearInterval(timer);
-  }, [contractData]);
-
 
 
   // Initialize blockchain connection and load contract data
@@ -278,7 +252,7 @@ const Home: React.FC = () => {
         if (result.success && contract) {
           setReadOnlyContract(contract);
           console.log('Connected to blockchain contract');
-          
+
           // Load contract data
           const { data, result: contractResult } = await getContractData(contract);
           if (contractResult.success && data) {
@@ -317,29 +291,29 @@ const Home: React.FC = () => {
   // Load token previews for thumbnails (optimized batch loading)
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadTokenPreviews = async () => {
       if (!readOnlyContract || !contractData || contractData.tokenCount === 0) return;
 
       // Load previews for tokens that don't already have them
       const tokens = Array.from({ length: contractData.tokenCount }, (_, i) => i + 1);
       const tokensToLoad = tokens.filter(tokenId => !tokenPreviews.has(tokenId));
-      
+
       if (tokensToLoad.length === 0) return;
 
       console.log(`Loading previews for ${tokensToLoad.length} tokens...`);
-      
+
       // Load tokens with a small delay between requests to avoid overwhelming the network
       for (const tokenId of tokensToLoad) {
         if (!isMounted) break;
-        
+
         try {
           const { svg: svgContent, result } = await getTokenSVG(readOnlyContract, tokenId);
           if (result.success && isMounted) {
             // Convert SVG string to data URL for img tag
             const blob = new Blob([svgContent], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
-            
+
             setTokenPreviews(prev => {
               const newPreviews = new Map(prev);
               newPreviews.set(tokenId, url);
@@ -349,14 +323,14 @@ const Home: React.FC = () => {
         } catch (error) {
           console.error(`Error loading preview for token ${tokenId}:`, error);
         }
-        
+
         // Small delay to prevent overwhelming the network
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     };
 
     loadTokenPreviews();
-    
+
     return () => {
       isMounted = false;
     };
@@ -371,15 +345,6 @@ const Home: React.FC = () => {
     };
   }, [tokenPreviews]);
 
-  const handleMint = () => {
-    // Implement minting logic here
-    console.log('Minting NFT...');
-    if (contractData) {
-      setContractData(prev => prev ? { ...prev, tokenCount: prev.tokenCount + 1 } : null);
-    }
-  };
-
-  const mintPrice = contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH';
 
   const appTitle = () => {
     return `ColourMeNFT - ${activeToken}.svg`;
@@ -406,39 +371,20 @@ const Home: React.FC = () => {
         <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos voluptate distinctio necessitatibus explicabo laboriosam sunt ipsum tempora, accusamus repellendus eos molestiae consequatur ullam fugit dolor maiores incidunt. Sed veniam, architecto repudiandae quas dolorum maxime corrupti nostrum, expedita temporibus error provident iure blanditiis? Nulla officiis aspernatur vel eveniet dolor culpa asperiores, doloremque suscipit quasi beatae quidem nesciunt repellat modi voluptatibus adipisci fuga ab exercitationem. Consectetur, pariatur. Quae quisquam sapiente tenetur. </p>
       </Window>
 
-      {/* NFT Controls */}
+      {/* Website Browser */}
       <Window id="mint" title="Browser - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
-        {contractData && !contractData.isMintActive ? (
-          <div className="countdown-container">
-            <h3>Mint Opens In</h3>
-            <div className="countdown">
-              {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
-            </div>
-            <p>Get ready for the most epic paint party in Web3!</p>
-            <div style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
-              Opens: {contractData.mintOpen.toLocaleDateString()} at {contractData.mintOpen.toLocaleTimeString()}
-            </div>
-          </div>
-        ) : (
-          <div className="mint-controls">
-            <div className="mint-counter">
-              {isLoadingContract ? (
-                'Loading contract data...'
-              ) : contractData ? (
-                `Minted: ${contractData.tokenCount} / ${contractData.maxSupply}`
-              ) : (
-                'Loading...'
-              )}
-            </div>
-            <button 
-              className="os-btn-large success"
-              onClick={handleMint}
-              disabled={!contractData || contractData.tokenCount >= contractData.maxSupply || isLoadingContract || !contractData.isMintActive}
-            >
-              Mint NFT ({mintPrice})
-            </button>
-          </div>
-        )}
+        <TokenAddressBar contractAddress={contractData?.contractAddress || ''} tokenId={activeToken || 0} />
+        <WebsiteContent 
+          contractData={contractData}
+          contract={readOnlyContract}
+          onMintSuccess={(tokenId) => {
+            setActiveToken(tokenId);
+            // Update contract data to reflect new token count
+            if (contractData) {
+              setContractData(prev => prev ? { ...prev, tokenCount: prev.tokenCount + 1 } : null);
+            }
+          }}
+        />
       </Window>
 
       {/* Main App Window */}
@@ -460,7 +406,7 @@ const Home: React.FC = () => {
           <div>Loading contract data from blockchain...</div>
         </div>
       ) : (
-        <TokenExplorer 
+        <TokenExplorer
           activeToken={activeToken}
           onTokenSelect={setActiveToken}
           tokenCount={contractData?.tokenCount || 0}
@@ -497,12 +443,12 @@ const Home: React.FC = () => {
         </div>
       </Window> */}
       <Window id="overview" title="Help - Overview" icon="❓" buttonset={{ minimize: "", expand: "", close: "" }}>
-      <div className="help-content">
+        <div className="help-content">
           <div className="help-formatted">
             <div className="help-header-section">
               <h1 className="help-main-title">🎨 ColourMeNFT</h1>
               <p className="help-subtitle">Revolutionary Web3 Paint Platform</p>
-              
+
               <div className="help-meta-info">
                 <div className="meta-item">
                   <span className="meta-label">Date:</span>
@@ -518,11 +464,12 @@ const Home: React.FC = () => {
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Mint Price:</span>
-                  <span className="meta-value">{mintPrice}</span>
+                  <span className="meta-value">{contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH'}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Contract Address:</span>
-                  <span className="meta-value">{contractData?.contractAddress}</span>
+                  <span className="meta-value address-full">{contractData?.contractAddress}</span>
+                  <span className="meta-value address-truncated">{formatAddress(contractData?.contractAddress || '')}</span>
                 </div>
               </div>
             </div>
@@ -530,7 +477,7 @@ const Home: React.FC = () => {
             <div className="help-section">
               <h2 className="section-title">📖 About This Project</h2>
               <p className="section-description">
-                Welcome to the future of digital art creation! ColourMeNFT combines the 
+                Welcome to the future of digital art creation! ColourMeNFT combines the
                 nostalgia of retro computing with cutting-edge blockchain technology.
               </p>
               <p className="section-description">
@@ -599,10 +546,10 @@ const Home: React.FC = () => {
             <div className="help-section">
               <h2 className="section-title">🌐 Community & Support</h2>
               <p className="section-description">
-                Join thousands of artists and NFT collectors in this Web3 paint adventure! Experience the 
+                Join thousands of artists and NFT collectors in this Web3 paint adventure! Experience the
                 perfect blend of nostalgia and innovation.
               </p>
-              
+
               <div className="social-links">
                 <div className="social-item">
                   <span className="social-icon">🌐 Website</span>
@@ -634,7 +581,7 @@ const Home: React.FC = () => {
       {/* Footer */}
       <footer className="footer">
         <p>
-          <strong>💰 Mint Price: {mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
+          <strong>💰 Mint Price: {contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH'} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
         <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>
           Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base'}

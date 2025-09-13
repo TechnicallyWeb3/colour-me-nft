@@ -1,5 +1,6 @@
 import React from 'react';
 import './TokenAddressBar.css';
+import { formatAddress } from '../utils/blockchain';
 
 interface TokenAddressBarProps {
   contractAddress: string;
@@ -38,25 +39,17 @@ const TokenAddressBar: React.FC<TokenAddressBarProps> = ({
     window.open(`${openSeaUrl}${contractAddress}/${tokenId}`, '_blank');
   };
 
-  // Format address for display (truncate middle)
-  const formatAddress = (address: string): string => {
-    if (address.length <= 10) return address;
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   return (
     <div className="token-address-bar-container">
       <div className="token-address-bar-wrapper">
         <div className="token-address-display">
-          <span className="address-label">Contract:</span>
-          <span className="address-value" title={contractAddress}>
-            {formatAddress(contractAddress)}
-          </span>
-          <span className="token-label">Token:</span>
-          <span className="token-value">#{tokenId}</span>
+          <span className="address-label">🔏</span>
+          <span className="address-full">{contractAddress}</span>
+          <span className="address-truncated">{formatAddress(contractAddress)}</span>
+
         </div>
       </div>
-      
+      <div className="token-address-buttons"></div>
       <button 
         className="token-address-copy-button" 
         onClick={handleCopyClick}

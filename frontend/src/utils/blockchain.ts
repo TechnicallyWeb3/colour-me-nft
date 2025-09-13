@@ -4,6 +4,12 @@ import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/C
 import type { ObjectStruct } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import { encodeObject, encodeObjects, type ObjectStruct as FrontendObject } from './encoding';
 
+// Format address for display (truncate middle)
+export const formatAddress = (address: string): string => {
+  if (address.length <= 20) return address;
+  return `${address.slice(0, 10)}...${address.slice(-8)}`;
+};
+
 // Network Configurations
 export const networkConfigs = {
   local: {

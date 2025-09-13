@@ -3,7 +3,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 15px;
   position: relative;
   padding: 4px;
   z-index: 100;
@@ -294,7 +293,6 @@
 @media (max-width: 600px) {
   .address-bar-container {
     gap: 6px;
-    margin-bottom: 10px;
   }
   
   .address-bar-wrapper {
@@ -343,7 +341,6 @@
 @media (max-width: 480px) {
   .address-bar-container {
     gap: 4px;
-    margin-bottom: 8px;
   }
   
   .address-bar-wrapper {

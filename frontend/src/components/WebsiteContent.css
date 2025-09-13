@@ -1,0 +1,602 @@
+/* 2000s Style Website Layout */
+.website-content {
+  padding: 0;
+  background: white;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+  height: 600px;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.website-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  height: 100%;
+}
+
+/* 2000s Style Minting Sidebar */
+.minting-sidebar {
+  background: linear-gradient(to bottom, #e8f4fd 0%, #d1e7f0 50%, #b8d4ea 100%);
+  border-right: 3px solid #5a8bb0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-bottom: 1px solid #7a7a7a;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8), inset -1px -1px 0 rgba(0,0,0,0.2);
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  background: linear-gradient(to bottom, #4a90e2 0%, #357abd 50%, #2e5f8f 100%);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  border-bottom: 2px solid #2c5aa0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.sidebar-subtitle {
+  font-size: 12px;
+  margin-top: 5px;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+/* Collection Stats Section */
+.collection-stats {
+  background: rgba(255,255,255,0.8);
+  margin: 15px 10px;
+  padding: 15px;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.stat-item {
+  margin-bottom: 15px;
+}
+
+.stat-item:last-child {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+.supply-counter {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.supply-counter .count {
+  color: #4CAF50;
+}
+
+.supply-counter .separator {
+  color: #666;
+}
+
+.supply-counter .total {
+  color: #0054e3;
+}
+
+/* 2000s Style Progress Bar */
+.progress-bar {
+  height: 12px;
+  background: #ddd;
+  border: 1px inset #c0c0c0;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #66bb6a 0%, #4caf50 50%, #388e3c 100%);
+  transition: width 0.3s ease;
+  border-right: 1px solid rgba(0,0,0,0.2);
+}
+
+.mint-price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2e5f8f;
+  text-align: center;
+  background: rgba(255,255,255,0.6);
+  padding: 8px;
+  border-radius: 3px;
+  border: 1px solid #b8d4ea;
+}
+
+/* Minting Status Section */
+.minting-status {
+  background: rgba(255,255,255,0.8);
+  margin: 0 10px 15px;
+  padding: 15px;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.minting-open {
+  color: #4CAF50;
+}
+
+.minting-closed-future {
+  color: #FF9800;
+}
+
+.minting-closed {
+  color: #f44336;
+}
+
+.minting-open h3,
+.minting-closed-future h3,
+.minting-closed h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.countdown {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 8px 0;
+  padding: 10px;
+  background: rgba(255,255,255,0.9);
+  border: 1px inset #c0c0c0;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* Wallet Info Section */
+.wallet-info {
+  background: rgba(255,255,255,0.9);
+  margin: 0 10px 15px;
+  padding: 12px;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.wallet-header {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.wallet-address {
+  font-size: 13px;
+  color: #0054e3;
+  font-family: monospace;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.network-indicator {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.network-indicator.correct {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+.network-indicator.incorrect {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #f44336;
+}
+
+/* Mint Controls Section */
+.mint-controls {
+  background: rgba(255,255,255,0.9);
+  margin: 0 10px 15px;
+  padding: 15px;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+}
+
+.quantity-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(255,255,255,0.8);
+  border: 1px inset #c0c0c0;
+  border-radius: 3px;
+}
+
+.quantity-section label {
+  font-weight: bold;
+  color: #333;
+  font-size: 12px;
+}
+
+.quantity-input {
+  width: 50px;
+  padding: 6px;
+  border: 1px inset #c0c0c0;
+  border-radius: 2px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  background: white;
+}
+
+.action-button {
+  width: 100%;
+  padding: 12px;
+  border: 2px outset #c0c0c0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.action-button:active {
+  border: 2px inset #c0c0c0;
+}
+
+.action-button.connect {
+  background: linear-gradient(to bottom, #4a9eff 0%, #0054e3 50%, #003d9e 100%);
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.action-button.switch-network {
+  background: linear-gradient(to bottom, #ffa726 0%, #ff9800 50%, #f57c00 100%);
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.action-button.mint {
+  background: linear-gradient(to bottom, #66bb6a 0%, #4caf50 50%, #388e3c 100%);
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.action-button.loading {
+  background: linear-gradient(to bottom, #e0e0e0, #ccc);
+  color: #666;
+  cursor: not-allowed;
+}
+
+.action-button.not-open,
+.action-button.sold-out {
+  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+  color: #666;
+  cursor: not-allowed;
+}
+
+.action-button:hover:not(:disabled):not(.loading):not(.not-open):not(.sold-out) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.status-message {
+  padding: 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.status-message.success {
+  background: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #4caf50;
+}
+
+.status-message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #f44336;
+}
+
+/* Sold Out Banner */
+.sold-out-banner {
+  background: linear-gradient(45deg, #f44336, #d32f2f);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  margin: 0 10px;
+  border: 2px outset #f44336;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Activity Panel */
+.activity-panel {
+  background: #f8f8f8;
+  border-left: 2px solid #ddd;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+  border-bottom: 2px solid #ccc;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
+}
+
+.event-messages {
+  padding: 15px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-message {
+  background: white;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.event-message:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border-color: #bbb;
+}
+
+.event-message.mint {
+  border-left: 4px solid #4CAF50;
+}
+
+.event-message.save {
+  border-left: 4px solid #FF9800;
+}
+
+.event-message.transfer {
+  border-left: 4px solid #2196F3;
+}
+
+.event-text {
+  font-size: 13px;
+  color: #333;
+  flex: 1;
+}
+
+.event-time {
+  font-size: 11px;
+  color: #666;
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+}
+
+.no-events {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 30px;
+  background: rgba(255,255,255,0.5);
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  margin: 20px;
+}
+
+.loading-text {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .website-content {
+    height: 500px;
+    max-height: 500px;
+  }
+  
+  .website-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  
+  .minting-sidebar {
+    border-right: none;
+    border-bottom: 3px solid #5a8bb0;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 14px;
+  }
+  
+  .collection-stats {
+    margin: 10px 8px;
+    padding: 12px;
+  }
+  
+  .supply-counter {
+    font-size: 24px;
+  }
+  
+  .countdown {
+    font-size: 16px;
+    padding: 8px;
+  }
+  
+  .action-button {
+    font-size: 12px;
+    padding: 10px;
+  }
+  
+  .activity-panel {
+    border-left: none;
+    border-top: 2px solid #ddd;
+  }
+  
+  .event-messages {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .event-message {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px;
+  }
+  
+  .event-time {
+    align-self: flex-end;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .website-content {
+    height: 450px;
+    max-height: 450px;
+  }
+  
+  .minting-sidebar {
+    max-height: 200px;
+  }
+  
+  .sidebar-header {
+    padding: 10px;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 13px;
+  }
+  
+  .sidebar-subtitle {
+    font-size: 11px;
+  }
+  
+  .collection-stats {
+    margin: 8px 5px;
+    padding: 10px;
+  }
+  
+  .supply-counter {
+    font-size: 20px;
+  }
+  
+  .countdown {
+    font-size: 14px;
+    padding: 6px;
+  }
+  
+  .mint-price {
+    font-size: 12px;
+    padding: 6px;
+  }
+  
+  .wallet-info,
+  .minting-status,
+  .mint-controls {
+    margin: 0 5px 10px;
+    padding: 10px;
+  }
+  
+  .action-button {
+    font-size: 11px;
+    padding: 8px;
+  }
+  
+  .event-text {
+    font-size: 12px;
+  }
+  
+  .event-time {
+    font-size: 9px;
+  }
+}
+
+/* Scrollbar Styling */
+.minting-sidebar::-webkit-scrollbar,
+.event-messages::-webkit-scrollbar {
+  width: 12px;
+}
+
+.minting-sidebar::-webkit-scrollbar-track,
+.event-messages::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border: 1px inset #c0c0c0;
+}
+
+.minting-sidebar::-webkit-scrollbar-thumb,
+.event-messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
+  border: 1px outset #c0c0c0;
+}
+
+.minting-sidebar::-webkit-scrollbar-thumb:hover,
+.event-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #d0d0d0, #b0b0b0);
+}
