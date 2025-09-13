@@ -106,6 +106,11 @@ describe("ColourMeNFT", function () {
     
     // Deploy NFT contract
     const NFTFactory = await ethers.getContractFactory("ColourMeNFT");
+    // Set mint start to a time in the past, and current time should be between start and end
+    const now = Math.floor(Date.now() / 1000);
+    const mintStart = now - 3600; // Started 1 hour ago
+    const mintDuration = 365 * 24 * 60 * 60; // 1 year duration
+    
     nft = await NFTFactory.deploy(
       "ColourMe Packed Test",
       "CMPT",
@@ -113,7 +118,11 @@ describe("ColourMeNFT", function () {
       1000, // maxSupply
       await renderer.getAddress(),
       owner.address,
-      250 // 2.5% royalty
+      250, // 2.5% royalty
+      0, // mintPrice (free)
+      10, // mintLimit (10 per transaction)
+      mintStart, // mintStart (started 1 hour ago)
+      mintDuration // mintDuration (1 year)
     ) as unknown as ColourMeNFT;
     await nft.waitForDeployment();
     
@@ -125,7 +134,7 @@ describe("ColourMeNFT", function () {
   
   describe("Basic NFT functionality", function () {
     it("Should mint a token with random traits", async function () {
-      await nft.mint(user.address);
+      await nft.mint(user.address, 1); // quantity = 1
       
       expect(await nft.ownerOf(1)).to.equal(user.address);
       expect(await nft.tokenCount()).to.equal(1);
@@ -139,7 +148,7 @@ describe("ColourMeNFT", function () {
   
   describe(" object validation", function () {
     beforeEach(async function () {
-      await nft.mint(user.address);
+      await nft.mint(user.address, 1); // quantity = 1
     });
     
     it("Should validate basic packed object structure", async function () {
@@ -218,7 +227,7 @@ describe("ColourMeNFT", function () {
     let traits: any;
     
     beforeEach(async function () {
-      await nft.mint(user.address);
+      await nft.mint(user.address, 1); // quantity = 1
       tokenId = 1n;
       traits = await nft.traits(tokenId);
     });
@@ -406,7 +415,7 @@ describe("ColourMeNFT", function () {
     let tokenId: number;
     
     beforeEach(async function () {
-      await nft.mint(user.address);
+      await nft.mint(user.address, 1); // quantity = 1
       tokenId = 1;
     });
     
@@ -514,7 +523,7 @@ describe("ColourMeNFT", function () {
     let tokenId: number;
     
     beforeEach(async function () {
-      await nft.mint(user.address);
+      await nft.mint(user.address, 1); // quantity = 1
       tokenId = 1;
     });
     

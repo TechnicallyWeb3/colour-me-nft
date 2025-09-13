@@ -7,15 +7,11 @@ import AddressBar from './AddressBar';
 import { 
   connectToProvider,
   getTokenSVG,
-  getTokenCount
+  getContractData,
+  type ContractData
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
-// Mock launch timestamp - in a real app this would come from the smart contract
-const getMintTimestamp = (): number => {
-  // Mock launch date: 30 days from now
-  return Date.now() + (30 * 24 * 60 * 60 * 1000);
-};
 
 interface TokenExplorerProps {
   activeToken: number;
@@ -234,29 +230,26 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
 };
 
 const Home: React.FC = () => {
-  const [isLaunched, setIsLaunched] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [mintCount, setMintCount] = useState(0); // Start with 0, will be loaded from blockchain
-  const [totalSupply] = useState(1000);
   const [activeToken, setActiveToken] = useState(0);
-
   const [svgKey, setSvgKey] = useState(0); // For forcing SVG reload like in App.tsx
   
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
+  const [contractData, setContractData] = useState<ContractData | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
-  const [isLoadingTokenCount, setIsLoadingTokenCount] = useState(false);
+  const [isLoadingContract, setIsLoadingContract] = useState(false);
 
-  // Initialize countdown from mock timestamp
+  // Initialize countdown from contract data
   useEffect(() => {
-    const launchTime = getMintTimestamp();
+    if (!contractData) return;
     
     const updateCountdown = () => {
       const now = Date.now();
+      const launchTime = contractData.mintOpen.getTime();
       const timeLeft = launchTime - now;
       
       if (timeLeft <= 0) {
-        setIsLaunched(true);
         setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       } else {
         const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
@@ -272,52 +265,49 @@ const Home: React.FC = () => {
     const timer = setInterval(updateCountdown, 1000);
     
     return () => clearInterval(timer);
-  }, []);
+  }, [contractData]);
 
 
 
-  // Initialize blockchain connection
+  // Initialize blockchain connection and load contract data
   useEffect(() => {
     const initializeBlockchain = async () => {
+      setIsLoadingContract(true);
       try {
         const { contract, result } = await connectToProvider();
         if (result.success && contract) {
           setReadOnlyContract(contract);
           console.log('Connected to blockchain contract');
+          
+          // Load contract data
+          const { data, result: contractResult } = await getContractData(contract);
+          if (contractResult.success && data) {
+            setContractData(data);
+            console.log('Loaded contract data:', data);
+          } else {
+            console.error('Failed to load contract data:', contractResult.error);
+            // Load fallback data even if contract fails
+            const { data: fallbackData } = await getContractData(null);
+            setContractData(fallbackData);
+          }
         } else {
           console.warn('Failed to connect to blockchain:', result.error);
+          // Load fallback data when no contract connection
+          const { data: fallbackData } = await getContractData(null);
+          setContractData(fallbackData);
         }
       } catch (error) {
         console.error('Error initializing blockchain:', error);
+        // Load fallback data on error
+        const { data: fallbackData } = await getContractData(null);
+        setContractData(fallbackData);
+      } finally {
+        setIsLoadingContract(false);
       }
     };
 
     initializeBlockchain();
   }, []);
-
-  // Load actual token count from blockchain
-  useEffect(() => {
-    const loadTokenCount = async () => {
-      if (!readOnlyContract) return;
-
-      setIsLoadingTokenCount(true);
-      try {
-        const { count, result } = await getTokenCount(readOnlyContract);
-        if (result.success) {
-          setMintCount(count);
-          console.log(`Loaded token count: ${count}`);
-        } else {
-          console.error('Failed to load token count:', result.error);
-        }
-      } catch (error) {
-        console.error('Error loading token count:', error);
-      } finally {
-        setIsLoadingTokenCount(false);
-      }
-    };
-
-    loadTokenCount();
-  }, [readOnlyContract]);
 
   // Force SVG reload when active token changes (like in App.tsx)
   useEffect(() => {
@@ -329,10 +319,10 @@ const Home: React.FC = () => {
     let isMounted = true;
     
     const loadTokenPreviews = async () => {
-      if (!readOnlyContract || mintCount === 0) return;
+      if (!readOnlyContract || !contractData || contractData.tokenCount === 0) return;
 
       // Load previews for tokens that don't already have them
-      const tokens = Array.from({ length: mintCount }, (_, i) => i + 1);
+      const tokens = Array.from({ length: contractData.tokenCount }, (_, i) => i + 1);
       const tokensToLoad = tokens.filter(tokenId => !tokenPreviews.has(tokenId));
       
       if (tokensToLoad.length === 0) return;
@@ -370,7 +360,7 @@ const Home: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [readOnlyContract, mintCount, tokenPreviews]);
+  }, [readOnlyContract, contractData, tokenPreviews]);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
@@ -384,8 +374,12 @@ const Home: React.FC = () => {
   const handleMint = () => {
     // Implement minting logic here
     console.log('Minting NFT...');
-    setMintCount(prev => prev + 1);
+    if (contractData) {
+      setContractData(prev => prev ? { ...prev, tokenCount: prev.tokenCount + 1 } : null);
+    }
   };
+
+  const mintPrice = contractData?.mintPrice === '0.0' ? 'FREE' : contractData?.mintPrice + ' ' + (contractData?.chain?.symbol || 'ETH') || '0.0002 ETH';
 
   const appTitle = () => {
     return `ColourMeNFT - ${activeToken}.svg`;
@@ -413,30 +407,35 @@ const Home: React.FC = () => {
       </Window>
 
       {/* NFT Controls */}
-      <Window id="mint" title="NFT Controls" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
-        {!isLaunched ? (
+      <Window id="mint" title="Browser - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
+        {contractData && !contractData.isMintActive ? (
           <div className="countdown-container">
-            <h3>Launch Countdown</h3>
+            <h3>Mint Opens In</h3>
             <div className="countdown">
               {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
             </div>
             <p>Get ready for the most epic paint party in Web3!</p>
+            <div style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
+              Opens: {contractData.mintOpen.toLocaleDateString()} at {contractData.mintOpen.toLocaleTimeString()}
+            </div>
           </div>
         ) : (
           <div className="mint-controls">
             <div className="mint-counter">
-              {isLoadingTokenCount ? (
-                'Loading token count...'
+              {isLoadingContract ? (
+                'Loading contract data...'
+              ) : contractData ? (
+                `Minted: ${contractData.tokenCount} / ${contractData.maxSupply}`
               ) : (
-                `Minted: ${mintCount} / ${totalSupply}`
+                'Loading...'
               )}
             </div>
             <button 
               className="os-btn-large success"
               onClick={handleMint}
-              disabled={mintCount >= totalSupply || isLoadingTokenCount}
+              disabled={!contractData || contractData.tokenCount >= contractData.maxSupply || isLoadingContract || !contractData.isMintActive}
             >
-              Mint NFT ($1)
+              Mint NFT ({mintPrice})
             </button>
           </div>
         )}
@@ -455,16 +454,16 @@ const Home: React.FC = () => {
       </Window>
 
       {/* Token Explorer */}
-      {isLoadingTokenCount ? (
+      {isLoadingContract ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'white' }}>
           <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
-          <div>Loading token data from blockchain...</div>
+          <div>Loading contract data from blockchain...</div>
         </div>
       ) : (
         <TokenExplorer 
           activeToken={activeToken}
           onTokenSelect={setActiveToken}
-          tokenCount={mintCount}
+          tokenCount={contractData?.tokenCount || 0}
           tokenPreviews={tokenPreviews}
           contract={readOnlyContract}
         />
@@ -519,11 +518,11 @@ const Home: React.FC = () => {
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Mint Price:</span>
-                  <span className="meta-value highlight">$1 USD</span>
+                  <span className="meta-value">{mintPrice}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Contract Address:</span>
-                  <span className="meta-value">[DEPLOYING SOON]</span>
+                  <span className="meta-value">{contractData?.contractAddress}</span>
                 </div>
               </div>
             </div>
@@ -635,10 +634,10 @@ const Home: React.FC = () => {
       {/* Footer */}
       <footer className="footer">
         <p>
-          <strong>💰 $1 Mint Price</strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
+          <strong>💰 Mint Price: {mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
         <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>
-          Built with ❤️ for the Web3 community • Powered by Base
+          Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base'}
         </p>
       </footer>
     </div>

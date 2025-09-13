@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+// import "@wttp/site/contracts/extensions/WTTPForwarder.sol";
 
 interface IColourMeNFT is IERC721 {
     function mint(address to) external;
@@ -15,9 +16,16 @@ interface IColourMeNFT is IERC721 {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
-contract ColourMeNFT is ERC721, ERC2981, Ownable {
+contract ColourMeNFT is ERC721, ERC2981, Ownable { //, WTTPForwarder {
     using Strings for uint256;
     using Base64 for bytes;
+
+    error MintingClosed(string reason);
+    error InvalidQuantity();
+    error InsufficientPayment(uint256 required, uint256 sent);
+
+    event CanvasMinted(uint256 tokenId, address to, uint256 qty);
+    event ArtSaved(uint256 indexed tokenId, address indexed artist);
 
     constructor(
         string memory name, 
@@ -26,24 +34,54 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         uint256 _maxSupply,
         address _paintRenderer,
         address _owner,
-        uint96 _royalty
-    ) ERC721(name, symbol) Ownable(_owner) {
+        uint96 _royalty,
+        uint256 _mintPrice,
+        uint256 _mintLimit,
+        uint256 _mintStart,
+        uint256 _mintDuration
+    ) ERC721(name, symbol) Ownable(_owner) { //WTTPForwarder(_baseURL, 301) {
         baseURL = _baseURL;
         maxSupply = _maxSupply;
         cmr = IColourMeRenderer(_paintRenderer);
         _setDefaultRoyalty(owner(), _royalty);
+        mintPrice = _mintPrice;
+        mintLimit = _mintLimit;
+        mintStart = _mintStart;
+        mintDuration = _mintDuration;
     }
 
-    string public baseURL;
+    string private baseURL;
     bytes public svgStart;
     bytes public svgEnd;
     uint256 public tokenCount;
     uint256 public maxSupply;
-    IColourMeRenderer public cmr;
+    IColourMeRenderer private cmr;
+    uint256 private mintPrice;
+    uint256 private mintLimit;
+    uint256 private mintStart;
+    uint256 private mintDuration;
 
     mapping(uint256 => Trait) public traits;
     mapping(uint256 => bytes) public traitSVG;
     mapping(uint256 => Object[]) public art;
+
+    function getProjectInfo() external view returns (string memory, string memory, string memory, uint256, uint256, uint256, uint256, uint256, uint256) {
+        return (
+            name(), 
+            symbol(), 
+            baseURL,
+            tokenCount,
+            maxSupply, 
+            mintPrice, 
+            mintLimit, 
+            mintStart, 
+            mintDuration
+        );
+    }
+
+    // function setRedirect(string memory _url) external onlyOwner {
+    //     _setRedirectConfig(_url, 301);
+    // }
 
     function setSVG(bytes memory _svgStart, bytes memory _svgEnd) external onlyOwner {
         svgStart = _svgStart;
@@ -85,11 +123,20 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         });
     }
 
-    function mint(address to) external {
-        tokenCount++;
-        _mint(to, tokenCount);
-        traits[tokenCount] = _randomTraits(tokenCount);
-        traitSVG[tokenCount] = cmr.renderTrait(traits[tokenCount]);
+    function mint(address to, uint256 qty) external payable {
+        if(block.timestamp < mintStart) revert MintingClosed("Mint not started");
+        if(block.timestamp > mintStart + mintDuration) revert MintingClosed("Mint ended");
+        if(tokenCount >= maxSupply) revert MintingClosed("Max supply reached");
+        if(qty > mintLimit || qty == 0) revert InvalidQuantity();
+        if(msg.value < mintPrice * qty) revert InsufficientPayment(mintPrice * qty, msg.value);
+        for(uint256 i = 0; i < qty; i++) {
+            tokenCount++;
+            _mint(to, tokenCount);
+            traits[tokenCount] = _randomTraits(tokenCount);
+            traitSVG[tokenCount] = cmr.renderTrait(traits[tokenCount]);
+            if(tokenCount == maxSupply) break;
+        }
+        emit CanvasMinted(tokenCount, to, qty);
     }
 
     function _objectAllowed(uint256 tokenId, Object memory object) internal view {
@@ -183,6 +230,7 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
             _objectAllowed(tokenId, _art[i]);
             art[tokenId].push(_art[i]);
         }
+        emit ArtSaved(tokenId, msg.sender);
     }
 
     function setArt(uint256 tokenId, Object[] calldata _art) external {
@@ -195,6 +243,7 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
     }
 
     function tokenSVG(uint256 tokenId) public view returns (string memory) {
+        _requireOwned(tokenId);
         return string(abi.encodePacked(
             svgStart, 
             traitSVG[tokenId],

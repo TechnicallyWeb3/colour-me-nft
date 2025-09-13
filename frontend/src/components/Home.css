@@ -757,11 +757,6 @@ html, body {
     gap: 15px;
   }
   
-  .token-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-  }
-  
   .token-explorer {
     margin: 10px 5px;
   }
@@ -819,12 +814,6 @@ html, body {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 8px;
     padding: 5px;
-  }
-  
-  .token-thumbnail {
-    width: 60px;
-    height: 60px;
-    font-size: 10px;
   }
   
   .token-filename {
@@ -953,19 +942,6 @@ html, body {
   .mint-counter {
     padding: 6px 8px;
     font-size: 12px;
-  }
-  
-  
-  .token-grid {
-    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
-    gap: 4px;
-    padding: 5px;
-  }
-  
-  .token-thumbnail {
-    width: 45px;
-    height: 45px;
-    font-size: 8px;
   }
   
   .token-filename {

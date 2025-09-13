@@ -20,7 +20,7 @@
     "testnet:ui": "npm run dev:testnet --prefix frontend",
     "testnet": "npm run testnet:deploy && npm run testnet:setup && npm run testnet:ui",
     "mainnet:deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts --network base",
-    "mainnet:setup": "npm run frontend:setup:mainnet", 
+    "mainnet:setup": "npm run frontend:setup:mainnet",
     "mainnet:ui": "npm run dev:mainnet --prefix frontend",
     "mainnet": "npm run mainnet:deploy && npm run mainnet:setup && npm run mainnet:ui"
   },
@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
+    "@wttp/site": "^0.3.0",
     "hardhat-build": "^0.1.5"
   }
 }

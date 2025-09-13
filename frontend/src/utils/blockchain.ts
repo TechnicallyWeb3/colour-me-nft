@@ -16,6 +16,9 @@ export const networkConfigs = {
       decimals: 18,
     },
     blockExplorerUrls: [], // No block explorer for local network
+    rpcUrl: 'http://127.0.0.1:8545',
+    explorerUrl: 'http://localhost:3000', // No explorer for local
+    openseaUrl: 'http://localhost:8000', // Testnets OpenSea
     contracts: {
       ColourMeNFT: {
         address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Local hardhat deployment
@@ -33,6 +36,9 @@ export const networkConfigs = {
       decimals: 18,
     },
     blockExplorerUrls: ['https://sepolia.etherscan.io'],
+    rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com/',
+    explorerUrl: 'https://sepolia.etherscan.io/',
+    openseaUrl: 'https://testnets.opensea.io/',
     contracts: {
       ColourMeNFT: {
         address: "0x2219278fB3fFB912f64f64C3Dd2FbD74976E6aC0", // Live testnet deployment
@@ -50,6 +56,9 @@ export const networkConfigs = {
       decimals: 18,
     },
     blockExplorerUrls: ['https://basescan.org'],
+    rpcUrl: 'https://base-rpc.publicnode.com',
+    explorerUrl: 'https://basescan.org/',
+    openseaUrl: 'https://opensea.io/',
     contracts: {
       ColourMeNFT: {
         address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Base mainnet
@@ -67,6 +76,110 @@ const getActiveNetwork = (): keyof typeof networkConfigs => {
   }
   console.warn(`⚠️ Unknown network: ${env}, falling back to local`);
   return 'local';
+};
+
+// Contract Data Interface
+export interface ContractData {
+  // Chain Information
+  chain: {
+    name: string;
+    id: string;
+    rpc: string;
+    symbol: string;
+  };
+  
+  // Contract Information
+  contractAddress: string;
+  explorerUrl: string;
+  openseaUrl: string;
+  
+  // Contract State
+  tokenCount: number;
+  maxSupply: number;
+  mintOpen: Date;
+  mintDuration: number; // in milliseconds
+  mintPrice: string; // in ETH string format
+  
+  // Derived
+  mintEnd: Date;
+  isMintActive: boolean;
+}
+
+// Get current contract data
+export const getContractData = async (contract: ColourMeNFT | null): Promise<{ data: ContractData | null; result: ConnectionResult }> => {
+  try {
+    console.log('Loading contract data, contract available:', !!contract);
+    
+    const networkName = getActiveNetwork();
+    const config = networkConfigs[networkName];
+    
+    // Chain information
+    const chain = {
+      name: config.chainName,
+      id: config.chainId,
+      rpc: config.rpcUrls[0],
+      symbol: config.nativeCurrency.symbol
+    };
+    
+    // Contract information
+    const contractAddress = config.contracts.ColourMeNFT.address;
+    const explorerUrl = config.explorerUrl;
+    const openseaUrl = config.openseaUrl;
+    
+    if (!contract) {
+      throw new Error('Contract not connected');
+    }
+    
+    // Get all project info with a single efficient call
+    const { projectInfo, result: projectResult } = await getProjectInfo(contract);
+    
+    if (!projectResult.success || !projectInfo) {
+      throw new Error(`Failed to load project info: ${projectResult.error}`);
+    }
+    
+    // Extract data from project info
+    const tokenCount = projectInfo.tokenCount;
+    const maxSupply = projectInfo.maxSupply;
+    const mintOpen = new Date(projectInfo.mintStart * 1000); // convert to milliseconds
+    const mintDuration = projectInfo.mintDuration * 1000; // convert to milliseconds
+    const mintPrice = ethers.formatEther(projectInfo.mintPrice); // convert wei to ETH
+    
+    // Calculate derived values
+    const mintEnd = new Date(mintOpen.getTime() + mintDuration);
+    const now = new Date();
+    const isMintActive = now >= mintOpen && now <= mintEnd;
+    
+    const contractData: ContractData = {
+      chain,
+      contractAddress,
+      explorerUrl,
+      openseaUrl,
+      tokenCount,
+      maxSupply,
+      mintOpen,
+      mintDuration,
+      mintPrice,
+      mintEnd,
+      isMintActive
+    };
+    
+    return {
+      data: contractData,
+      result: {
+        success: true,
+        data: contractData
+      }
+    };
+    
+  } catch (error) {
+    return {
+      data: null,
+      result: {
+        success: false,
+        error: `Failed to load contract data: ${error}`
+      }
+    };
+  }
 };
 
 const activeNetwork = getActiveNetwork();
@@ -440,14 +553,15 @@ export const connectToWallet = async (): Promise<{
 // Helper function to get gas estimate with fallback for mint
 const getGasEstimateForMint = async (
   contract: ColourMeNFT,
-  toAddress: string
+  toAddress: string,
+  quantity: number = 1
 ): Promise<bigint> => {
   try {
-    const estimatedGas = await contract.mint.estimateGas(toAddress);
+    const estimatedGas = await contract.mint.estimateGas(toAddress, quantity);
     return (estimatedGas * 120n) / 100n; // Add 20% buffer
   } catch (error) {
     console.warn('Gas estimation failed for mint, using fallback:', error);
-    return 200000n;
+    return BigInt(200000 * quantity); // Scale fallback with quantity
   }
 };
 
@@ -678,13 +792,56 @@ export const executeQueueChunk = async (
   };
 };
 
+// Contract Read Methods
+export const getProjectInfo = async (
+  contract: ColourMeNFT
+): Promise<{ projectInfo: any; result: ConnectionResult }> => {
+  try {
+    const projectInfo = await contract.getProjectInfo();
+    const [
+      name,
+      symbol,
+      baseURL,
+      tokenCount,
+      maxSupply,
+      mintPrice,
+      mintLimit,
+      mintStart,
+      mintDuration
+    ] = projectInfo;
+
+    const info = {
+      name: name,
+      symbol: symbol,
+      baseURL: baseURL,
+      tokenCount: Number(tokenCount),
+      maxSupply: Number(maxSupply),
+      mintPrice: mintPrice,
+      mintLimit: Number(mintLimit),
+      mintStart: Number(mintStart),
+      mintDuration: Number(mintDuration)
+    };
+
+    return {
+      projectInfo: info,
+      result: { success: true, data: info }
+    };
+  } catch (error) {
+    return {
+      projectInfo: null,
+      result: { success: false, error: `Failed to get project info: ${error}` }
+    };
+  }
+};
+
 // Contract Write Methods
 export const mintToken = async (
   contract: ColourMeNFT,
-  toAddress: string
+  toAddress: string,
+  quantity: number = 1
 ): Promise<ConnectionResult> => {
   try {
-    console.log('🪙 Minting token:', toAddress);
+    console.log('🪙 Minting token:', toAddress, 'quantity:', quantity);
     // Pre-flight checks
     const tokenCount = await contract.tokenCount();
     const maxSupply = await contract.maxSupply();
@@ -693,9 +850,13 @@ export const mintToken = async (
       return { success: false, error: 'Collection is sold out' };
     }
 
-    const gasLimit = await getGasEstimateForMint(contract, toAddress);
+    if (tokenCount + BigInt(quantity) > maxSupply) {
+      return { success: false, error: `Only ${Number(maxSupply - tokenCount)} tokens remaining` };
+    }
+
+    const gasLimit = await getGasEstimateForMint(contract, toAddress, quantity);
     
-    const tx = await contract.mint(toAddress, {
+    const tx = await contract.mint(toAddress, quantity, {
       gasLimit: gasLimit
     });
     

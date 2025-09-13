@@ -122,6 +122,11 @@ describe("Transaction Limits", function () {
       console.log("Attached to existing nft");
     } catch (error: any) {
       const NFTFactory = await ethers.getContractFactory("ColourMeNFT");
+      // Set mint start to a time in the past, and current time should be between start and end
+      const now = Math.floor(Date.now() / 1000);
+      const mintStart = now - 3600; // Started 1 hour ago
+      const mintDuration = 365 * 24 * 60 * 60; // 1 year duration
+      
       nft = await NFTFactory.deploy(
         "ColourMe",
         "CM",
@@ -129,7 +134,11 @@ describe("Transaction Limits", function () {
         1000, // maxSupply
         renderer.target,
         owner.address,
-        250 // 2.5% royalty
+        250, // 2.5% royalty
+        0, // mintPrice (free)
+        10, // mintLimit (10 per transaction)
+        mintStart, // mintStart (started 1 hour ago)
+        mintDuration // mintDuration (1 year)
       ) as unknown as ColourMeNFT;
       await nft.waitForDeployment();
       console.log("Deployed NFT at", await nft.getAddress());
@@ -145,7 +154,7 @@ describe("Transaction Limits", function () {
   });
 
   beforeEach(async function () {
-    const tx = await nft.mint(user.address);
+    const tx = await nft.mint(user.address, 1); // quantity = 1
     await tx.wait();
     tokenId = Number(await nft.tokenCount());
   });

@@ -5,7 +5,7 @@ import {
   connectToProvider,
   connectToWallet,
   getTokenCount,
-  getMaxSupply,
+  getProjectInfo,
   mintToken,
   switchNetwork,
   setupNetworkListeners,
@@ -73,20 +73,19 @@ const UnifiedActionButton: React.FC<UnifiedActionButtonProps> = ({
         console.log(`✅ Connected to contract at ${dappConfig.contracts.ColourMeNFT.address}`);
         setReadOnlyContract(readContract);
         
-        // Get contract data
+        // Get contract data with single efficient call
         console.log('📊 Loading contract data...');
-        const [tokenCountResult, maxSupplyResult] = await Promise.all([
-          getTokenCount(readContract),
-          getMaxSupply(readContract)
-        ]);
+        const { projectInfo, result: projectResult } = await getProjectInfo(readContract);
         
-        if (tokenCountResult.result.success) {
-          setTokenCount(tokenCountResult.count);
-          console.log(`📈 Token count: ${tokenCountResult.count}`);
-        }
-        if (maxSupplyResult.result.success) {
-          setMaxSupply(maxSupplyResult.maxSupply);
-          console.log(`🎯 Max supply: ${maxSupplyResult.maxSupply}`);
+        if (projectResult.success && projectInfo) {
+          setTokenCount(projectInfo.tokenCount);
+          setMaxSupply(projectInfo.maxSupply);
+          console.log(`📈 Token count: ${projectInfo.tokenCount}`);
+          console.log(`🎯 Max supply: ${projectInfo.maxSupply}`);
+          console.log(`💰 Mint price: ${projectInfo.mintPrice}`);
+          console.log(`📅 Mint timing: ${projectInfo.mintStart} - ${projectInfo.mintStart + projectInfo.mintDuration}`);
+        } else {
+          console.error('❌ Failed to load project info:', projectResult.error);
         }
       } else {
         console.error('❌ Failed to connect to contract:', result.error);

@@ -235,6 +235,11 @@ async function main() {
   // Deploy ColourMeNFT
   console.log("Deploying ColourMeNFT...");
   const NFTFactory = await ethers.getContractFactory("ColourMeNFT");
+  // Set mint start to a time in the past, and current time should be between start and end
+  const now = Math.floor(Date.now() / 1000);
+  const mintStart = now - 3600; // Started 1 hour ago
+  const mintDuration = 365 * 24 * 60 * 60; // 1 year duration
+  
   const nft = await NFTFactory.deploy(
     "Colour Me NFT",           // name
     "CLRNFT",                  // symbol
@@ -242,7 +247,11 @@ async function main() {
     10000,                     // maxSupply
     await renderer.getAddress(), // renderer address
     deployer.address,          // owner
-    500                        // royalty (5%)
+    500,                       // royalty (5%)
+    0,                         // mintPrice (free)
+    10,                        // mintLimit (10 per transaction)
+    mintStart,                 // mintStart (started 1 hour ago)  
+    mintDuration               // mintDuration (1 year)
   ) as ColourMeNFT;
   await nft.waitForDeployment();
   console.log("✅ ColourMeNFT deployed at:", await nft.getAddress());
@@ -309,7 +318,7 @@ async function main() {
   
   try {
     const tokenCount = await nft.tokenCount();
-    const mintTx = await nft.mint(deployer.address);
+    const mintTx = await nft.mint(deployer.address, 1); // quantity = 1
     await mintTx.wait();
     tokenId = Number(tokenCount) + 1;
     console.log("✅ Minted token ID:", tokenId);

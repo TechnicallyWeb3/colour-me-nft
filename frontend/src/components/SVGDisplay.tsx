@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   connectToProvider,
-  getTokenCount,
+  getProjectInfo,
   getOwnerOf,
   getTokenSVG,
   type ConnectionResult
@@ -67,20 +67,22 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
       }
 
       // Check if token is valid and owned
-      const [tokenCountResult, ownerResult] = await Promise.all([
-        getTokenCount(contract!),
+      const [projectInfoResult, ownerResult] = await Promise.all([
+        getProjectInfo(contract!),
         getOwnerOf(contract!, effectiveTokenId)
       ]);
 
-      if (!tokenCountResult.result.success) {
-        setError('Failed to get token count');
+      if (!projectInfoResult.result.success) {
+        setError('Failed to get project info');
         loadLocalSVG();
         return;
       }
 
+      const tokenCount = projectInfoResult.projectInfo?.tokenCount || 0;
+
       // Check if token ID is within valid range
-      if (effectiveTokenId > tokenCountResult.count) {
-        console.log(`📄 Token #${effectiveTokenId} does not exist yet (${tokenCountResult.count} total tokens)`);
+      if (effectiveTokenId > tokenCount) {
+        console.log(`📄 Token #${effectiveTokenId} does not exist yet (${tokenCount} total tokens)`);
         loadLocalSVG();
         clearUrlHash();
         return;
