@@ -346,7 +346,7 @@
   .address-bar-wrapper {
     padding: 3px 5px;
     flex: 1;
-    min-width: 120px;
+    min-width: 150px;
   }
   
   .address-bar-input {
