@@ -180,27 +180,34 @@ function HomePage() {
 
   // Handle save request from SVG
   const handleSaveRequest = (data: { artData: any[] | string, saveType: 'set' | 'append' }) => {
+    console.log('🔍 [App.tsx] handleSaveRequest called with:', data);
+    
     // Parse artData if it's a JSON string
     let parsedArtData: any[] = [];
     
     if (typeof data.artData === 'string') {
       try {
         parsedArtData = JSON.parse(data.artData);
+        console.log('✅ [App.tsx] Parsed JSON artData:', parsedArtData.length, 'objects');
       } catch (error) {
-        console.error('Failed to parse artData JSON:', error);
+        console.error('❌ [App.tsx] Failed to parse artData JSON:', error);
         parsedArtData = [];
       }
     } else if (Array.isArray(data.artData)) {
       parsedArtData = data.artData;
+      console.log('✅ [App.tsx] Using array artData:', parsedArtData.length, 'objects');
     } else {
-      console.warn('artData is neither string nor array:', data.artData);
+      console.warn('⚠️ [App.tsx] artData is neither string nor array:', data.artData);
       parsedArtData = [];
     }
     
-    setSaveRequestData({
+    const saveRequest = {
       artData: parsedArtData,
       saveType: data.saveType
-    });
+    };
+    
+    console.log('📝 [App.tsx] Setting saveRequestData:', saveRequest);
+    setSaveRequestData(saveRequest);
   };
 
   // Handle messages from SVG
@@ -211,6 +218,7 @@ function HomePage() {
       const { type, data } = event.data;
       
       if (type === 'SAVE_REQUEST') {
+        console.log('🎨 [App.tsx] SAVE_REQUEST received:', { type, data });
         handleSaveRequest(data);
       } else if (type === 'OBJECT_ADDED') {
         // Update current objects when new object is added

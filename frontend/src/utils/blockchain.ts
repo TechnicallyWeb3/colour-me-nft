@@ -911,28 +911,43 @@ export const setArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
+    console.log('🎨 [blockchain.ts] setArt called with:', { tokenId, artDataLength: artData.length, artData });
     const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
+    console.log('📦 [blockchain.ts] Converted to packed objects:', { packedObjectsLength: contractObjects.length, contractObjects });
     
     // Pre-flight check - verify token ownership
     try {
+      console.log('🔐 [blockchain.ts] Checking token ownership for token:', tokenId);
       const owner = await contract.ownerOf(tokenId);
+      console.log('👤 [blockchain.ts] Token owner:', owner);
+      
       const runner = contract.runner;
       if (!runner || typeof (runner as any).getAddress !== 'function') {
+        console.error('❌ [blockchain.ts] No signer available');
         return { success: false, error: 'No signer available' };
       }
       const signerAddress = await (runner as any).getAddress();
+      console.log('✏️ [blockchain.ts] Signer address:', signerAddress);
+      
       if (owner.toLowerCase() !== signerAddress?.toLowerCase()) {
+        console.error('❌ [blockchain.ts] Ownership mismatch:', { owner: owner.toLowerCase(), signer: signerAddress?.toLowerCase() });
         return { success: false, error: 'You do not own this token' };
       }
+      console.log('✅ [blockchain.ts] Ownership verified');
     } catch (error) {
+      console.error('❌ [blockchain.ts] Ownership check failed:', error);
       return { success: false, error: 'Token does not exist or ownership check failed' };
     }
 
+    console.log('⛽ [blockchain.ts] Getting gas estimate...');
     const gasLimit = await getGasEstimateForSetArt(contract, tokenId, contractObjects);
+    console.log('⛽ [blockchain.ts] Gas limit estimated:', gasLimit.toString());
     
+    console.log('📤 [blockchain.ts] Sending setArt transaction...');
     const tx = await contract.setArt(tokenId, contractObjects, {
       gasLimit: gasLimit
     });
+    console.log('📤 [blockchain.ts] Transaction sent:', tx.hash);
     
     console.log('🎨 SetArt transaction sent:', tx.hash);
     const receipt = await tx.wait();
@@ -976,28 +991,43 @@ export const appendArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
+    console.log('➕ [blockchain.ts] appendArt called with:', { tokenId, artDataLength: artData.length, artData });
     const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
+    console.log('📦 [blockchain.ts] Converted to packed objects:', { packedObjectsLength: contractObjects.length, contractObjects });
     
     // Pre-flight check - verify token ownership
     try {
+      console.log('🔐 [blockchain.ts] Checking token ownership for token:', tokenId);
       const owner = await contract.ownerOf(tokenId);
+      console.log('👤 [blockchain.ts] Token owner:', owner);
+      
       const runner = contract.runner;
       if (!runner || typeof (runner as any).getAddress !== 'function') {
+        console.error('❌ [blockchain.ts] No signer available');
         return { success: false, error: 'No signer available' };
       }
       const signerAddress = await (runner as any).getAddress();
+      console.log('✏️ [blockchain.ts] Signer address:', signerAddress);
+      
       if (owner.toLowerCase() !== signerAddress?.toLowerCase()) {
+        console.error('❌ [blockchain.ts] Ownership mismatch:', { owner: owner.toLowerCase(), signer: signerAddress?.toLowerCase() });
         return { success: false, error: 'You do not own this token' };
       }
+      console.log('✅ [blockchain.ts] Ownership verified');
     } catch (error) {
+      console.error('❌ [blockchain.ts] Ownership check failed:', error);
       return { success: false, error: 'Token does not exist or ownership check failed' };
     }
 
+    console.log('⛽ [blockchain.ts] Getting gas estimate...');
     const gasLimit = await getGasEstimateForAppendArt(contract, tokenId, contractObjects);
+    console.log('⛽ [blockchain.ts] Gas limit estimated:', gasLimit.toString());
     
+    console.log('📤 [blockchain.ts] Sending appendArt transaction...');
     const tx = await contract.appendArt(tokenId, contractObjects, {
       gasLimit: gasLimit
     });
+    console.log('📤 [blockchain.ts] Transaction sent:', tx.hash);
     
     console.log('➕ AppendArt transaction sent:', tx.hash);
     const receipt = await tx.wait();

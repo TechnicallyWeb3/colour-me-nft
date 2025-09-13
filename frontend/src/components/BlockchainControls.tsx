@@ -32,6 +32,13 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
   onSaveSuccess,
   saveRequestData
 }) => {
+  console.log('🔄 [BlockchainControls] Component rendered with props:', {
+    tokenId,
+    account: account ? `${account.slice(0, 6)}...${account.slice(-4)}` : null,
+    isOwner,
+    saveRequestData: saveRequestData ? { saveType: saveRequestData.saveType, artDataLength: saveRequestData.artData?.length } : null
+  });
+  
   const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
   // Use external saveRequestData instead of internal state
   const pendingSaveRequest = saveRequestData;
@@ -62,18 +69,21 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
   // Initialize write contract when account is available
   useEffect(() => {
     const initializeContract = async () => {
+      console.log('🔌 [BlockchainControls] Initializing write contract for account:', account);
       if (account) {
         try {
           const { contract, result } = await connectToWallet();
           if (result.success) {
+            console.log('✅ [BlockchainControls] Write contract connected successfully');
             setWriteContract(contract);
           } else {
-            console.error('Failed to connect write contract:', result.error);
+            console.error('❌ [BlockchainControls] Failed to connect write contract:', result.error);
           }
         } catch (error) {
-          console.error('Error initializing write contract:', error);
+          console.error('❌ [BlockchainControls] Error initializing write contract:', error);
         }
       } else {
+        console.log('⚠️ [BlockchainControls] No account, clearing write contract');
         setWriteContract(null);
       }
     };
@@ -100,7 +110,26 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
 
   // Handle save requests from SVG
   const handleSaveRequest = async (data: { artData: ContractObject[], saveType: 'set' | 'append' }) => {
+    console.log('🚀 [BlockchainControls] handleSaveRequest called with:', {
+      saveType: data.saveType,
+      artDataLength: data.artData?.length || 0,
+      artData: data.artData
+    });
+    
+    console.log('🔍 [BlockchainControls] Checking prerequisites:', {
+      writeContract: !!writeContract,
+      account: account,
+      tokenId: tokenId,
+      isOwner: isOwner
+    });
+    
     if (!writeContract || !account || !tokenId || !isOwner) {
+      console.error('❌ [BlockchainControls] Prerequisites not met:', {
+        writeContract: !!writeContract,
+        account: !!account,
+        tokenId: !!tokenId,
+        isOwner: isOwner
+      });
       showMessage('Cannot save: Missing requirements', true);
       return;
     }
@@ -125,17 +154,23 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
     setIsSaving(true);
 
     try {
+      console.log(`🔗 [BlockchainControls] Starting ${data.saveType} transaction...`);
       showMessage(`${data.saveType === 'set' ? 'Setting' : 'Appending'} art on token #${tokenId}...`);
       
       let result: ConnectionResult;
       
       if (data.saveType === 'set') {
+        console.log('📝 [BlockchainControls] Calling setArt with:', { tokenId, artDataLength: data.artData.length });
         result = await setArt(writeContract, tokenId, data.artData);
+        console.log('📝 [BlockchainControls] setArt result:', result);
       } else {
+        console.log('➕ [BlockchainControls] Calling appendArt with:', { tokenId, artDataLength: data.artData.length });
         result = await appendArt(writeContract, tokenId, data.artData);
+        console.log('➕ [BlockchainControls] appendArt result:', result);
       }
 
       if (result.success) {
+        console.log('✅ [BlockchainControls] Transaction successful!', result.data);
         showMessage(`Art ${data.saveType === 'set' ? 'set' : 'appended'} successfully!`);
         
         // Notify parent component to reload SVG
@@ -143,9 +178,11 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
           onSaveSuccess();
         }
       } else {
+        console.error('❌ [BlockchainControls] Transaction failed:', result.error);
         showMessage(result.error || `Failed to ${data.saveType} art`, true);
       }
     } catch (error) {
+      console.error('❌ [BlockchainControls] Exception during save:', error);
       showMessage(`Error saving to blockchain: ${error}`, true);
     } finally {
       setIsSaving(false);
@@ -221,10 +258,32 @@ const BlockchainControls: React.FC<BlockchainControlsProps> = ({
 
   // Auto-handle save requests when data changes
   useEffect(() => {
+    console.log('🔄 [BlockchainControls] useEffect triggered with state:', {
+      pendingSaveRequest: !!pendingSaveRequest,
+      writeContract: !!writeContract,
+      account: !!account,
+      tokenId: tokenId,
+      isOwner: isOwner,
+      isSaving: isSaving,
+      shouldUseQueue: shouldUseQueue,
+      saveRequestData: pendingSaveRequest
+    });
+    
     if (pendingSaveRequest && writeContract && account && tokenId && isOwner && !isSaving && !shouldUseQueue) {
+      console.log('✅ [BlockchainControls] All conditions met, calling handleSaveRequest');
       handleSaveRequest(pendingSaveRequest);
+    } else {
+      console.log('❌ [BlockchainControls] Conditions not met for auto-save:', {
+        hasPendingRequest: !!pendingSaveRequest,
+        hasWriteContract: !!writeContract,
+        hasAccount: !!account,
+        hasTokenId: !!tokenId,
+        isOwner: isOwner,
+        notSaving: !isSaving,
+        notUsingQueue: !shouldUseQueue
+      });
     }
-  }, [pendingSaveRequest, writeContract, account, tokenId, isOwner, shouldUseQueue]);
+  }, [pendingSaveRequest, writeContract, account, tokenId, isOwner, isSaving, shouldUseQueue]);
 
   // Manual save functions for testing
   const handleManualSet = async () => {

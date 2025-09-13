@@ -11,7 +11,12 @@ import {
   getTokenSVG,
   getContractData,
   type ContractData,
-  formatAddress
+  formatAddress,
+  connectToWallet,
+  setArt,
+  appendArt,
+  type ConnectionResult,
+  type ContractObject
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
@@ -238,9 +243,19 @@ const Home: React.FC = () => {
 
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
+  const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
+  const [account, setAccount] = useState<string>('');
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
   const [isLoadingContract, setIsLoadingContract] = useState(false);
+  
+  // Save functionality state
+  const [saveRequestData, setSaveRequestData] = useState<{
+    artData: ContractObject[];
+    saveType: 'set' | 'append';
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string>('');
 
 
   // Function to refresh contract data from blockchain
@@ -299,6 +314,30 @@ const Home: React.FC = () => {
 
     initializeBlockchain();
   }, []);
+
+  // Initialize write contract when account is available
+  useEffect(() => {
+    const initializeWriteContract = async () => {
+      if (account) {
+        try {
+          const { contract, result } = await connectToWallet();
+          if (result.success) {
+            console.log('✅ [Home.tsx] Write contract connected successfully');
+            setWriteContract(contract);
+          } else {
+            console.error('❌ [Home.tsx] Failed to connect write contract:', result.error);
+          }
+        } catch (error) {
+          console.error('❌ [Home.tsx] Error initializing write contract:', error);
+        }
+      } else {
+        console.log('⚠️ [Home.tsx] No account, clearing write contract');
+        setWriteContract(null);
+      }
+    };
+
+    initializeWriteContract();
+  }, [account]);
 
   // Force SVG reload when active token changes (like in App.tsx)
   useEffect(() => {
@@ -362,6 +401,217 @@ const Home: React.FC = () => {
     };
   }, [tokenPreviews]);
 
+  // Handle save request from SVG
+  const handleSaveRequest = (data: { artData: any[] | string, saveType: 'set' | 'append' }) => {
+    console.log('🎨 [Home.tsx] SAVE_REQUEST received:', { type: 'SAVE_REQUEST', data });
+    console.log('🔍 [Home.tsx] handleSaveRequest called with:', data);
+    
+    // Parse artData if it's a JSON string
+    let parsedArtData: ContractObject[] = [];
+    
+    if (typeof data.artData === 'string') {
+      try {
+        parsedArtData = JSON.parse(data.artData);
+        console.log('✅ [Home.tsx] Parsed JSON artData:', parsedArtData.length, 'objects');
+      } catch (error) {
+        console.error('❌ [Home.tsx] Failed to parse artData JSON:', error);
+        parsedArtData = [];
+      }
+    } else if (Array.isArray(data.artData)) {
+      parsedArtData = data.artData;
+      console.log('✅ [Home.tsx] Using array artData:', parsedArtData.length, 'objects');
+    } else {
+      console.warn('⚠️ [Home.tsx] artData is neither string nor array:', data.artData);
+      parsedArtData = [];
+    }
+    
+    const saveRequest = {
+      artData: parsedArtData,
+      saveType: data.saveType
+    };
+    
+    console.log('📝 [Home.tsx] Setting saveRequestData:', saveRequest);
+    setSaveRequestData(saveRequest);
+  };
+
+  // Handle successful save
+  const handleSaveSuccess = () => {
+    console.log('✅ [Home.tsx] Save successful, reloading SVG and thumbnail');
+    setSvgKey(prev => prev + 1); // Force SVG reload
+    setSaveRequestData(null); // Clear pending request
+    setSaveStatus('Art saved successfully!');
+    setTimeout(() => setSaveStatus(''), 3000);
+    
+    // Reload thumbnail for the current token
+    if (activeToken > 0 && readOnlyContract) {
+      reloadTokenThumbnail(activeToken);
+    }
+  };
+
+  // Reload thumbnail for a specific token
+  const reloadTokenThumbnail = async (tokenId: number) => {
+    if (!readOnlyContract) return;
+    
+    try {
+      console.log(`🖼️ [Home.tsx] Reloading thumbnail for token #${tokenId}`);
+      const { svg: svgContent, result } = await getTokenSVG(readOnlyContract, tokenId);
+      if (result.success) {
+        // Clean up old URL if it exists
+        const oldUrl = tokenPreviews.get(tokenId);
+        if (oldUrl) {
+          URL.revokeObjectURL(oldUrl);
+        }
+        
+        // Create new preview URL
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        setTokenPreviews(prev => {
+          const newPreviews = new Map(prev);
+          newPreviews.set(tokenId, url);
+          return newPreviews;
+        });
+        
+        console.log(`✅ [Home.tsx] Thumbnail reloaded for token #${tokenId}`);
+      } else {
+        console.error(`❌ [Home.tsx] Failed to reload thumbnail for token #${tokenId}:`, result.error);
+      }
+    } catch (error) {
+      console.error(`❌ [Home.tsx] Error reloading thumbnail for token #${tokenId}:`, error);
+    }
+  };
+
+  // Auto-handle save requests when data changes
+  useEffect(() => {
+    console.log('🔄 [Home.tsx] useEffect triggered with state:', {
+      saveRequestData: !!saveRequestData,
+      writeContract: !!writeContract,
+      account: !!account,
+      activeToken: activeToken,
+      isSaving: isSaving
+    });
+    
+    if (saveRequestData && writeContract && account && activeToken > 0 && !isSaving) {
+      console.log('✅ [Home.tsx] All conditions met, calling handleSaveRequest');
+      handleSaveRequest(saveRequestData);
+    } else {
+      console.log('❌ [Home.tsx] Conditions not met for auto-save:', {
+        hasSaveRequest: !!saveRequestData,
+        hasWriteContract: !!writeContract,
+        hasAccount: !!account,
+        hasValidToken: activeToken > 0,
+        notSaving: !isSaving
+      });
+    }
+  }, [saveRequestData, writeContract, account, activeToken, isSaving]);
+
+  // Handle save execution
+  const executeSave = async (data: { artData: ContractObject[], saveType: 'set' | 'append' }) => {
+    if (!writeContract || !account || !activeToken || activeToken === 0) {
+      console.error('❌ [Home.tsx] Prerequisites not met for save:', {
+        writeContract: !!writeContract,
+        account: !!account,
+        activeToken: activeToken
+      });
+      setSaveStatus('Cannot save: Missing requirements');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveStatus(`${data.saveType === 'set' ? 'Setting' : 'Appending'} art...`);
+
+    try {
+      console.log(`🔗 [Home.tsx] Starting ${data.saveType} transaction...`);
+      
+      let result: ConnectionResult;
+      
+      if (data.saveType === 'set') {
+        console.log('📝 [Home.tsx] Calling setArt with:', { tokenId: activeToken, artDataLength: data.artData.length });
+        result = await setArt(writeContract, activeToken, data.artData);
+        console.log('📝 [Home.tsx] setArt result:', result);
+      } else {
+        console.log('➕ [Home.tsx] Calling appendArt with:', { tokenId: activeToken, artDataLength: data.artData.length });
+        result = await appendArt(writeContract, activeToken, data.artData);
+        console.log('➕ [Home.tsx] appendArt result:', result);
+      }
+
+      if (result.success) {
+        console.log('✅ [Home.tsx] Transaction successful!', result.data);
+        setSaveStatus(`Art ${data.saveType === 'set' ? 'set' : 'appended'} successfully!`);
+        handleSaveSuccess();
+      } else {
+        console.error('❌ [Home.tsx] Transaction failed:', result.error);
+        setSaveStatus(result.error || `Failed to ${data.saveType} art`);
+      }
+    } catch (error) {
+      console.error('❌ [Home.tsx] Exception during save:', error);
+      setSaveStatus(`Error saving to blockchain: ${error}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Execute save when saveRequestData changes
+  useEffect(() => {
+    if (saveRequestData && writeContract && account && activeToken > 0 && !isSaving) {
+      executeSave(saveRequestData);
+    }
+  }, [saveRequestData, writeContract, account, activeToken, isSaving]);
+
+  // Listen for messages from SVG (like in App.tsx)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const { type, data } = event.data;
+      
+      if (type === 'SAVE_REQUEST') {
+        console.log('🎨 [Home.tsx] SAVE_REQUEST received from SVG:', { type, data });
+        handleSaveRequest(data);
+      } else if (type === 'OBJECT_ADDED') {
+        console.log('📝 [Home.tsx] OBJECT_ADDED received:', data);
+        // Update current objects when new object is added
+        const { artData } = data;
+        if (artData && artData.diff) {
+          try {
+            const diffObjects = typeof artData.diff === 'string' 
+              ? JSON.parse(artData.diff) 
+              : artData.diff;
+            
+            if (Array.isArray(diffObjects) && diffObjects.length > 0) {
+              console.log('📝 [Home.tsx] Processing diff objects:', diffObjects.length);
+              // For append operations, add to current objects
+              if (artData.saveType === 'append') {
+                // Handle append logic if needed
+                console.log('➕ [Home.tsx] Append operation detected');
+              } else {
+                // For set operations, replace current objects
+                console.log('🔄 [Home.tsx] Set operation detected');
+              }
+            }
+          } catch (error) {
+            console.error('❌ [Home.tsx] Failed to parse OBJECT_ADDED data:', error);
+          }
+        }
+      } else if (type === 'CLEAR_REQUEST') {
+        console.log('🗑️ [Home.tsx] CLEAR_REQUEST received');
+        // Reset objects when canvas is cleared
+      } else if (type === 'LOAD_DATA') {
+        console.log('📂 [Home.tsx] LOAD_DATA received:', data);
+        // Update objects when data is loaded
+        const { artData } = data;
+        if (Array.isArray(artData)) {
+          console.log('📂 [Home.tsx] Loading art data:', artData.length, 'objects');
+        }
+      }
+    };
+
+    console.log('👂 [Home.tsx] Setting up message listener');
+    window.addEventListener('message', handleMessage);
+    return () => {
+      console.log('🔇 [Home.tsx] Removing message listener');
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []); // Empty dependency array like in App.tsx
+
 
   const appTitle = () => {
     return `ColourMeNFT - ${activeToken}.svg`;
@@ -398,6 +648,7 @@ const Home: React.FC = () => {
             setActiveToken(tokenId);
           }}
           onContractDataUpdate={refreshContractData}
+          onAccountChange={setAccount}
         />
       </Window>
 
@@ -407,9 +658,27 @@ const Home: React.FC = () => {
           <SVGDisplay
             key={svgKey}
             tokenId={activeToken || undefined}
+            account={account}
+            onSaveRequest={handleSaveRequest}
             width={appWindowWidth()}
             height={appWindowWidth()}
           />
+          {/* Save Status Display */}
+          {saveStatus && (
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              zIndex: 1000
+            }}>
+              {saveStatus}
+            </div>
+          )}
         </div>
       </Window>
 

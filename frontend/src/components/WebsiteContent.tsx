@@ -18,6 +18,7 @@ interface WebsiteContentProps {
   contract: ColourMeNFT | null;
   onMintSuccess?: (tokenId: number) => void;
   onContractDataUpdate?: () => void;
+  onAccountChange?: (account: string) => void;
 }
 
 interface EventMessage {
@@ -28,11 +29,12 @@ interface EventMessage {
   txHash?: string;
 }
 
-const WebsiteContent: React.FC<WebsiteContentProps> = ({
-  contractData,
-  contract,
-  onMintSuccess,
-  onContractDataUpdate
+const WebsiteContent: React.FC<WebsiteContentProps> = ({ 
+  contractData, 
+  contract, 
+  onMintSuccess, 
+  onContractDataUpdate,
+  onAccountChange
 }) => {
   // Wallet state
   const [account, setAccount] = useState<string>('');
@@ -116,10 +118,12 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
         if (accounts.length === 0) {
           setAccount('');
           setWriteContract(null);
+          onAccountChange?.('');
           showMessage('Wallet disconnected', true);
         } else if (accounts[0] !== account) {
           const newAccount = accounts[0];
           setAccount(newAccount);
+          onAccountChange?.(newAccount);
           showMessage(`Switched to ${formatAddress(newAccount)}`);
           setTimeout(() => handleConnectWallet(), 100);
         }
@@ -136,6 +140,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       
       if (result.success && walletAccount && signer) {
         setAccount(walletAccount);
+        onAccountChange?.(walletAccount);
         setWriteContract(walletContract);
         showMessage(`Connected to ${formatAddress(walletAccount)}`);
       } else {
