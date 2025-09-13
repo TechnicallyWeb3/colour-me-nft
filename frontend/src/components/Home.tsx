@@ -635,7 +635,172 @@ const Home: React.FC = () => {
 
       {/* About Section */}
       <Window id="about" title="Document - About.txt" icon="🗒️" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos voluptate distinctio necessitatibus explicabo laboriosam sunt ipsum tempora, accusamus repellendus eos molestiae consequatur ullam fugit dolor maiores incidunt. Sed veniam, architecto repudiandae quas dolorum maxime corrupti nostrum, expedita temporibus error provident iure blanditiis? Nulla officiis aspernatur vel eveniet dolor culpa asperiores, doloremque suscipit quasi beatae quidem nesciunt repellat modi voluptatibus adipisci fuga ab exercitationem. Consectetur, pariatur. Quae quisquam sapiente tenetur. </p>
+        <div style={{
+          fontFamily: 'Courier New, monospace',
+          fontSize: '12px',
+          lineHeight: '1.4',
+          color: '#000',
+          backgroundColor: '#fefefe',
+          padding: '15px 60px',
+          whiteSpace: 'pre-wrap',
+          textAlign: 'justify',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ 
+            fontWeight: 'bold', 
+            fontSize: '16px', 
+            marginBottom: '20px', 
+            textAlign: 'center',
+            borderBottom: '2px solid #333',
+            paddingBottom: '10px',
+            letterSpacing: '1px'
+          }}>
+            COLOUR ME NFT - ABOUT
+          </div>
+          
+          <div style={{ 
+            marginBottom: '20px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#d32f2f',
+            textAlign: 'center',
+            border: '2px solid #d32f2f',
+            padding: '8px',
+            backgroundColor: '#ffebee'
+          }}>
+            🚀 NFTs ARE SO BACK! 🚀
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            Can we even technically call these NFTs? Not another pixel PFP. This isn't "just a JPEG". This is history!
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            Welcome to <strong>Colour Me NFT</strong> — the <strong>first-ever NFT App</strong>. A fully on-chain, interactive canvas where YOU are the artist. Mint your NFT and you don't just get a JPEG — you get a living, breathing SVG art app that runs forever on-chain. Find a creation made by your favourite artist, friend or just something you're vibing!
+          </div>
+          
+          <div style={{ 
+            marginBottom: '20px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            color: '#1976d2',
+            border: '1px solid #1976d2',
+            padding: '10px',
+            backgroundColor: '#e3f2fd',
+            borderRadius: '4px'
+          }}>
+            🖌️ <strong>5 random colours. 3 random shapes. Unlimited degen energy.</strong>
+          </div>
+          
+          <div style={{ 
+            marginBottom: '20px',
+            padding: '10px',
+            backgroundColor: '#f5f5f5',
+            border: '1px solid #ddd',
+            borderRadius: '4px'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
+              🎨 Toolbar Features:
+            </div>
+            <div style={{ marginLeft: '20px', marginBottom: '10px' }}>
+              • Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.
+              • Colours + shapes are randomized at mint, making each canvas unique.
+              • Tools: brush, eraser and fill bucket and the colour black are common attributes.
+            </div>
+            <div style={{ 
+              textAlign: 'center', 
+              margin: '10px 0',
+              padding: '15px',
+              backgroundColor: '#fff',
+              border: '2px dashed #ccc',
+              borderRadius: '4px',
+              color: '#666',
+              fontStyle: 'italic'
+            }}>
+              [TOOLBAR IMAGE PLACEHOLDER - toolbar1.png]
+              <br />
+              <small>Interactive drawing toolbar with colors, brush sizes, shapes, and tools</small>
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            This isn't stored on IPFS, Arweave, or some server that dies in a year. Nah, fam. Your art lives on the blockchain. <strong>Forever. Immutable. Unstoppable.</strong>
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            And the mint price? Just <strong>0.00025 ETH (~$1)</strong> on Base.
+            That's literally cheaper than your morning coffee. If you can't see what a value this is, if you fade this, you're NGMI.
+          </div>
+          
+          <div style={{ 
+            marginBottom: '15px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            color: '#2e7d32',
+            border: '1px solid #2e7d32',
+            padding: '8px',
+            backgroundColor: '#e8f5e8',
+            borderRadius: '4px'
+          }}>
+            💡 <strong>Think of it like this:</strong>
+          </div>
+          
+          <div style={{ 
+            marginLeft: '20px', 
+            marginBottom: '20px',
+            padding: '10px',
+            backgroundColor: '#f9f9f9',
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px'
+          }}>
+            • PFPs were the last era.
+            • <strong>Tokenized Web Apps (TWAs)</strong> are the next.
+            • And Colour Me NFT is the first TWA the world has ever seen.
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            Plus, every mint pays it forward: <strong>5% royalties go to TW3</strong> (Technically Web3) so we can keep building more degen-friendly, dope experiments that push Web3 forward.
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            👉 Whether you're an artist who wants to make something timeless, or just a degen who knows "first-of-its-kind" is ALWAYS alpha — this is your chance to grab history.
+          </div>
+          
+          <div style={{ 
+            marginTop: '25px', 
+            padding: '15px', 
+            backgroundColor: '#fff3e0', 
+            borderRadius: '6px', 
+            border: '2px solid #ff9800',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ 
+              fontWeight: 'bold', 
+              marginBottom: '12px',
+              fontSize: '14px',
+              color: '#e65100',
+              textAlign: 'center',
+              borderBottom: '1px solid #ff9800',
+              paddingBottom: '8px'
+            }}>
+              🎯 Wanna Shill This Project?
+            </div>
+            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
+              Wanna talk about how dope this NFT project is? We want to thank you! Originally we were thinking of making this a <strong>FREE</strong> mint, then decided we would just share the <strong>Primary Sale Revenue</strong> with our community instead. So we're going to reward the top 50 posts on TikTok and X. Members of our community can <strong>earn upto $400</strong> to post about this project! To learn more, check out our Shill2Earn page including who is eligible, how to enter and how to get paid.
+            </div>
+            <div style={{ 
+              marginTop: '12px', 
+              fontWeight: 'bold',
+              textAlign: 'center',
+              color: '#d84315',
+              fontSize: '12px'
+            }}>
+              🏆 May the best shillers win! 🏆
+            </div>
+          </div>
+        </div>
       </Window>
 
       {/* Website Browser */}

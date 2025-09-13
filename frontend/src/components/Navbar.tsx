@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './Navbar.css';
+import Shill2Earn from './Shill2Earn';
 
 const Navbar: React.FC = () => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isShill2EarnOpen, setIsShill2EarnOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -53,6 +55,9 @@ const Navbar: React.FC = () => {
           <a href="#overview" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('overview'); }}>
             Overview
           </a>
+          <a href="#" className="os-nav-link" onClick={(e) => { e.preventDefault(); setIsShill2EarnOpen(true); }}>
+            Shill2Earn
+          </a>
         </div>
         
         <div className="os-social-links">
@@ -86,6 +91,12 @@ const Navbar: React.FC = () => {
           </a>
         </div>
       </nav>
+      
+      {/* Shill2Earn Popup */}
+      <Shill2Earn 
+        isOpen={isShill2EarnOpen} 
+        onClose={() => setIsShill2EarnOpen(false)} 
+      />
     </>
 
   )

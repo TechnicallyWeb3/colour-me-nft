@@ -122,6 +122,31 @@
   background: rgba(255,255,255,0.1);
 }
 
+/* Medium screens - reduce spacing for cramped navbar */
+@media (max-width: 700px) and (min-width: 601px) {
+  .os-nav-links {
+    gap: 8px;
+  }
+  
+  .os-nav-link {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  
+  .os-navbar {
+    padding: 6px 12px;
+  }
+  
+  .os-social-links {
+    gap: 6px;
+  }
+  
+  .os-social-link {
+    padding: 2px;
+    font-size: 14px;
+  }
+}
+
 /* Mobile Styles */
 @media (max-width: 600px) {
   .os-nav-links {
