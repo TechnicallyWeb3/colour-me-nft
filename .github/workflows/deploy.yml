@@ -37,7 +37,9 @@ jobs:
         run: cd frontend && npm ci
       
       - name: Build testnet frontend
-        run: cd frontend && npm run build:testnet
+        run: cd frontend && npm run build
+        env:
+          VITE_NETWORK: testnet
       
       - name: Create 404.html for SPA routing
         run: cp frontend/dist/index.html frontend/dist/404.html
