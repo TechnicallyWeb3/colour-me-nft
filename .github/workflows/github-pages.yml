@@ -31,9 +31,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
           
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
+        
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: ./frontend
         
       - name: Build for testnet
         run: npm run testnet:build
