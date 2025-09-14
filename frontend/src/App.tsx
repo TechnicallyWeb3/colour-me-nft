@@ -4,7 +4,7 @@ import './App.css'
 
 function App() {
   return (
-    <Router>
+    <Router basename={import.meta.env.PROD ? '/colour-me-nft' : ''}>
       <Routes>
         <Route path="/" element={<Home />} />
       </Routes>
