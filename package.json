@@ -1,6 +1,6 @@
 {
   "name": "colour-me-nft",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NFT Dapp that allows changes to be made via the SVG",
   "main": "index.js",
   "scripts": {
