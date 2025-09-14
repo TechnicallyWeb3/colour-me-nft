@@ -42,7 +42,7 @@ jobs:
       - name: Build frontend for production
         run: cd frontend && npm run build
         env:
-          VITE_NETWORK: mainnet
+          VITE_NETWORK: testnet
       
       - name: Create 404.html for SPA routing
         run: cp frontend/dist/index.html frontend/dist/404.html
