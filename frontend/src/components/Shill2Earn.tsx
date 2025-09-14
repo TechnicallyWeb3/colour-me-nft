@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import './Shill2Earn.css';
 
 interface Shill2EarnProps {

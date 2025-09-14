@@ -3,8 +3,7 @@ import {
   connectToProvider,
   getProjectInfo,
   getOwnerOf,
-  getTokenSVG,
-  type ConnectionResult
+  getTokenSVG
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import colourMeFullSvg from '../assets/colour-me.full.svg';
@@ -232,8 +231,6 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
       (objectRef.current as any).reloadSVG = reloadTokenSVG;
     }
   }, [readOnlyContract, isValidToken, effectiveTokenId]);
-
-  const isOwner = isValidToken && account && tokenOwner.toLowerCase() === account.toLowerCase();
 
   return (
     <>
