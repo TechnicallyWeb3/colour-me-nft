@@ -3,4 +3,5 @@
 /* eslint-disable */
 export * as colourMeNftSol from "./ColourMeNFT.sol";
 export * as interfaces from "./interfaces";
+export * as test from "./test";
 export { ColourMeRenderer__factory } from "./ColourMeRenderer__factory";

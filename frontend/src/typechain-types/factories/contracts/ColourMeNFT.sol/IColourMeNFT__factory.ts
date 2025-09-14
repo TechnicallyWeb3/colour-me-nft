@@ -94,36 +94,14 @@ const _abi = [
       {
         components: [
           {
-            internalType: "enum Path",
-            name: "shape",
-            type: "uint8",
+            internalType: "uint256",
+            name: "base",
+            type: "uint256",
           },
           {
-            internalType: "bytes3",
-            name: "color",
-            type: "bytes3",
-          },
-          {
-            internalType: "uint8",
-            name: "stroke",
-            type: "uint8",
-          },
-          {
-            components: [
-              {
-                internalType: "uint16",
-                name: "x",
-                type: "uint16",
-              },
-              {
-                internalType: "uint16",
-                name: "y",
-                type: "uint16",
-              },
-            ],
-            internalType: "struct Point[]",
-            name: "points",
-            type: "tuple[]",
+            internalType: "bytes",
+            name: "additionalPoints",
+            type: "bytes",
           },
         ],
         internalType: "struct Object[]",
@@ -327,36 +305,14 @@ const _abi = [
       {
         components: [
           {
-            internalType: "enum Path",
-            name: "shape",
-            type: "uint8",
+            internalType: "uint256",
+            name: "base",
+            type: "uint256",
           },
           {
-            internalType: "bytes3",
-            name: "color",
-            type: "bytes3",
-          },
-          {
-            internalType: "uint8",
-            name: "stroke",
-            type: "uint8",
-          },
-          {
-            components: [
-              {
-                internalType: "uint16",
-                name: "x",
-                type: "uint16",
-              },
-              {
-                internalType: "uint16",
-                name: "y",
-                type: "uint16",
-              },
-            ],
-            internalType: "struct Point[]",
-            name: "points",
-            type: "tuple[]",
+            internalType: "bytes",
+            name: "additionalPoints",
+            type: "bytes",
           },
         ],
         internalType: "struct Object[]",

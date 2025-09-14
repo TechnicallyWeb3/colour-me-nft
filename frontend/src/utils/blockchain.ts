@@ -2,13 +2,18 @@ import { ethers } from 'ethers';
 import { ColourMeNFT__factory } from '../typechain-types/factories/contracts/ColourMeNFT.sol/ColourMeNFT__factory';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import type { ObjectStruct } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
+import { encodeObject, encodeObjects, type ObjectStruct as FrontendObject } from './encoding';
 
-// dApp Configuration
-export const dappConfig = {
-  // Network Configuration
-  network: {
+// Format address for display (truncate middle)
+export const formatAddress = (address: string): string => {
+  if (address.length <= 20) return address;
+  return `${address.slice(0, 10)}...${address.slice(-8)}`;
+};
+
+// Network Configurations
+export const networkConfigs = {
+  local: {
     chainId: '0x7A69', // 31337 in hex (Hardhat default)
-    chainIdDecimal: 31337,
     chainName: 'Hardhat Local',
     rpcUrls: ['http://127.0.0.1:8545'],
     nativeCurrency: {
@@ -16,21 +21,201 @@ export const dappConfig = {
       symbol: 'ETH',
       decimals: 18,
     },
-    blockExplorerUrls: null, // No block explorer for local network
+    blockExplorerUrls: [], // No block explorer for local network
+    rpcUrl: 'http://127.0.0.1:8545',
+    explorerUrl: 'http://localhost:3000', // No explorer for local
+    openseaUrl: 'http://localhost:8000', // Testnets OpenSea
+    contracts: {
+      ColourMeNFT: {
+        address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Local hardhat deployment
+        deployedBlock: 0,
+      }
+    }
+  },
+  testnet: {
+    chainId: '0xaa36a7', // 11155111 in hex (Sepolia testnet)
+    chainName: 'Sepolia Testnet',
+    rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+    nativeCurrency: {
+      name: 'Sepolia Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+    rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com/',
+    explorerUrl: 'https://sepolia.etherscan.io/',
+    openseaUrl: 'https://testnets.opensea.io/',
+    contracts: {
+      ColourMeNFT: {
+        address: "0xEF99b795cA31637ED4EFACAAD6dA187755907F9d", // Live testnet deployment
+        deployedBlock: 0,
+      }
+    }
+  },
+  mainnet: {
+    chainId: '0x2105', // 8453 in hex (Base mainnet)
+    chainName: 'Base',
+    rpcUrls: ['https://mainnet.base.org'],
+    nativeCurrency: {
+      name: 'Ether',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    blockExplorerUrls: ['https://basescan.org'],
+    rpcUrl: 'https://base-rpc.publicnode.com',
+    explorerUrl: 'https://basescan.org/',
+    openseaUrl: 'https://opensea.io/',
+    contracts: {
+      ColourMeNFT: {
+        address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Base mainnet
+        deployedBlock: 0,
+      }
+    }
+  }
+};
+
+// Get active network configuration based on environment variable
+const getActiveNetwork = (): keyof typeof networkConfigs => {
+  const env = import.meta.env.VITE_NETWORK || 'local';
+  if (env in networkConfigs) {
+    return env as keyof typeof networkConfigs;
+  }
+  console.warn(`⚠️ Unknown network: ${env}, falling back to local`);
+  return 'local';
+};
+
+// Contract Data Interface
+export interface ContractData {
+  // Chain Information
+  chain: {
+    name: string;
+    id: string;
+    rpc: string;
+    symbol: string;
+  };
+  
+  // Contract Information
+  contractAddress: string;
+  explorerUrl: string;
+  openseaUrl: string;
+  
+  // Contract State
+  tokenCount: number;
+  maxSupply: number;
+  mintOpen: Date;
+  mintDuration: number; // in milliseconds
+  mintPrice: string; // in ETH string format
+  
+  // Derived
+  mintEnd: Date;
+  isMintActive: boolean;
+}
+
+// Get current contract data
+export const getContractData = async (contract: ColourMeNFT | null): Promise<{ data: ContractData | null; result: ConnectionResult }> => {
+  try {
+    console.log('Loading contract data, contract available:', !!contract);
+    
+    const networkName = getActiveNetwork();
+    const config = networkConfigs[networkName];
+    
+    // Chain information
+    const chain = {
+      name: config.chainName,
+      id: config.chainId,
+      rpc: config.rpcUrls[0],
+      symbol: config.nativeCurrency.symbol
+    };
+    
+    // Contract information
+    const contractAddress = config.contracts.ColourMeNFT.address;
+    const explorerUrl = config.explorerUrl;
+    const openseaUrl = config.openseaUrl;
+    
+    if (!contract) {
+      throw new Error('Contract not connected');
+    }
+    
+    // Get all project info with a single efficient call
+    const { projectInfo, result: projectResult } = await getProjectInfo(contract);
+    
+    if (!projectResult.success || !projectInfo) {
+      throw new Error(`Failed to load project info: ${projectResult.error}`);
+    }
+    
+    // Extract data from project info
+    const tokenCount = projectInfo.tokenCount;
+    const maxSupply = projectInfo.maxSupply;
+    const mintOpen = new Date(projectInfo.mintStart * 1000); // convert to milliseconds
+    const mintDuration = projectInfo.mintDuration * 1000; // convert to milliseconds
+    const mintPrice = projectInfo?.mintPrice > 0n ? (ethers.formatEther(projectInfo.mintPrice) + ' ' + (chain?.symbol || 'ETH')) : 'FREE'; // convert wei to ETH
+    // Calculate derived values
+    const mintEnd = new Date(mintOpen.getTime() + mintDuration);
+    const now = new Date();
+    const isMintActive = now >= mintOpen && now <= mintEnd;
+    
+    const contractData: ContractData = {
+      chain,
+      contractAddress,
+      explorerUrl,
+      openseaUrl,
+      tokenCount,
+      maxSupply,
+      mintOpen,
+      mintDuration,
+      mintPrice,
+      mintEnd,
+      isMintActive
+    };
+    
+    return {
+      data: contractData,
+      result: {
+        success: true,
+        data: contractData
+      }
+    };
+    
+  } catch (error) {
+    return {
+      data: null,
+      result: {
+        success: false,
+        error: `Failed to load contract data: ${error}`
+      }
+    };
+  }
+};
+
+const activeNetwork = getActiveNetwork();
+const activeConfig = networkConfigs[activeNetwork];
+
+// dApp Configuration
+export const dappConfig = {
+  // Network Configuration
+  network: {
+    chainId: activeConfig.chainId,
+    chainName: activeConfig.chainName,
+    rpcUrls: activeConfig.rpcUrls,
+    nativeCurrency: activeConfig.nativeCurrency,
+    blockExplorerUrls: activeConfig.blockExplorerUrls,
   },
   // Contract Configuration  
   contracts: {
     ColourMeNFT: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      deployedBlock: 0, // Start block for event filtering
+      address: activeConfig.contracts.ColourMeNFT.address,
+      deployedBlock: activeConfig.contracts.ColourMeNFT.deployedBlock,
     }
   },
   // App Configuration
   app: {
     name: 'Paint dApp',
-    description: 'On-chain collaborative painting',
+    description: `On-chain collaborative painting on ${activeConfig.chainName}`,
     icon: '🎨',
-  }
+  },
+  // Active network info
+  activeNetwork,
+  allNetworks: networkConfigs
 };
 
 // Types
@@ -39,6 +224,12 @@ export interface ContractObject {
   color: string;
   stroke: number;
   points: { x: number; y: number }[];
+}
+
+// New packed contract object (matches the updated Object struct)
+export interface PackedContractObject {
+  base: bigint;
+  additionalPoints: Uint8Array;
 }
 
 export interface NetworkStatus {
@@ -55,12 +246,147 @@ export interface ConnectionResult {
 }
 
 // Helper Functions
-export const convertToObjectStruct = (obj: ContractObject): ObjectStruct => ({
-  shape: obj.shape,
-  color: obj.color,
-  stroke: obj.stroke,
-  points: obj.points.map(p => ({ x: p.x, y: p.y }))
-});
+
+// Legacy function for backwards compatibility
+export const convertToObjectStruct = (obj: ContractObject): ObjectStruct => {
+  // Convert to frontend object first, then encode to packed format
+  const frontendObj: FrontendObject = {
+    shape: obj.shape,
+    color: obj.color,
+    stroke: obj.stroke,
+    points: obj.points
+  };
+  
+  const packed = encodeObject(frontendObj);
+  
+  return {
+    base: packed.base,
+    additionalPoints: packed.additionalPoints
+  };
+};
+
+// New function for converting multiple objects with packed encoding
+export const convertToPackedObjects = (objects: ContractObject[]): ObjectStruct[] => {
+  const frontendObjects: FrontendObject[] = objects.map(obj => ({
+    shape: obj.shape,
+    color: obj.color,
+    stroke: obj.stroke,
+    points: obj.points
+  }));
+  
+  const packedObjects = encodeObjects(frontendObjects);
+  
+  return packedObjects.map(packed => ({
+    base: packed.base,
+    additionalPoints: packed.additionalPoints
+  }));
+};
+
+// Transaction size estimation with packed encoding benefits
+export const estimateObjectGasSize = (obj: ContractObject): number => {
+  // Base gas for packed object structure (much more efficient)
+  let gasEstimate = 60; // Reduced base cost due to packed encoding
+  
+  // First 6 points are packed into the base uint256 (very efficient)
+  const basePoints = Math.min(obj.points.length, 6);
+  gasEstimate += basePoints * 20; // Much cheaper for packed points
+  
+  // Additional points beyond 6 (stored as bytes)
+  const additionalPoints = Math.max(0, obj.points.length - 6);
+  gasEstimate += additionalPoints * 30; // Still cheaper than unpacked
+  
+  // Additional cost for complex shapes (reduced due to packed encoding)
+  if (obj.shape === 4 || obj.shape === 5) { // polyline or polygon
+    gasEstimate += obj.points.length * 10; // Reduced from 20
+  }
+  
+  return gasEstimate;
+};
+
+// New function to estimate packed encoding savings
+export const estimatePackedSavings = (objects: ContractObject[]): {
+  unpackedGas: number;
+  packedGas: number;
+  gasSavings: number;
+  savingsPercent: number;
+} => {
+  const unpackedGas = objects.reduce((total, obj) => {
+    // Old unpacked estimation
+    return total + 100 + (obj.points.length * 80) + 
+           ((obj.shape === 4 || obj.shape === 5) ? obj.points.length * 20 : 0);
+  }, 0);
+  
+  const packedGas = objects.reduce((total, obj) => {
+    return total + estimateObjectGasSize(obj);
+  }, 0);
+  
+  const gasSavings = unpackedGas - packedGas;
+  const savingsPercent = unpackedGas > 0 ? (gasSavings / unpackedGas) * 100 : 0;
+  
+  return {
+    unpackedGas,
+    packedGas,
+    gasSavings,
+    savingsPercent
+  };
+};
+
+export const estimateTransactionGas = (objects: ContractObject[]): number => {
+  const baseTransactionGas = 21000; // Base Ethereum transaction
+  const contractCallGas = 25000; // Base contract interaction
+  
+  // Defensive programming: ensure objects is an array
+  if (!Array.isArray(objects)) {
+    console.warn('estimateTransactionGas received non-array objects:', objects);
+    return baseTransactionGas + contractCallGas;
+  }
+  
+  const objectsGas = objects.reduce((total, obj) => {
+    return total + estimateObjectGasSize(obj);
+  }, 0);
+  
+  return baseTransactionGas + contractCallGas + objectsGas;
+};
+
+export const calculateOptimalChunkSize = (
+  objects: ContractObject[], 
+  maxGasLimit: number = 800000 // Increased limit due to packed encoding efficiency
+): { chunkSize: number; estimatedChunks: number } => {
+  if (objects.length === 0) {
+    return { chunkSize: 0, estimatedChunks: 0 };
+  }
+  
+  // Find the largest single object to ensure we can fit at least one per transaction
+  const maxSingleObjectGas = Math.max(...objects.map(estimateObjectGasSize));
+  const baseGas = 46000; // Base transaction + contract call gas
+  
+  if (baseGas + maxSingleObjectGas > maxGasLimit) {
+    throw new Error('Single object too large for any transaction');
+  }
+  
+  // Binary search to find optimal chunk size
+  let minChunk = 1;
+  let maxChunk = objects.length;
+  let optimalChunk = 1;
+  
+  while (minChunk <= maxChunk) {
+    const midChunk = Math.floor((minChunk + maxChunk) / 2);
+    const testObjects = objects.slice(0, midChunk);
+    const estimatedGas = estimateTransactionGas(testObjects);
+    
+    if (estimatedGas <= maxGasLimit) {
+      optimalChunk = midChunk;
+      minChunk = midChunk + 1;
+    } else {
+      maxChunk = midChunk - 1;
+    }
+  }
+  
+  return {
+    chunkSize: optimalChunk,
+    estimatedChunks: Math.ceil(objects.length / optimalChunk)
+  };
+};
 
 // Network Management
 export const getCurrentNetwork = async (): Promise<string | null> => {
@@ -91,9 +417,15 @@ export const addNetwork = async (): Promise<ConnectionResult> => {
   }
 
   try {
+    const { chainId, chainName, rpcUrls, nativeCurrency, blockExplorerUrls } = dappConfig.network;
+    const params: any = { chainId, chainName, rpcUrls, nativeCurrency };
+    if (Array.isArray(blockExplorerUrls) && blockExplorerUrls.length > 0) {
+      params.blockExplorerUrls = blockExplorerUrls;
+    }
+
     await window.ethereum.request({
       method: 'wallet_addEthereumChain',
-      params: [dappConfig.network],
+      params: [params],
     });
     return { success: true, data: dappConfig.network };
   } catch (error) {
@@ -195,10 +527,10 @@ export const connectToWallet = async (): Promise<{
     const web3Provider = new ethers.BrowserProvider(window.ethereum);
     const web3Signer = await web3Provider.getSigner();
     
-    const address = await web3Signer.getAddress();
-    const writeContract = ColourMeNFT__factory.connect(dappConfig.contracts.ColourMeNFT.address, web3Signer);
-    
-    return {
+          const address = await web3Signer.getAddress();
+      const writeContract = ColourMeNFT__factory.connect(dappConfig.contracts.ColourMeNFT.address, web3Signer);
+      
+      return {
       signer: web3Signer,
       contract: writeContract,
       account: address,
@@ -226,14 +558,15 @@ export const connectToWallet = async (): Promise<{
 // Helper function to get gas estimate with fallback for mint
 const getGasEstimateForMint = async (
   contract: ColourMeNFT,
-  toAddress: string
+  toAddress: string,
+  quantity: number = 1
 ): Promise<bigint> => {
   try {
-    const estimatedGas = await contract.mint.estimateGas(toAddress);
+    const estimatedGas = await contract.mint.estimateGas(toAddress, quantity);
     return (estimatedGas * 120n) / 100n; // Add 20% buffer
   } catch (error) {
     console.warn('Gas estimation failed for mint, using fallback:', error);
-    return 200000n;
+    return BigInt(200000 * quantity); // Scale fallback with quantity
   }
 };
 
@@ -267,12 +600,253 @@ const getGasEstimateForAppendArt = async (
   }
 };
 
+// Transaction Queue Types
+export interface TransactionChunk {
+  id: string;
+  chunkIndex: number;
+  totalChunks: number;
+  objects: ContractObject[];
+  type: 'set' | 'append';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  error?: string;
+  txHash?: string;
+  gasUsed?: string;
+}
+
+export interface TransactionQueue {
+  tokenId: number;
+  chunks: TransactionChunk[];
+  isProcessing: boolean;
+  currentChunkIndex: number;
+}
+
+// Helper function to chunk array
+const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+};
+
+// Create transaction queue from art data
+export const createTransactionQueue = (
+  tokenId: number,
+  artData: ContractObject[],
+  saveType: 'set' | 'append' = 'set',
+  maxGasLimit: number = 500000
+): TransactionQueue => {
+  if (artData.length === 0) {
+    return {
+      tokenId,
+      chunks: [],
+      isProcessing: false,
+      currentChunkIndex: 0
+    };
+  }
+
+  const { chunkSize } = calculateOptimalChunkSize(artData, maxGasLimit);
+  const chunkedData = chunkArray(artData, chunkSize);
+  
+  const chunks: TransactionChunk[] = chunkedData.map((chunkObjects, index) => ({
+    id: `${tokenId}-${index}-${Date.now()}`,
+    chunkIndex: index,
+    totalChunks: chunkedData.length,
+    objects: chunkObjects,
+    type: index === 0 ? saveType : 'append', // First chunk uses saveType, rest use append
+    status: 'pending'
+  }));
+
+  return {
+    tokenId,
+    chunks,
+    isProcessing: false,
+    currentChunkIndex: 0
+  };
+};
+
+// Execute a single chunk transaction
+export const executeTransactionChunk = async (
+  contract: ColourMeNFT,
+  tokenId: number,
+  chunk: TransactionChunk
+): Promise<ConnectionResult & { chunk: TransactionChunk }> => {
+  try {
+    let result: ConnectionResult;
+    
+    if (chunk.type === 'set') {
+      result = await setArt(contract, tokenId, chunk.objects);
+    } else {
+      result = await appendArt(contract, tokenId, chunk.objects);
+    }
+    
+    const updatedChunk: TransactionChunk = {
+      ...chunk,
+      status: result.success ? 'completed' : 'failed',
+      error: result.success ? undefined : result.error,
+      txHash: result.success ? result.data?.hash : undefined,
+      gasUsed: result.success ? result.data?.gasUsed : undefined
+    };
+    
+    return {
+      ...result,
+      chunk: updatedChunk
+    };
+  } catch (error) {
+    const updatedChunk: TransactionChunk = {
+      ...chunk,
+      status: 'failed',
+      error: `Transaction execution failed: ${error}`
+    };
+    
+    return {
+      success: false,
+      error: `Transaction execution failed: ${error}`,
+      chunk: updatedChunk
+    };
+  }
+};
+
+// Execute transaction queue (all chunks in sequence)
+export const executeTransactionQueue = async (
+  contract: ColourMeNFT,
+  queue: TransactionQueue,
+  onChunkUpdate?: (chunk: TransactionChunk, queueProgress: { completed: number; total: number }) => void
+): Promise<ConnectionResult & { finalQueue: TransactionQueue }> => {
+  const updatedQueue: TransactionQueue = {
+    ...queue,
+    isProcessing: true
+  };
+  
+  let completedCount = 0;
+  
+  for (let i = 0; i < updatedQueue.chunks.length; i++) {
+    const chunk = updatedQueue.chunks[i];
+    
+    // Skip already completed chunks
+    if (chunk.status === 'completed') {
+      completedCount++;
+      continue;
+    }
+    
+    // Update chunk status to processing
+    updatedQueue.chunks[i] = { ...chunk, status: 'processing' };
+    updatedQueue.currentChunkIndex = i;
+    
+    if (onChunkUpdate) {
+      onChunkUpdate(updatedQueue.chunks[i], { completed: completedCount, total: updatedQueue.chunks.length });
+    }
+    
+    // Execute the chunk
+    const result = await executeTransactionChunk(contract, updatedQueue.tokenId, chunk);
+    updatedQueue.chunks[i] = result.chunk;
+    
+    if (result.success) {
+      completedCount++;
+      if (onChunkUpdate) {
+        onChunkUpdate(result.chunk, { completed: completedCount, total: updatedQueue.chunks.length });
+      }
+    } else {
+      // Stop on first failure
+      updatedQueue.isProcessing = false;
+      return {
+        success: false,
+        error: `Transaction ${i + 1} failed: ${result.error}`,
+        finalQueue: updatedQueue
+      };
+    }
+  }
+  
+  updatedQueue.isProcessing = false;
+  
+  return {
+    success: true,
+    data: {
+      totalChunks: updatedQueue.chunks.length,
+      completedChunks: completedCount
+    },
+    finalQueue: updatedQueue
+  };
+};
+
+// Execute single chunk from queue (for retry functionality)
+export const executeQueueChunk = async (
+  contract: ColourMeNFT,
+  queue: TransactionQueue,
+  chunkIndex: number
+): Promise<ConnectionResult & { updatedQueue: TransactionQueue }> => {
+  if (chunkIndex < 0 || chunkIndex >= queue.chunks.length) {
+    return {
+      success: false,
+      error: 'Invalid chunk index',
+      updatedQueue: queue
+    };
+  }
+  
+  const chunk = queue.chunks[chunkIndex];
+  const result = await executeTransactionChunk(contract, queue.tokenId, chunk);
+  
+  const updatedQueue: TransactionQueue = {
+    ...queue,
+    chunks: queue.chunks.map((c, i) => i === chunkIndex ? result.chunk : c)
+  };
+  
+  return {
+    ...result,
+    updatedQueue
+  };
+};
+
+// Contract Read Methods
+export const getProjectInfo = async (
+  contract: ColourMeNFT
+): Promise<{ projectInfo: any; result: ConnectionResult }> => {
+  try {
+    const projectInfo = await contract.getProjectInfo();
+    const [
+      name,
+      symbol,
+      baseURL,
+      tokenCount,
+      maxSupply,
+      mintPrice,
+      mintLimit,
+      mintStart,
+      mintDuration
+    ] = projectInfo;
+
+    const info = {
+      name: name,
+      symbol: symbol,
+      baseURL: baseURL,
+      tokenCount: Number(tokenCount),
+      maxSupply: Number(maxSupply),
+      mintPrice: mintPrice,
+      mintLimit: Number(mintLimit),
+      mintStart: Number(mintStart),
+      mintDuration: Number(mintDuration)
+    };
+
+    return {
+      projectInfo: info,
+      result: { success: true, data: info }
+    };
+  } catch (error) {
+    return {
+      projectInfo: null,
+      result: { success: false, error: `Failed to get project info: ${error}` }
+    };
+  }
+};
+
 // Contract Write Methods
 export const mintToken = async (
   contract: ColourMeNFT,
-  toAddress: string
+  toAddress: string,
+  quantity: number = 1
 ): Promise<ConnectionResult> => {
   try {
+    console.log('🪙 Minting token:', toAddress, 'quantity:', quantity);
     // Pre-flight checks
     const tokenCount = await contract.tokenCount();
     const maxSupply = await contract.maxSupply();
@@ -281,13 +855,17 @@ export const mintToken = async (
       return { success: false, error: 'Collection is sold out' };
     }
 
-    const gasLimit = await getGasEstimateForMint(contract, toAddress);
+    if (tokenCount + BigInt(quantity) > maxSupply) {
+      return { success: false, error: `Only ${Number(maxSupply - tokenCount)} tokens remaining` };
+    }
+
+    const gasLimit = await getGasEstimateForMint(contract, toAddress, quantity);
     
-    const tx = await contract.mint(toAddress, {
+    const tx = await contract.mint(toAddress, quantity, {
       gasLimit: gasLimit
     });
     
-    console.log('Mint transaction sent:', tx.hash);
+    console.log('🪙 Mint transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {
@@ -333,30 +911,45 @@ export const setArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
-    const contractObjects: ObjectStruct[] = artData.map(convertToObjectStruct);
+    console.log('🎨 [blockchain.ts] setArt called with:', { tokenId, artDataLength: artData.length, artData });
+    const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
+    console.log('📦 [blockchain.ts] Converted to packed objects:', { packedObjectsLength: contractObjects.length, contractObjects });
     
     // Pre-flight check - verify token ownership
     try {
+      console.log('🔐 [blockchain.ts] Checking token ownership for token:', tokenId);
       const owner = await contract.ownerOf(tokenId);
+      console.log('👤 [blockchain.ts] Token owner:', owner);
+      
       const runner = contract.runner;
       if (!runner || typeof (runner as any).getAddress !== 'function') {
+        console.error('❌ [blockchain.ts] No signer available');
         return { success: false, error: 'No signer available' };
       }
       const signerAddress = await (runner as any).getAddress();
+      console.log('✏️ [blockchain.ts] Signer address:', signerAddress);
+      
       if (owner.toLowerCase() !== signerAddress?.toLowerCase()) {
+        console.error('❌ [blockchain.ts] Ownership mismatch:', { owner: owner.toLowerCase(), signer: signerAddress?.toLowerCase() });
         return { success: false, error: 'You do not own this token' };
       }
+      console.log('✅ [blockchain.ts] Ownership verified');
     } catch (error) {
+      console.error('❌ [blockchain.ts] Ownership check failed:', error);
       return { success: false, error: 'Token does not exist or ownership check failed' };
     }
 
+    console.log('⛽ [blockchain.ts] Getting gas estimate...');
     const gasLimit = await getGasEstimateForSetArt(contract, tokenId, contractObjects);
+    console.log('⛽ [blockchain.ts] Gas limit estimated:', gasLimit.toString());
     
+    console.log('📤 [blockchain.ts] Sending setArt transaction...');
     const tx = await contract.setArt(tokenId, contractObjects, {
       gasLimit: gasLimit
     });
+    console.log('📤 [blockchain.ts] Transaction sent:', tx.hash);
     
-    console.log('SetArt transaction sent:', tx.hash);
+    console.log('🎨 SetArt transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {
@@ -398,30 +991,45 @@ export const appendArt = async (
   artData: ContractObject[]
 ): Promise<ConnectionResult> => {
   try {
-    const contractObjects: ObjectStruct[] = artData.map(convertToObjectStruct);
+    console.log('➕ [blockchain.ts] appendArt called with:', { tokenId, artDataLength: artData.length, artData });
+    const contractObjects: ObjectStruct[] = convertToPackedObjects(artData);
+    console.log('📦 [blockchain.ts] Converted to packed objects:', { packedObjectsLength: contractObjects.length, contractObjects });
     
     // Pre-flight check - verify token ownership
     try {
+      console.log('🔐 [blockchain.ts] Checking token ownership for token:', tokenId);
       const owner = await contract.ownerOf(tokenId);
+      console.log('👤 [blockchain.ts] Token owner:', owner);
+      
       const runner = contract.runner;
       if (!runner || typeof (runner as any).getAddress !== 'function') {
+        console.error('❌ [blockchain.ts] No signer available');
         return { success: false, error: 'No signer available' };
       }
       const signerAddress = await (runner as any).getAddress();
+      console.log('✏️ [blockchain.ts] Signer address:', signerAddress);
+      
       if (owner.toLowerCase() !== signerAddress?.toLowerCase()) {
+        console.error('❌ [blockchain.ts] Ownership mismatch:', { owner: owner.toLowerCase(), signer: signerAddress?.toLowerCase() });
         return { success: false, error: 'You do not own this token' };
       }
+      console.log('✅ [blockchain.ts] Ownership verified');
     } catch (error) {
+      console.error('❌ [blockchain.ts] Ownership check failed:', error);
       return { success: false, error: 'Token does not exist or ownership check failed' };
     }
 
+    console.log('⛽ [blockchain.ts] Getting gas estimate...');
     const gasLimit = await getGasEstimateForAppendArt(contract, tokenId, contractObjects);
+    console.log('⛽ [blockchain.ts] Gas limit estimated:', gasLimit.toString());
     
+    console.log('📤 [blockchain.ts] Sending appendArt transaction...');
     const tx = await contract.appendArt(tokenId, contractObjects, {
       gasLimit: gasLimit
     });
+    console.log('📤 [blockchain.ts] Transaction sent:', tx.hash);
     
-    console.log('AppendArt transaction sent:', tx.hash);
+    console.log('➕ AppendArt transaction sent:', tx.hash);
     const receipt = await tx.wait();
     
     if (!receipt) {
@@ -484,13 +1092,12 @@ export const getTokenSVG = async (
   tokenId: number
 ): Promise<{ svg: string; result: ConnectionResult }> => {
   try {
-    const svgBytes = await contract.tokenSVG(tokenId);
-    const svgString = ethers.toUtf8String(svgBytes);
+    const svg = await contract.tokenSVG(tokenId);
     return {
-      svg: svgString,
+      svg,
       result: {
         success: true,
-        data: { tokenId, svgLength: svgString.length }
+        data: { tokenId, svgLength: svg.length }
       }
     };
   } catch (error) {

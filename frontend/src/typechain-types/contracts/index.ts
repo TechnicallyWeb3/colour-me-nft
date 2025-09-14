@@ -5,4 +5,6 @@ import type * as colourMeNftSol from "./ColourMeNFT.sol";
 export type { colourMeNftSol };
 import type * as interfaces from "./interfaces";
 export type { interfaces };
+import type * as test from "./test";
+export type { test };
 export type { ColourMeRenderer } from "./ColourMeRenderer";

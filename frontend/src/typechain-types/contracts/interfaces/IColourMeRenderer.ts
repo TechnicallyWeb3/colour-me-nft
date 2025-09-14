@@ -51,30 +51,32 @@ export type TraitStructOutput = [
   polygon: bigint;
 };
 
+export type ObjectStruct = { base: BigNumberish; additionalPoints: BytesLike };
+
+export type ObjectStructOutput = [base: bigint, additionalPoints: string] & {
+  base: bigint;
+  additionalPoints: string;
+};
+
+export type BaseObjectStruct = {
+  shape: BigNumberish;
+  color: BytesLike;
+  stroke: BigNumberish;
+  pointsLength: BigNumberish;
+};
+
+export type BaseObjectStructOutput = [
+  shape: bigint,
+  color: string,
+  stroke: bigint,
+  pointsLength: bigint
+] & { shape: bigint; color: string; stroke: bigint; pointsLength: bigint };
+
 export type PointStruct = { x: BigNumberish; y: BigNumberish };
 
 export type PointStructOutput = [x: bigint, y: bigint] & {
   x: bigint;
   y: bigint;
-};
-
-export type ObjectStruct = {
-  shape: BigNumberish;
-  color: BytesLike;
-  stroke: BigNumberish;
-  points: PointStruct[];
-};
-
-export type ObjectStructOutput = [
-  shape: bigint,
-  color: string,
-  stroke: bigint,
-  points: PointStructOutput[]
-] & {
-  shape: bigint;
-  color: string;
-  stroke: bigint;
-  points: PointStructOutput[];
 };
 
 export interface IColourMeRendererInterface extends Interface {
@@ -95,7 +97,7 @@ export interface IColourMeRendererInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getURI",
-    values: [string, BigNumberish, string, BytesLike, TraitStruct]
+    values: [string, BigNumberish, string, string, TraitStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "renderObjects",
@@ -103,7 +105,7 @@ export interface IColourMeRendererInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "renderPath",
-    values: [ObjectStruct]
+    values: [BaseObjectStruct, PointStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "renderPolygon",
@@ -192,7 +194,7 @@ export interface IColourMeRenderer extends BaseContract {
       _name: string,
       _tokenId: BigNumberish,
       _baseURL: string,
-      _svg: BytesLike,
+      _svg: string,
       _trait: TraitStruct
     ],
     [string],
@@ -205,7 +207,11 @@ export interface IColourMeRenderer extends BaseContract {
     "view"
   >;
 
-  renderPath: TypedContractMethod<[_object: ObjectStruct], [string], "view">;
+  renderPath: TypedContractMethod<
+    [_object: BaseObjectStruct, _points: PointStruct[]],
+    [string],
+    "view"
+  >;
 
   renderPolygon: TypedContractMethod<
     [_polygon: BigNumberish],
@@ -235,7 +241,7 @@ export interface IColourMeRenderer extends BaseContract {
       _name: string,
       _tokenId: BigNumberish,
       _baseURL: string,
-      _svg: BytesLike,
+      _svg: string,
       _trait: TraitStruct
     ],
     [string],
@@ -246,7 +252,11 @@ export interface IColourMeRenderer extends BaseContract {
   ): TypedContractMethod<[_objects: ObjectStruct[]], [string], "view">;
   getFunction(
     nameOrSignature: "renderPath"
-  ): TypedContractMethod<[_object: ObjectStruct], [string], "view">;
+  ): TypedContractMethod<
+    [_object: BaseObjectStruct, _points: PointStruct[]],
+    [string],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "renderPolygon"
   ): TypedContractMethod<[_polygon: BigNumberish], [string], "view">;

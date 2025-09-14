@@ -23,30 +23,11 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export type PointStruct = { x: BigNumberish; y: BigNumberish };
+export type ObjectStruct = { base: BigNumberish; additionalPoints: BytesLike };
 
-export type PointStructOutput = [x: bigint, y: bigint] & {
-  x: bigint;
-  y: bigint;
-};
-
-export type ObjectStruct = {
-  shape: BigNumberish;
-  color: BytesLike;
-  stroke: BigNumberish;
-  points: PointStruct[];
-};
-
-export type ObjectStructOutput = [
-  shape: bigint,
-  color: string,
-  stroke: bigint,
-  points: PointStructOutput[]
-] & {
-  shape: bigint;
-  color: string;
-  stroke: bigint;
-  points: PointStructOutput[];
+export type ObjectStructOutput = [base: bigint, additionalPoints: string] & {
+  base: bigint;
+  additionalPoints: string;
 };
 
 export interface ColourMeNFTInterface extends Interface {
@@ -56,9 +37,8 @@ export interface ColourMeNFTInterface extends Interface {
       | "approve"
       | "art"
       | "balanceOf"
-      | "baseURL"
-      | "cmr"
       | "getApproved"
+      | "getProjectInfo"
       | "isApprovedForAll"
       | "maxSupply"
       | "mint"
@@ -89,6 +69,8 @@ export interface ColourMeNFTInterface extends Interface {
     nameOrSignatureOrTopic:
       | "Approval"
       | "ApprovalForAll"
+      | "ArtSaved"
+      | "CanvasMinted"
       | "OwnershipTransferred"
       | "Transfer"
   ): EventFragment;
@@ -109,18 +91,23 @@ export interface ColourMeNFTInterface extends Interface {
     functionFragment: "balanceOf",
     values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "baseURL", values?: undefined): string;
-  encodeFunctionData(functionFragment: "cmr", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getApproved",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProjectInfo",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
     values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "maxSupply", values?: undefined): string;
-  encodeFunctionData(functionFragment: "mint", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "mint",
+    values: [AddressLike, BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -195,10 +182,12 @@ export interface ColourMeNFTInterface extends Interface {
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "art", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "baseURL", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "cmr", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProjectInfo",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -294,6 +283,37 @@ export namespace ApprovalForAllEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace ArtSavedEvent {
+  export type InputTuple = [tokenId: BigNumberish, artist: AddressLike];
+  export type OutputTuple = [tokenId: bigint, artist: string];
+  export interface OutputObject {
+    tokenId: bigint;
+    artist: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace CanvasMintedEvent {
+  export type InputTuple = [
+    tokenId: BigNumberish,
+    to: AddressLike,
+    qty: BigNumberish
+  ];
+  export type OutputTuple = [tokenId: bigint, to: string, qty: bigint];
+  export interface OutputObject {
+    tokenId: bigint;
+    to: string;
+    qty: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -382,23 +402,19 @@ export interface ColourMeNFT extends BaseContract {
 
   art: TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [bigint, string, bigint] & {
-        shape: bigint;
-        color: string;
-        stroke: bigint;
-      }
-    ],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
     "view"
   >;
 
   balanceOf: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
 
-  baseURL: TypedContractMethod<[], [string], "view">;
-
-  cmr: TypedContractMethod<[], [string], "view">;
-
   getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+
+  getProjectInfo: TypedContractMethod<
+    [],
+    [[string, string, string, bigint, bigint, bigint, bigint, bigint, bigint]],
+    "view"
+  >;
 
   isApprovedForAll: TypedContractMethod<
     [owner: AddressLike, operator: AddressLike],
@@ -408,7 +424,11 @@ export interface ColourMeNFT extends BaseContract {
 
   maxSupply: TypedContractMethod<[], [bigint], "view">;
 
-  mint: TypedContractMethod<[to: AddressLike], [void], "nonpayable">;
+  mint: TypedContractMethod<
+    [to: AddressLike, qty: BigNumberish],
+    [void],
+    "payable"
+  >;
 
   name: TypedContractMethod<[], [string], "view">;
 
@@ -530,27 +550,22 @@ export interface ColourMeNFT extends BaseContract {
     nameOrSignature: "art"
   ): TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
-    [
-      [bigint, string, bigint] & {
-        shape: bigint;
-        color: string;
-        stroke: bigint;
-      }
-    ],
+    [[bigint, string] & { base: bigint; additionalPoints: string }],
     "view"
   >;
   getFunction(
     nameOrSignature: "balanceOf"
   ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
   getFunction(
-    nameOrSignature: "baseURL"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "cmr"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "getApproved"
   ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "getProjectInfo"
+  ): TypedContractMethod<
+    [],
+    [[string, string, string, bigint, bigint, bigint, bigint, bigint, bigint]],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "isApprovedForAll"
   ): TypedContractMethod<
@@ -563,7 +578,11 @@ export interface ColourMeNFT extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "mint"
-  ): TypedContractMethod<[to: AddressLike], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [to: AddressLike, qty: BigNumberish],
+    [void],
+    "payable"
+  >;
   getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
@@ -691,6 +710,20 @@ export interface ColourMeNFT extends BaseContract {
     ApprovalForAllEvent.OutputObject
   >;
   getEvent(
+    key: "ArtSaved"
+  ): TypedContractEvent<
+    ArtSavedEvent.InputTuple,
+    ArtSavedEvent.OutputTuple,
+    ArtSavedEvent.OutputObject
+  >;
+  getEvent(
+    key: "CanvasMinted"
+  ): TypedContractEvent<
+    CanvasMintedEvent.InputTuple,
+    CanvasMintedEvent.OutputTuple,
+    CanvasMintedEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -726,6 +759,28 @@ export interface ColourMeNFT extends BaseContract {
       ApprovalForAllEvent.InputTuple,
       ApprovalForAllEvent.OutputTuple,
       ApprovalForAllEvent.OutputObject
+    >;
+
+    "ArtSaved(uint256,address)": TypedContractEvent<
+      ArtSavedEvent.InputTuple,
+      ArtSavedEvent.OutputTuple,
+      ArtSavedEvent.OutputObject
+    >;
+    ArtSaved: TypedContractEvent<
+      ArtSavedEvent.InputTuple,
+      ArtSavedEvent.OutputTuple,
+      ArtSavedEvent.OutputObject
+    >;
+
+    "CanvasMinted(uint256,address,uint256)": TypedContractEvent<
+      CanvasMintedEvent.InputTuple,
+      CanvasMintedEvent.OutputTuple,
+      CanvasMintedEvent.OutputObject
+    >;
+    CanvasMinted: TypedContractEvent<
+      CanvasMintedEvent.InputTuple,
+      CanvasMintedEvent.OutputTuple,
+      CanvasMintedEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<

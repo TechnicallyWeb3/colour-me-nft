@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+// import "@wttp/site/contracts/extensions/WTTPForwarder.sol";
 
 interface IColourMeNFT is IERC721 {
     function mint(address to) external;
@@ -15,9 +16,16 @@ interface IColourMeNFT is IERC721 {
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
-contract ColourMeNFT is ERC721, ERC2981, Ownable {
+contract ColourMeNFT is ERC721, ERC2981, Ownable { //, WTTPForwarder {
     using Strings for uint256;
     using Base64 for bytes;
+
+    error MintingClosed(string reason);
+    error InvalidQuantity();
+    error InsufficientPayment(uint256 required, uint256 sent);
+
+    event CanvasMinted(uint256 tokenId, address to, uint256 qty);
+    event ArtSaved(uint256 indexed tokenId, address indexed artist);
 
     constructor(
         string memory name, 
@@ -26,24 +34,54 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         uint256 _maxSupply,
         address _paintRenderer,
         address _owner,
-        uint96 _royalty
-    ) ERC721(name, symbol) Ownable(_owner) {
+        uint96 _royalty,
+        uint256 _mintPrice,
+        uint256 _mintLimit,
+        uint256 _mintStart,
+        uint256 _mintDuration
+    ) ERC721(name, symbol) Ownable(_owner) { //WTTPForwarder(_baseURL, 301) {
         baseURL = _baseURL;
         maxSupply = _maxSupply;
         cmr = IColourMeRenderer(_paintRenderer);
         _setDefaultRoyalty(owner(), _royalty);
+        mintPrice = _mintPrice;
+        mintLimit = _mintLimit;
+        mintStart = _mintStart;
+        mintDuration = _mintDuration;
     }
 
-    string public baseURL;
+    string private baseURL;
     bytes public svgStart;
     bytes public svgEnd;
     uint256 public tokenCount;
     uint256 public maxSupply;
-    IColourMeRenderer public cmr;
+    IColourMeRenderer private cmr;
+    uint256 private mintPrice;
+    uint256 private mintLimit;
+    uint256 private mintStart;
+    uint256 private mintDuration;
 
     mapping(uint256 => Trait) public traits;
     mapping(uint256 => bytes) public traitSVG;
     mapping(uint256 => Object[]) public art;
+
+    function getProjectInfo() external view returns (string memory, string memory, string memory, uint256, uint256, uint256, uint256, uint256, uint256) {
+        return (
+            name(), 
+            symbol(), 
+            baseURL,
+            tokenCount,
+            maxSupply, 
+            mintPrice, 
+            mintLimit, 
+            mintStart, 
+            mintDuration
+        );
+    }
+
+    // function setRedirect(string memory _url) external onlyOwner {
+    //     _setRedirectConfig(_url, 301);
+    // }
 
     function setSVG(bytes memory _svgStart, bytes memory _svgEnd) external onlyOwner {
         svgStart = _svgStart;
@@ -85,107 +123,135 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
         });
     }
 
-    function mint(address to) external {
-        tokenCount++;
-        _mint(to, tokenCount);
-        traits[tokenCount] = _randomTraits(tokenCount);
-        traitSVG[tokenCount] = cmr.renderTrait(traits[tokenCount]);
+    function mint(address to, uint256 qty) external payable {
+        if(block.timestamp < mintStart) revert MintingClosed("Mint not started");
+        if(block.timestamp > mintStart + mintDuration) revert MintingClosed("Mint ended");
+        if(tokenCount >= maxSupply) revert MintingClosed("Max supply reached");
+        if(qty > mintLimit || qty == 0) revert InvalidQuantity();
+        if(msg.value < mintPrice * qty) revert InsufficientPayment(mintPrice * qty, msg.value);
+        for(uint256 i = 0; i < qty; i++) {
+            tokenCount++;
+            _mint(to, tokenCount);
+            traits[tokenCount] = _randomTraits(tokenCount);
+            traitSVG[tokenCount] = cmr.renderTrait(traits[tokenCount]);
+            if(tokenCount == maxSupply) break;
+        }
+        emit CanvasMinted(tokenCount, to, qty);
     }
 
     function _objectAllowed(uint256 tokenId, Object memory object) internal view {
-        // do we make this less restrictive? Let hackers make dope art?
+        // Decode essential fields for validation (minimal decoding strategy)
+        bytes3 color = decodeColor(object.base);
+        
+        // Early exit: validate color first (cheapest check)
         if (!(
-            object.shape == traits[tokenId].shape0 || 
-            object.shape == traits[tokenId].shape1 ||
-            object.shape == Path.polygon ||
-            object.shape == Path.path ||
-            object.shape > Path.path
+            color == 0x000000 ||
+            color == 0xffffff ||
+            color == traits[tokenId].color0 || 
+            color == traits[tokenId].color1 || 
+            color == traits[tokenId].color2 || 
+            color == traits[tokenId].color3 || 
+            color == traits[tokenId].color4
         )) {
-            if (!(
-                object.shape == Path.rect && 
-                object.points.length == 2 &&
-                object.points[0].x == 10 &&
-                object.points[0].y == 90 &&
-                object.points[1].x == 980 &&
-                object.points[1].y == 900
-            )) {
-                revert InvalidShape(object.shape);
+            revert InvalidColor(color);
+        }
+
+        Path shape = decodeShape(object.base);
+
+        // Check if shape is allowed for this token
+        bool shapeAllowed = (
+            shape == traits[tokenId].shape0 || 
+            shape == traits[tokenId].shape1 ||
+            shape == Path.polygon ||
+            shape == Path.path
+        );
+        
+        // Special case: bucket tool rect (only if token doesn't allow rect)
+        if (!shapeAllowed && shape == Path.rect) {
+            // Decode first 2 points to check bucket tool dimensions
+            Point[2] memory basePoints = getBasePoints(object.base);
+            if (
+                basePoints[0].x == 10 &&
+                basePoints[0].y == 90 &&
+                basePoints[1].x == 980 &&
+                basePoints[1].y == 900
+            ) {
+                shapeAllowed = true; // Allow bucket tool rect
             }
         }
-        if (!(
-            object.color == 0x000000 ||
-            object.color == 0xffffff ||
-            object.color == traits[tokenId].color0 || 
-            object.color == traits[tokenId].color1 || 
-            object.color == traits[tokenId].color2 || 
-            object.color == traits[tokenId].color3 || 
-            object.color == traits[tokenId].color4
-        )) {
-            revert InvalidColor(object.color);
+        
+        if (!shapeAllowed) {
+            revert InvalidShape(uint8(shape));
         }
-        if (
-            object.shape == Path.polyline ||
-            object.shape == Path.path
-        ) { 
-            if (object.points.length < 2) {
-                revert InvalidPoints(object.points.length);
-            }
-        }
-        // find MAX_POINTS for ethereum transaction limits
-        if (
-            object.shape == Path.rect || 
-            object.shape == Path.ellipse || 
-            object.shape == Path.line
+        
+        // Additional validation for specific shapes
+        uint16 pointsLength = decodePointsLength(object.base);
+
+        if (pointsLength < 2) {
+            revert InvalidPoints(pointsLength);
+        } else if (
+            (
+                shape == Path.rect || 
+                shape == Path.ellipse || 
+                shape == Path.line
+            ) &&
+            pointsLength != 2
         ) {
-            if (object.points.length != 2) {
-                revert InvalidPoints(object.points.length);
-            }
-        } else if (object.shape == Path.polygon) {
-            if (object.points.length != traits[tokenId].polygon) {
-                revert InvalidPoints(object.points.length);
+            revert InvalidPoints(pointsLength);
+        }
+
+        // Additional validation for specific shapes
+        if (shape == Path.polygon) {
+            if (pointsLength != traits[tokenId].polygon) {
+                revert InvalidPoints(pointsLength);
             }
         }
-        // pass
+
+        // Additional validation for specific shapes
+        uint8 stroke = decodeStroke(object.base);
+
+        if (
+            stroke == 0 &&
+            (
+                shape == Path.line ||
+                shape == Path.polyline ||
+                shape == Path.path
+            )
+        ) {
+            revert InvalidStroke(stroke);
+        }
+        
+        // pass - object is allowed
     }
 
-    function setArt(uint256 tokenId, Object[] memory _art) external {
-        delete art[tokenId];
-
+    function _updateArt(uint256 tokenId, Object[] calldata _art) internal {
         for (uint256 i = 0; i < _art.length; i++) {
+            // Token-specific validation
             _objectAllowed(tokenId, _art[i]);
-            art[tokenId].push();
-            art[tokenId][i].color = _art[i].color; 
-            art[tokenId][i].shape = _art[i].shape;
-            art[tokenId][i].stroke = _art[i].stroke;
-            for (uint256 j = 0; j < _art[i].points.length; j++) {
-                art[tokenId][i].points.push(_art[i].points[j]);
-            }
+            art[tokenId].push(_art[i]);
         }
+        emit ArtSaved(tokenId, msg.sender);
     }
 
-    function appendArt(uint256 tokenId, Object[] memory _object) external {
-        uint256 artLength = art[tokenId].length;
-        for (uint256 i = 0; i < _object.length; i++) {
-            _objectAllowed(tokenId, _object[i]);
-            art[tokenId].push();
-            art[tokenId][i + artLength].color = _object[i].color; 
-            art[tokenId][i + artLength].shape = _object[i].shape;
-            art[tokenId][i + artLength].stroke = _object[i].stroke;
-            for (uint256 j = 0; j < _object[i].points.length; j++) {
-                art[tokenId][i + artLength].points.push(_object[i].points[j]);
-            }
-        }
+    function setArt(uint256 tokenId, Object[] calldata _art) external {
+        delete art[tokenId];
+        _updateArt(tokenId, _art);
     }
 
-    function tokenSVG(uint256 tokenId) public view returns (bytes memory) {
-        return abi.encodePacked(
+    function appendArt(uint256 tokenId, Object[] calldata _object) external {
+        _updateArt(tokenId, _object);
+    }
+
+    function tokenSVG(uint256 tokenId) public view returns (string memory) {
+        _requireOwned(tokenId);
+        return string(abi.encodePacked(
             svgStart, 
             traitSVG[tokenId],
             '<g id="drawing-area" clip-path="url(#canvas-clip)" data-token="', tokenId.toString(), '">',
                 cmr.renderObjects(art[tokenId]),
             '</g>',
             svgEnd
-        );
+        ));
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -194,7 +260,6 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC2981) returns (bool) {
-        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IColourMeNFT).interfaceId || super.supportsInterface(interfaceId);
     }
-
 }

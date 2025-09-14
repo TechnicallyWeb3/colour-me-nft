@@ -88,9 +88,9 @@ const _abi = [
         type: "string",
       },
       {
-        internalType: "bytes",
+        internalType: "string",
         name: "_svg",
-        type: "bytes",
+        type: "string",
       },
       {
         components: [
@@ -156,36 +156,14 @@ const _abi = [
       {
         components: [
           {
-            internalType: "enum Path",
-            name: "shape",
-            type: "uint8",
+            internalType: "uint256",
+            name: "base",
+            type: "uint256",
           },
           {
-            internalType: "bytes3",
-            name: "color",
-            type: "bytes3",
-          },
-          {
-            internalType: "uint8",
-            name: "stroke",
-            type: "uint8",
-          },
-          {
-            components: [
-              {
-                internalType: "uint16",
-                name: "x",
-                type: "uint16",
-              },
-              {
-                internalType: "uint16",
-                name: "y",
-                type: "uint16",
-              },
-            ],
-            internalType: "struct Point[]",
-            name: "points",
-            type: "tuple[]",
+            internalType: "bytes",
+            name: "additionalPoints",
+            type: "bytes",
           },
         ],
         internalType: "struct Object[]",
@@ -224,26 +202,31 @@ const _abi = [
             type: "uint8",
           },
           {
-            components: [
-              {
-                internalType: "uint16",
-                name: "x",
-                type: "uint16",
-              },
-              {
-                internalType: "uint16",
-                name: "y",
-                type: "uint16",
-              },
-            ],
-            internalType: "struct Point[]",
-            name: "points",
-            type: "tuple[]",
+            internalType: "uint16",
+            name: "pointsLength",
+            type: "uint16",
           },
         ],
-        internalType: "struct Object",
+        internalType: "struct BaseObject",
         name: "_object",
         type: "tuple",
+      },
+      {
+        components: [
+          {
+            internalType: "int16",
+            name: "x",
+            type: "int16",
+          },
+          {
+            internalType: "int16",
+            name: "y",
+            type: "int16",
+          },
+        ],
+        internalType: "struct Point[]",
+        name: "_points",
+        type: "tuple[]",
       },
     ],
     name: "renderPath",

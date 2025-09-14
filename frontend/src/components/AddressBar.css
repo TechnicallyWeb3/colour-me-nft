@@ -1,0 +1,394 @@
+/* Address Bar Component Styles */
+.address-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding: 4px;
+  z-index: 100;
+}
+
+.address-bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px inset #c0c0c0;
+  border-radius: 4px;
+  position: relative;
+  padding: 6px 8px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  transition: border-color 0.2s ease;
+}
+
+.address-bar-wrapper:focus-within {
+  border-color: #0054e3;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 0 1px #0054e3;
+}
+
+.address-bar-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+  background: transparent;
+  color: #000;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.address-bar-input[readonly] {
+  cursor: pointer;
+  background: white;
+}
+
+.address-bar-input:not([readonly]) {
+  cursor: text;
+}
+
+.address-bar-dropdown-button {
+  width: 16px;
+  height: 20px;
+  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+  border-left: 1px solid #c0c0c0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 8px;
+  color: #666;
+  user-select: none;
+  transition: all 0.2s ease;
+  border-radius: 0 2px 2px 0;
+}
+
+.address-bar-dropdown-button:hover {
+  background: linear-gradient(to bottom, #f0f8ff, #e6f3ff);
+  color: #0054e3;
+}
+
+.address-bar-go-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 18px;
+  color: inherit;
+  cursor: pointer;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.address-bar-go-button:hover {
+  transform: scale(1.1);
+}
+
+.address-bar-go-button:active {
+  transform: scale(0.95);
+}
+
+.address-bar-go-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.address-bar-go-button:disabled:hover {
+  transform: none;
+}
+
+.address-bar-explorer-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 18px;
+  color: inherit;
+  cursor: pointer;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.address-bar-explorer-button:hover {
+  transform: scale(1.1);
+}
+
+.address-bar-explorer-button:active {
+  transform: scale(0.95);
+}
+
+.address-bar-explorer-button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.address-bar-explorer-button:disabled:hover {
+  transform: none;
+}
+
+.address-bar-opensea-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 18px;
+  color: inherit;
+  cursor: pointer;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.address-bar-opensea-button:hover {
+  transform: scale(1.1);
+}
+
+.address-bar-opensea-button:active {
+  transform: scale(0.95);
+}
+
+.address-bar-opensea-button:disabled {
+  cursor: default;
+  opacity: 0.3;
+}
+
+.address-bar-opensea-button:disabled:hover {
+  transform: none;
+}
+
+/* Dropdown Styles */
+.address-bar-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px outset #c0c0c0;
+  border-top: 1px solid #c0c0c0;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.1s ease;
+  gap: 8px;
+  text-align: left;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(to bottom, #e6f3ff, #d0e8ff);
+}
+
+.dropdown-item.selected {
+  background: linear-gradient(to bottom, #4a9eff, #0054e3);
+  color: white;
+}
+
+.dropdown-item.active {
+  background: linear-gradient(to bottom, #ffffcc, #ffff99);
+  border-left: 3px solid #ffff00;
+}
+
+.dropdown-item.active.selected {
+  background: linear-gradient(to bottom, #ff9999, #ff6666);
+  color: white;
+}
+
+.dropdown-item-icon {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dropdown-item-content {
+  flex: 1;
+  min-width: 0; /* Allow text truncation */
+  text-align: left;
+}
+
+.dropdown-item-title {
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.dropdown-item.selected .dropdown-item-title {
+  color: white;
+}
+
+.dropdown-item-address {
+  font-size: 10px;
+  color: #666;
+  font-family: "Courier New", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.dropdown-item.selected .dropdown-item-address {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dropdown-empty {
+  padding: 20px;
+  text-align: left;
+  color: #999;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* Custom scrollbar for dropdown */
+.address-bar-dropdown::-webkit-scrollbar {
+  width: 12px;
+}
+
+.address-bar-dropdown::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 0 0 4px 0;
+}
+
+.address-bar-dropdown::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #d0d0d0, #a0a0a0);
+  border: 1px solid #808080;
+  border-radius: 2px;
+}
+
+.address-bar-dropdown::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #c0c0c0, #909090);
+}
+
+/* Firefox scrollbar */
+.address-bar-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: #a0a0a0 #f0f0f0;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .address-bar-container {
+    gap: 6px;
+  }
+  
+  .address-bar-wrapper {
+    padding: 4px 6px;
+  }
+  
+  .address-bar-input {
+    font-size: 10px;
+  }
+  
+  .address-bar-go-button {
+    font-size: 16px;
+    min-width: 20px;
+    height: 20px;
+  }
+
+  .address-bar-explorer-button {
+    font-size: 16px;
+    min-width: 20px;
+    height: 20px;
+  }
+
+  .address-bar-opensea-button {
+    font-size: 16px;
+    min-width: 20px;
+    height: 20px;
+  }
+  
+  .dropdown-item {
+    padding: 6px 8px;
+  }
+  
+  .dropdown-item-title {
+    font-size: 10px;
+  }
+  
+  .dropdown-item-address {
+    font-size: 9px;
+  }
+  
+  .address-bar-dropdown {
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .address-bar-container {
+    gap: 4px;
+  }
+  
+  .address-bar-wrapper {
+    padding: 3px 5px;
+    flex: 1;
+    min-width: 150px;
+  }
+  
+  .address-bar-input {
+    font-size: 9px;
+  }
+  
+  .address-bar-go-button {
+    font-size: 14px;
+    min-width: 18px;
+    height: 18px;
+  }
+
+  .address-bar-explorer-button {
+    font-size: 14px;
+    min-width: 18px;
+    height: 18px;
+  }
+
+  .address-bar-opensea-button {
+    font-size: 14px;
+    min-width: 18px;
+    height: 18px;
+  }
+  
+  .dropdown-item {
+    padding: 5px 6px;
+  }
+  
+  .dropdown-item-icon {
+    font-size: 12px;
+    width: 14px;
+  }
+  
+  .dropdown-item-title {
+    font-size: 9px;
+  }
+  
+  .dropdown-item-address {
+    font-size: 8px;
+  }
+  
+  .address-bar-dropdown {
+    max-height: 150px;
+  }
+}

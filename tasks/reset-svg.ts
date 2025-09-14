@@ -15,7 +15,7 @@ task("reset-svg", "Reset SVG data in the ColourMeNFT contract")
     console.log(`Using start file: ${startFile}`);
     console.log(`Using end file: ${endFile}`);
 
-    const resetSvgData = require("../scripts/reset-svg")
+    const { default: resetSvgData } = await import("../scripts/reset-svg");
     
     try {
       await resetSvgData(contract, startFile, endFile, hre);

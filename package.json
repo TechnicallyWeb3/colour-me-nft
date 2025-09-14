@@ -1,11 +1,30 @@
 {
   "name": "colour-me-nft",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NFT Dapp that allows changes to be made via the SVG",
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
-    "deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts"
+    "deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts",
+    "reset": "npx hardhat run ./scripts/reset-svg.ts --network localhost",
+    "frontend:setup": "node ./scripts/setup-frontend.js",
+    "frontend:setup:local": "node ./scripts/setup-frontend.js local",
+    "frontend:setup:testnet": "node ./scripts/setup-frontend.js testnet",
+    "frontend:setup:mainnet": "node ./scripts/setup-frontend.js mainnet",
+    "local:deploy": "wait-on tcp:127.0.0.1:8545 && npx hardhat ignition deploy ./ignition/modules/NFT.ts --network localhost",
+    "local:setup": "wait-on file:./ignition/deployments/chain-31337/deployed_addresses.json && npm run frontend:setup:local",
+    "local:ui": "npm run dev:local --prefix frontend",
+    "local": "concurrently --success=all --kill-others-on-fail -n NODE,WEB -c blue,magenta \"npx hardhat node\" \"npm run local:deploy && npm run local:setup && npm run local:ui\"",
+    "testnet:deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts --network sepolia",
+    "testnet:setup": "npm run frontend:setup:testnet",
+    "testnet:ui": "npm run dev:testnet --prefix frontend",
+    "testnet:build": "npm run build:testnet --prefix frontend",
+    "testnet": "npm run testnet:deploy && npm run testnet:setup && npm run testnet:ui",
+    "mainnet:deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts --network base",
+    "mainnet:setup": "npm run frontend:setup:mainnet",
+    "mainnet:ui": "npm run dev:mainnet --prefix frontend",
+    "mainnet:build": "npm run build:mainnet --prefix frontend",
+    "mainnet": "npm run mainnet:deploy && npm run mainnet:setup && npm run mainnet:ui"
   },
   "repository": {
     "type": "git",
@@ -27,12 +46,15 @@
   "homepage": "https://github.com/technicallyweb3/colour-me-nft#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "concurrently": "^9.2.0",
     "create-vite": "^7.1.1",
     "dotenv": "^17.2.1",
-    "hardhat": "^2.26.1"
+    "hardhat": "^2.26.1",
+    "wait-on": "^8.0.4"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0",
+    "@wttp/site": "^0.3.0",
     "hardhat-build": "^0.1.5"
   }
 }
