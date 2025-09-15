@@ -636,18 +636,24 @@ const Home: React.FC = () => {
       {/* About Section */}
       <Window id="about" title="Document - About.txt" icon="🗒️" buttonset={{ minimize: "", expand: "", close: "" }}>
         <div style={{
-          fontFamily: 'Courier New, monospace',
-          fontSize: '12px',
-          lineHeight: '1.4',
-          color: '#000',
-          backgroundColor: '#fefefe',
-          padding: '15px 60px',
-          whiteSpace: 'pre-wrap',
-          textAlign: 'justify',
+          height: '500px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           border: '1px solid #ccc',
           borderRadius: '4px',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+          backgroundColor: '#fefefe'
         }}>
+          <div style={{
+            fontFamily: 'Courier New, monospace',
+            fontSize: '12px',
+            lineHeight: '1.4',
+            color: '#000',
+            backgroundColor: '#fefefe',
+            padding: '15px 60px',
+            whiteSpace: 'pre-wrap',
+            textAlign: 'justify'
+          }}>
           <div style={{ 
             fontWeight: 'bold', 
             fontSize: '16px', 
@@ -761,7 +767,7 @@ const Home: React.FC = () => {
           </div>
           
           <div style={{ marginBottom: '15px' }}>
-            Plus, every mint pays it forward: <strong>5% royalties go to TW3</strong> (Technically Web3) so we can keep building more degen-friendly, dope experiments that push Web3 forward.
+            Plus, every mint pays it forward: <strong>5% royalties go to TW3</strong> (Technically Web3) so we can keep building more first-of-its-kind, dope experiments that push Web3 forward.
           </div>
           
           <div style={{ marginBottom: '15px' }}>
@@ -799,6 +805,7 @@ const Home: React.FC = () => {
             }}>
               🏆 May the best shillers win! 🏆
             </div>
+          </div>
           </div>
         </div>
       </Window>
