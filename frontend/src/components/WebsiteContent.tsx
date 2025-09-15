@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './WebsiteContent.css';
 import { 
   connectToWallet, 
@@ -48,21 +48,8 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>('');
   
   // Events state
-  const [eventMessages, setEventMessages] = useState<EventMessage[]>([
-    // Sample messages to show the format
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 300000),
-      type: 'mint',
-      message: '0x1234...5678 just minted 2 canvases'
-    },
-    {
-      id: '2', 
-      timestamp: new Date(Date.now() - 600000),
-      type: 'save',
-      message: '0xabcd...bcda just saved art to token #21'
-    }
-  ]);
+  const [eventMessages, setEventMessages] = useState<EventMessage[]>([]);
+  const eventListenersRef = useRef<(() => void) | null>(null);
 
   const showMessage = (message: string, isError = false) => {
     if (isError) {
@@ -78,9 +65,174 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     }, 5000);
   };
 
+  // Add event message to the list
+  const addEventMessage = (event: Omit<EventMessage, 'id'>) => {
+    const newEvent: EventMessage = {
+      ...event,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    };
+    setEventMessages(prev => [newEvent, ...prev.slice(0, 19)]); // Keep only last 20 events
+  };
+
+  // Load recent events from the blockchain
+  const loadRecentEvents = async (contractInstance: ColourMeNFT) => {
+    try {
+      console.log('📜 Loading recent events from blockchain...');
+      
+      // Get recent CanvasMinted events (last 100 blocks for better coverage)
+      const canvasMintedFilter = contractInstance.filters.CanvasMinted();
+      const currentBlock = await contractInstance.runner?.provider?.getBlockNumber() || 0;
+      const fromBlock = Math.max(0, currentBlock - 100);
+      
+      const canvasMintedEvents = await contractInstance.queryFilter(
+        canvasMintedFilter,
+        fromBlock,
+        currentBlock
+      );
+      
+      // Get recent ArtSaved events (last 100 blocks)
+      const artSavedFilter = contractInstance.filters.ArtSaved();
+      const artSavedEvents = await contractInstance.queryFilter(
+        artSavedFilter,
+        fromBlock,
+        currentBlock
+      );
+      
+      // Get current block timestamp for better time estimation
+      const currentBlockData = await contractInstance.runner?.provider?.getBlock(currentBlock);
+      const currentTimestamp = currentBlockData?.timestamp || Math.floor(Date.now() / 1000);
+      
+      // Process and add events to the list
+      const recentEvents: EventMessage[] = [];
+      
+      // Process CanvasMinted events
+      for (const event of canvasMintedEvents) {
+        if (event.args) {
+          const [, to, qty] = event.args;
+          const formattedAddress = formatAddress(to.toString());
+          const quantity = Number(qty);
+          const message = `${formattedAddress} minted ${quantity} canvas${quantity > 1 ? 'es' : ''}`;
+          
+          // Estimate timestamp based on block number difference
+          const blockDifference = currentBlock - Number(event.blockNumber);
+          const estimatedTimestamp = new Date((currentTimestamp - (blockDifference * 12)) * 1000); // ~12 seconds per block
+          
+          recentEvents.push({
+            id: `historical-mint-${event.transactionHash}-${event.index}`,
+            timestamp: estimatedTimestamp,
+            type: 'mint',
+            message,
+            txHash: event.transactionHash
+          });
+        }
+      }
+      
+      // Process ArtSaved events
+      for (const event of artSavedEvents) {
+        if (event.args) {
+          const [tokenId, artist] = event.args;
+          const formattedAddress = formatAddress(artist.toString());
+          const message = `${formattedAddress} saved art to token #${tokenId.toString()}`;
+          
+          // Estimate timestamp based on block number difference
+          const blockDifference = currentBlock - Number(event.blockNumber);
+          const estimatedTimestamp = new Date((currentTimestamp - (blockDifference * 12)) * 1000); // ~12 seconds per block
+          
+          recentEvents.push({
+            id: `historical-save-${event.transactionHash}-${event.index}`,
+            timestamp: estimatedTimestamp,
+            type: 'save',
+            message,
+            txHash: event.transactionHash
+          });
+        }
+      }
+      
+      // Sort by timestamp (newest first) and limit to 10 events
+      recentEvents.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setEventMessages(recentEvents.slice(0, 10));
+      
+      console.log(`📜 Loaded ${recentEvents.length} recent events`);
+    } catch (error) {
+      console.error('Failed to load recent events:', error);
+    }
+  };
+
+  // Setup smart contract event listeners
+  const setupContractEventListeners = (contractInstance: ColourMeNFT) => {
+    console.log('🔔 Setting up contract event listeners...');
+
+    // Clean up existing listeners
+    if (eventListenersRef.current) {
+      eventListenersRef.current();
+    }
+
+    // Load recent events first
+    loadRecentEvents(contractInstance);
+
+    // CanvasMinted event listener
+    const canvasMintedListener = (tokenId: bigint, to: string, qty: bigint, event: any) => {
+      console.log('🎨 CanvasMinted event received:', { tokenId: tokenId.toString(), to, qty: qty.toString() });
+      
+      const formattedAddress = formatAddress(to);
+      const quantity = Number(qty);
+      const message = `${formattedAddress} just minted ${quantity} canvas${quantity > 1 ? 'es' : ''}`;
+      
+      addEventMessage({
+        timestamp: new Date(),
+        type: 'mint',
+        message,
+        txHash: event.transactionHash
+      });
+    };
+
+    // ArtSaved event listener
+    const artSavedListener = (tokenId: bigint, artist: string, event: any) => {
+      console.log('💾 ArtSaved event received:', { tokenId: tokenId.toString(), artist });
+      
+      const formattedAddress = formatAddress(artist);
+      const message = `${formattedAddress} just saved art to token #${tokenId.toString()}`;
+      
+      addEventMessage({
+        timestamp: new Date(),
+        type: 'save',
+        message,
+        txHash: event.transactionHash
+      });
+    };
+
+    // Set up the event listeners using filters
+    const canvasMintedFilter = contractInstance.filters.CanvasMinted();
+    const artSavedFilter = contractInstance.filters.ArtSaved();
+    
+    contractInstance.on(canvasMintedFilter, canvasMintedListener);
+    contractInstance.on(artSavedFilter, artSavedListener);
+
+    // Store cleanup function
+    eventListenersRef.current = () => {
+      console.log('🧹 Cleaning up contract event listeners...');
+      contractInstance.off(canvasMintedFilter, canvasMintedListener);
+      contractInstance.off(artSavedFilter, artSavedListener);
+    };
+  };
+
   const isOnCorrectNetwork = (chainId: string = currentChainId) => {
     return chainId.toLowerCase() === dappConfig.network.chainId.toLowerCase();
   };
+
+  // Setup contract event listeners when contract is available
+  useEffect(() => {
+    if (contract) {
+      setupContractEventListeners(contract);
+    }
+
+    // Cleanup on unmount or contract change
+    return () => {
+      if (eventListenersRef.current) {
+        eventListenersRef.current();
+      }
+    };
+  }, [contract]);
 
   // Initialize wallet connection
   useEffect(() => {
@@ -224,15 +376,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       if (result.success) {
         showMessage(`Successfully minted ${mintQuantity} token${mintQuantity > 1 ? 's' : ''}!`);
         
-        // Add event message
-        const newEvent: EventMessage = {
-          id: Date.now().toString(),
-          timestamp: new Date(),
-          type: 'mint',
-          message: `${formatAddress(account)} just minted ${mintQuantity} canvas${mintQuantity > 1 ? 'es' : ''}`,
-          txHash: result.data?.hash
-        };
-        setEventMessages(prev => [newEvent, ...prev.slice(0, 9)]); // Keep only last 10
+        // Note: Event message will be automatically added by the CanvasMinted event listener
         
         // Refresh contract data from blockchain to get accurate token count
         if (onContractDataUpdate) {
