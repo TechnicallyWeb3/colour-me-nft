@@ -573,7 +573,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
                   {event.txHash && (
                     <div className="event-tx-hash">
                       <a 
-                        href={`${dappConfig.network.blockExplorerUrls[0]}/tx/${event.txHash}`}
+                        href={`${dappConfig.network.explorerUrl}/tx/${event.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="tx-link"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AddressBar.css';
-import { getOwnerOf } from '../utils/blockchain';
+import { getOwnerOf, dappConfig } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
 interface TokenData {
@@ -214,19 +214,21 @@ const AddressBar: React.FC<AddressBarProps> = ({
       return;
     }
     
-    // Open Base blockchain explorer in new tab
-    const baseUrl = 'https://basescan.org/token/0x'; // Replace with actual contract address
-    window.open(`${baseUrl}CONTRACT_ADDRESS?a=${activeToken}`, '_blank');
+    // Open blockchain explorer in new tab
+    const explorerUrl = dappConfig.network.explorerUrl;
+    window.open(`${explorerUrl}/token/${dappConfig.contracts.ColourMeNFT.address}?a=${activeToken}`, '_blank');
   };
 
   // Handle OpenSea button click
   const handleOpenSeaClick = (tokenId: number) => {
     if (activeToken === 0) {
       // Return the project OpenSea page
-      window.open('https://opensea.io/collection/colour-me-nft', '_blank');
+      window.open(`${dappConfig.network.openseaUrl}/collection/colour-me-nft`, '_blank');
     } else {
       // Open the token's OpenSea page
-      window.open(`https://opensea.io/assets/base/0xCONTRACT_ADDRESS/${tokenId}`, '_blank');
+      const openSeaUrl = dappConfig.network.openseaUrl;
+      const chainName = dappConfig.network.chainName.toLowerCase();
+      window.open(`${openSeaUrl}/assets/${chainName}/${dappConfig.contracts.ColourMeNFT.address}/${tokenId}`, '_blank');
     }
   };
 

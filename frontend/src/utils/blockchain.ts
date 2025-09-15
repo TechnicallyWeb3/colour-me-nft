@@ -21,7 +21,6 @@ export const networkConfigs = {
       symbol: 'ETH',
       decimals: 18,
     },
-    blockExplorerUrls: [], // No block explorer for local network
     rpcUrl: 'http://127.0.0.1:8545',
     explorerUrl: 'http://localhost:3000', // No explorer for local
     openseaUrl: 'http://localhost:8000', // Testnets OpenSea
@@ -41,10 +40,9 @@ export const networkConfigs = {
       symbol: 'ETH',
       decimals: 18,
     },
-    blockExplorerUrls: ['https://sepolia.etherscan.io'],
     rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com/',
-    explorerUrl: 'https://sepolia.etherscan.io/',
-    openseaUrl: 'https://testnets.opensea.io/',
+    explorerUrl: 'https://sepolia.etherscan.io',
+    openseaUrl: 'https://testnets.opensea.io',
     contracts: {
       ColourMeNFT: {
         address: "0x09589896b6d0B3D2d437f0C6Ea2e33A05a14Ca46", // Live testnet deployment
@@ -61,10 +59,9 @@ export const networkConfigs = {
       symbol: 'ETH',
       decimals: 18,
     },
-    blockExplorerUrls: ['https://basescan.org'],
     rpcUrl: 'https://base-rpc.publicnode.com',
-    explorerUrl: 'https://basescan.org/',
-    openseaUrl: 'https://opensea.io/',
+    explorerUrl: 'https://basescan.org',
+    openseaUrl: 'https://opensea.io',
     contracts: {
       ColourMeNFT: {
         address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Base mainnet
@@ -198,7 +195,8 @@ export const dappConfig = {
     chainName: activeConfig.chainName,
     rpcUrls: activeConfig.rpcUrls,
     nativeCurrency: activeConfig.nativeCurrency,
-    blockExplorerUrls: activeConfig.blockExplorerUrls,
+    explorerUrl: activeConfig.explorerUrl,
+    openseaUrl: activeConfig.openseaUrl,
   },
   // Contract Configuration  
   contracts: {
@@ -417,10 +415,10 @@ export const addNetwork = async (): Promise<ConnectionResult> => {
   }
 
   try {
-    const { chainId, chainName, rpcUrls, nativeCurrency, blockExplorerUrls } = dappConfig.network;
+    const { chainId, chainName, rpcUrls, nativeCurrency, explorerUrl } = dappConfig.network;
     const params: any = { chainId, chainName, rpcUrls, nativeCurrency };
-    if (Array.isArray(blockExplorerUrls) && blockExplorerUrls.length > 0) {
-      params.blockExplorerUrls = blockExplorerUrls;
+    if (explorerUrl) {
+      params.blockExplorerUrls = [explorerUrl];
     }
 
     await window.ethereum.request({

@@ -16,7 +16,8 @@ import {
   setArt,
   appendArt,
   type ConnectionResult,
-  type ContractObject
+  type ContractObject,
+  dappConfig
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
@@ -120,9 +121,9 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
         document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 'explorer':
-        // Open Base blockchain explorer in new tab
-        const baseUrl = 'https://basescan.org/token/0x'; // Replace with actual contract address
-        window.open(`${baseUrl}CONTRACT_ADDRESS?a=${tokenId}`, '_blank');
+        // Open blockchain explorer in new tab
+        const explorerUrl = dappConfig.network.explorerUrl;
+        window.open(`${explorerUrl}/token/${dappConfig.contracts.ColourMeNFT.address}?a=${tokenId}`, '_blank');
         break;
       case 'attributes':
         setShowAttributes(tokenId);

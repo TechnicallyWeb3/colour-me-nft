@@ -1,6 +1,6 @@
 import React from 'react';
 import './TokenAddressBar.css';
-import { formatAddress } from '../utils/blockchain';
+import { formatAddress, dappConfig } from '../utils/blockchain';
 
 interface TokenAddressBarProps {
   contractAddress: string;
@@ -27,16 +27,16 @@ const TokenAddressBar: React.FC<TokenAddressBarProps> = ({
 
   // Handle Explorer button click
   const handleExplorerClick = () => {
-    // Open Base blockchain explorer in new tab
-    const baseUrl = 'https://basescan.org/token/';
-    window.open(`${baseUrl}${contractAddress}?a=${tokenId}`, '_blank');
+    // Open blockchain explorer in new tab
+    const explorerUrl = dappConfig.network.explorerUrl;
+    window.open(`${explorerUrl}/token/${contractAddress}?a=${tokenId}`, '_blank');
   };
 
   // Handle OpenSea button click
   const handleOpenSeaClick = () => {
     // Open OpenSea in new tab
-    const openSeaUrl = 'https://opensea.io/assets/base/';
-    window.open(`${openSeaUrl}${contractAddress}/${tokenId}`, '_blank');
+    const openSeaUrl = dappConfig.network.openseaUrl;
+    window.open(`${openSeaUrl}/assets/${dappConfig.network.chainName.toLowerCase()}/${contractAddress}/${tokenId}`, '_blank');
   };
 
   return (
