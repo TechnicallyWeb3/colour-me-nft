@@ -6,6 +6,8 @@ import Window from './Window';
 import TokenAddressBar from './TokenAddressBar';
 import AddressBar from './AddressBar';
 import WebsiteContent from './WebsiteContent';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXTwitter, faTiktok, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import {
   connectToProvider,
   getTokenSVG,
@@ -995,15 +997,21 @@ const Home: React.FC = () => {
                   <span className="social-text">ColourMeNFT.xyz</span>
                 </div>
                 <div className="social-item">
-                  <span className="social-icon">🐦 Twitter</span>
+                  <span className="social-icon">
+                    <FontAwesomeIcon icon={faXTwitter} />
+                  </span>
                   <span className="social-text">@ColourMeNFT</span>
                 </div>
                 <div className="social-item">
-                  <span className="social-icon">📱 TikTok</span>
+                  <span className="social-icon">
+                    <FontAwesomeIcon icon={faTiktok} />
+                  </span>
                   <span className="social-text">@TechnicallyWeb3</span>
                 </div>
                 <div className="social-item">
-                  <span className="social-icon">💬 Discord</span>
+                  <span className="social-icon">
+                    <FontAwesomeIcon icon={faDiscord} />
+                  </span>
                   <span className="social-text">Discord Coming Soon!</span>
                 </div>
               </div>

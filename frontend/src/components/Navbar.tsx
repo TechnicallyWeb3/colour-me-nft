@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import './Navbar.css';
 import Shill2Earn from './Shill2Earn';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXTwitter, faTiktok, faDiscord } from '@fortawesome/free-brands-svg-icons';
 
 const Navbar: React.FC = () => {
 
@@ -59,10 +61,13 @@ const Navbar: React.FC = () => {
         
         <div className="os-social-links">
           <a href="https://twitter.com/ColourMeNFT" target="_blank" rel="noopener noreferrer" className="os-social-link">
-            𝕏
+            <FontAwesomeIcon icon={faXTwitter} />
           </a>
           <a href="https://tiktok.com/@TechnicallyWeb3" target="_blank" rel="noopener noreferrer" className="os-social-link">
-            📱
+            <FontAwesomeIcon icon={faTiktok} />
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" className="os-social-link" title="Discord Coming Soon!">
+            <FontAwesomeIcon icon={faDiscord} />
           </a>
         </div>
         
