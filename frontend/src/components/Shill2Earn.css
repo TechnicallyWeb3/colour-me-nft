@@ -4,6 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.7);
   z-index: 1000;
   display: flex;
@@ -21,7 +23,10 @@
   max-height: 90vh;
   width: 100%;
   overflow: hidden;
-  position: relative;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 1001;
 }
 
@@ -309,8 +314,14 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .shill2earn-popup {
-    width: 95%;
+    width: 95vw;
+    max-width: 95vw;
     max-height: 95vh;
+    margin: 0;
+    /* Ensure it stays centered on mobile */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   
   .shill2earn-content {
@@ -332,5 +343,19 @@
   
   .image-placeholders {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .shill2earn-popup {
+    width: 98vw;
+    max-width: 98vw;
+    max-height: 98vh;
+    margin: 0;
+  }
+  
+  .shill2earn-content {
+    padding: 10px;
   }
 }

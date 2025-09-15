@@ -635,25 +635,8 @@ const Home: React.FC = () => {
 
       {/* About Section */}
       <Window id="about" title="Document - About.txt" icon="🗒️" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <div style={{
-          height: '500px',
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-          backgroundColor: '#fefefe'
-        }}>
-          <div style={{
-            fontFamily: 'Courier New, monospace',
-            fontSize: '12px',
-            lineHeight: '1.4',
-            color: '#000',
-            backgroundColor: '#fefefe',
-            padding: '15px 60px',
-            whiteSpace: 'pre-wrap',
-            textAlign: 'justify'
-          }}>
+        <div className="about-scroll-container">
+          <div className="about-content">
           <div style={{ 
             fontWeight: 'bold', 
             fontSize: '16px', 
