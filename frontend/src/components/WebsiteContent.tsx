@@ -570,6 +570,18 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
               eventMessages.map(event => (
                 <div key={event.id} className={`event-message ${event.type}`}>
                   <div className="event-text">{event.message}</div>
+                  {event.txHash && (
+                    <div className="event-tx-hash">
+                      <a 
+                        href={`${dappConfig.network.blockExplorerUrls[0]}/tx/${event.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tx-link"
+                      >
+                        {event.txHash.slice(0, 10)}...{event.txHash.slice(-8)}
+                      </a>
+                    </div>
+                  )}
                   <div className="event-time">
                     {event.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>

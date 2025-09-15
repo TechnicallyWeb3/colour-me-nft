@@ -192,8 +192,8 @@ input[type="number"] {
   padding: 8px;
   border: 2px inset #c0c0c0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
   box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8);
 }
 
@@ -212,7 +212,23 @@ input[type="number"] {
 .event-text {
   font-size: 11px;
   color: #000;
-  flex: 1;
+}
+
+.event-tx-hash {
+  font-size: 9px;
+  color: #808080;
+  font-family: "Courier New", monospace;
+}
+
+.tx-link {
+  color: #808080;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tx-link:hover {
+  color: #606060;
+  text-decoration: underline;
 }
 
 .event-time {
@@ -223,6 +239,7 @@ input[type="number"] {
   padding: 2px 4px;
   border: 1px inset #c0c0c0;
   border-radius: 0;
+  align-self: flex-end;
 }
 
 .no-events {
