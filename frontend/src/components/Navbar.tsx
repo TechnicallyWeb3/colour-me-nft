@@ -37,9 +37,6 @@ const Navbar: React.FC = () => {
         </div>
         
         <div className="os-nav-links">
-          <a href="#title" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('title'); }}>
-            Home
-          </a>
           <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
             About
           </a>
@@ -71,9 +68,6 @@ const Navbar: React.FC = () => {
         
         {/* Mobile Menu */}
         <div className={`os-nav-mobile ${isMobileMenuOpen ? 'open' : ''}`}>
-          <a href="#title" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('title'); }}>
-            Home
-          </a>
           <a href="#about" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('about'); }}>
             About
           </a>
@@ -88,6 +82,9 @@ const Navbar: React.FC = () => {
           </a>
           <a href="#overview" className="os-nav-link" onClick={(e) => { e.preventDefault(); scrollToSection('overview'); }}>
             Overview
+          </a>
+          <a href="#" className="os-nav-link" onClick={(e) => { e.preventDefault(); setIsShill2EarnOpen(true); }}>
+            Shill2Earn
           </a>
         </div>
       </nav>
