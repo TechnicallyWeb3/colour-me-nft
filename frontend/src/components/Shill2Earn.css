@@ -292,7 +292,12 @@
   color: #999;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - Override global thin scrollbar */
+.shill2earn-container {
+  scrollbar-width: auto !important;
+  scrollbar-color: #667eea #f1f1f1 !important;
+}
+
 .shill2earn-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -311,8 +316,19 @@
   background: #5a6fd8;
 }
 
+/* Hide scrollbar on very small screens (below 300px) */
+@media (max-width: 300px) {
+  .shill2earn-container {
+    scrollbar-width: none !important;
+  }
+  
+  .shill2earn-container::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .shill2earn-popup {
     width: 95vw;
     max-width: 95vw;
@@ -330,11 +346,8 @@
   
   .shill2earn-step {
     flex-direction: column;
+    align-items: center;
     gap: 10px;
-  }
-  
-  .step-number {
-    align-self: flex-start;
   }
   
   .requirements-grid {

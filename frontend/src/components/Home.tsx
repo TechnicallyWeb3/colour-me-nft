@@ -794,7 +794,7 @@ const Home: React.FC = () => {
       </Window>
 
       {/* Website Browser */}
-      <Window id="mint" title="Browser - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
+      <Window id="mint" title="Mint - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
         <TokenAddressBar contractAddress={contractData?.contractAddress || ''} tokenId={activeToken || 0} />
         <WebsiteContent 
           contractData={contractData}
