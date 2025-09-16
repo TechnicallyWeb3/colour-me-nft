@@ -45,7 +45,7 @@ export const networkConfigs = {
     openseaUrl: 'https://testnets.opensea.io',
     contracts: {
       ColourMeNFT: {
-        address: "0xd4150Bd70f06dffb96b075e55703A0e9149cA2bd", // Live testnet deployment
+        address: "0x900aA8EB88147EFAC46dcc047389562E0822B66D", // Live testnet deployment
         deployedBlock: 0,
       }
     }

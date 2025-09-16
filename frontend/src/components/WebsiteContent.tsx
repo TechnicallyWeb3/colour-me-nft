@@ -13,6 +13,56 @@ import {
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
+// Countdown Timer Component
+interface CountdownTimerProps {
+  targetDate: Date;
+  prefix: string;
+  onComplete?: () => void;
+}
+
+const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, prefix, onComplete }) => {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const target = targetDate.getTime();
+      const difference = target - now;
+
+      if (difference <= 0) {
+        setTimeLeft(0);
+        if (onComplete) onComplete();
+        return;
+      }
+
+      setTimeLeft(difference);
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Update every second
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [targetDate, onComplete]);
+
+  const formatTime = (ms: number): string => {
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  if (timeLeft <= 0) {
+    return <span>Time's up!</span>;
+  }
+
+  return <span>{prefix} {formatTime(timeLeft)}</span>;
+};
+
 interface WebsiteContentProps {
   contractData: ContractData | null;
   contract: ColourMeNFT | null;
@@ -465,17 +515,9 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     if (contractData.tokenCount >= contractData.maxSupply) {
       return 'Sold Out';
     } else if (isActive) {
-      const timeLeft = mintEnd.getTime() - now.getTime();
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      return `Ends in ${days}d ${hours}h ${minutes}m`;
+      return <CountdownTimer targetDate={mintEnd} prefix="Ends:" />;
     } else if (now < mintOpen) {
-      const timeLeft = mintOpen.getTime() - now.getTime();
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      return `Opens in ${days}d ${hours}h ${minutes}m`;
+      return <CountdownTimer targetDate={mintOpen} prefix="Opens:" />;
     } else {
       return 'Minting Closed';
     }

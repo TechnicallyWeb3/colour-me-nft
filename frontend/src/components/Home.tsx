@@ -956,8 +956,12 @@ const Home: React.FC = () => {
 
               <div className="help-meta-info">
                 <div className="meta-item">
-                  <span className="meta-label">Date:</span>
-                  <span className="meta-value">September 2025</span>
+                  <span className="meta-label">Launch Date:</span>
+                  <span className="meta-value">{contractData?.mintOpen ? contractData.mintOpen.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  }) : 'TBD'}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Version:</span>
@@ -965,7 +969,7 @@ const Home: React.FC = () => {
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Platform:</span>
-                  <span className="meta-value">Base Network</span>
+                  <span className="meta-value">{contractData?.chain?.name || 'Base Network'}</span>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Mint Price:</span>
@@ -1031,7 +1035,7 @@ const Home: React.FC = () => {
               <div className="tech-specs">
                 <div className="spec-row">
                   <span className="spec-label">Blockchain:</span>
-                  <span className="spec-value">Base (Ethereum L2)</span>
+                  <span className="spec-value">{contractData?.chain?.name || 'Base'} (Ethereum L2)</span>
                 </div>
                 <div className="spec-row">
                   <span className="spec-label">Token Standard:</span>
@@ -1095,7 +1099,7 @@ const Home: React.FC = () => {
           <strong>💰 Mint Price: {contractData?.mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
         <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>
-          Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base'}
+          Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base Network'}
         </p>
       </footer>
 
