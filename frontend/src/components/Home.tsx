@@ -6,6 +6,7 @@ import Window from './Window';
 import TokenAddressBar from './TokenAddressBar';
 import AddressBar from './AddressBar';
 import WebsiteContent from './WebsiteContent';
+import Shill2Earn from './Shill2Earn';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter, faTiktok, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -259,6 +260,9 @@ const Home: React.FC = () => {
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string>('');
+  
+  // Shill2Earn popup state
+  const [isShill2EarnOpen, setIsShill2EarnOpen] = useState(false);
 
 
   // Function to refresh contract data from blockchain
@@ -683,7 +687,30 @@ const Home: React.FC = () => {
             backgroundColor: '#e3f2fd',
             borderRadius: '4px'
           }}>
-            🖌️ <strong>5 random colours. 3 random shapes. Unlimited degen energy.</strong>
+            🖌️ <strong>5 random colours. 3 random shapes. Unique canvases. Unlimited degen energy.</strong>
+          </div>
+          
+          <div style={{ 
+            textAlign: 'center', 
+            margin: '20px 0',
+            padding: '15px',
+            backgroundColor: '#fff',
+            border: '2px dashed #ccc',
+            borderRadius: '4px'
+          }}>
+            <img 
+              src="/src/assets/toolbar_all.png" 
+              alt="Toolbar variations showing different color palettes and brush sizes"
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '4px'
+              }}
+            />
+            <br />
+            <small style={{ color: '#666', fontStyle: 'italic' }}>
+              Interactive drawing toolbar with colors, brush sizes, shapes, and tools
+            </small>
           </div>
           
           <div style={{ 
@@ -696,24 +723,32 @@ const Home: React.FC = () => {
             <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
               🎨 Toolbar Features:
             </div>
-            <div style={{ marginLeft: '20px', marginBottom: '10px' }}>
-              • Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.
-              • Colours + shapes are randomized at mint, making each canvas unique.
-              • Tools: brush, eraser and fill bucket and the colour black are common attributes.
-            </div>
+            <ul style={{ marginLeft: '20px', marginBottom: '10px', paddingLeft: '20px' }}>
+              <li style={{ marginBottom: '5px' }}>Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.</li>
+              <li style={{ marginBottom: '5px' }}>Colours + shapes are randomized at mint, making each canvas unique.</li>
+              <li style={{ marginBottom: '5px' }}>Tools: brush, eraser and fill bucket and the colour black are common attributes.</li>
+            </ul>
             <div style={{ 
               textAlign: 'center', 
               margin: '10px 0',
               padding: '15px',
               backgroundColor: '#fff',
               border: '2px dashed #ccc',
-              borderRadius: '4px',
-              color: '#666',
-              fontStyle: 'italic'
+              borderRadius: '4px'
             }}>
-              [TOOLBAR IMAGE PLACEHOLDER - toolbar1.png]
+              <img 
+                src="/src/assets/toolbar_full.png" 
+                alt="Full interactive drawing toolbar with colors, brush sizes, shapes, and tools"
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  borderRadius: '4px'
+                }}
+              />
               <br />
-              <small>Interactive drawing toolbar with colors, brush sizes, shapes, and tools</small>
+              <small style={{ color: '#666', fontStyle: 'italic' }}>
+                Interactive drawing toolbar with colors, brush sizes, shapes, and tools
+              </small>
             </div>
           </div>
           
@@ -747,9 +782,11 @@ const Home: React.FC = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '4px'
           }}>
-            • PFPs were the last era.
-            • <strong>Tokenized Web Apps (TWAs)</strong> are the next.
-            • And Colour Me NFT is the first TWA the world has ever seen.
+            <ul style={{ margin: '0', paddingLeft: '20px' }}>
+              <li style={{ marginBottom: '5px' }}>PFPs were the last era.</li>
+              <li style={{ marginBottom: '5px' }}><strong>Tokenized Web Apps (TWAs)</strong> are the next.</li>
+              <li style={{ marginBottom: '5px' }}>And Colour Me NFT is the <strong>first TWA</strong> the world has ever seen.</li>
+            </ul>
           </div>
           
           <div style={{ marginBottom: '15px' }}>
@@ -790,6 +827,33 @@ const Home: React.FC = () => {
               fontSize: '12px'
             }}>
               🏆 May the best shillers win! 🏆
+            </div>
+            <div style={{ 
+              marginTop: '15px', 
+              textAlign: 'center'
+            }}>
+              <a 
+                href="#" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setIsShill2EarnOpen(true);
+                }}
+                style={{
+                  display: 'inline-block',
+                  padding: '8px 16px',
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f57c00'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff9800'}
+              >
+                Learn More About Shill2Earn →
+              </a>
             </div>
           </div>
           </div>
@@ -1034,6 +1098,12 @@ const Home: React.FC = () => {
           Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base'}
         </p>
       </footer>
+
+      {/* Shill2Earn Popup */}
+      <Shill2Earn 
+        isOpen={isShill2EarnOpen} 
+        onClose={() => setIsShill2EarnOpen(false)} 
+      />
     </div>
   );
 };

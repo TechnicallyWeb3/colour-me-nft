@@ -51,6 +51,7 @@ export interface ColourMeNFTInterface extends Interface {
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
       | "setArt"
+      | "setDefaultRoyalty"
       | "setSVG"
       | "supportsInterface"
       | "svgEnd"
@@ -139,6 +140,10 @@ export interface ColourMeNFTInterface extends Interface {
     values: [BigNumberish, ObjectStruct[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "setDefaultRoyalty",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setSVG",
     values: [BytesLike, BytesLike]
   ): string;
@@ -220,6 +225,10 @@ export interface ColourMeNFTInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setArt", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setDefaultRoyalty",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setSVG", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
@@ -473,6 +482,12 @@ export interface ColourMeNFT extends BaseContract {
     "nonpayable"
   >;
 
+  setDefaultRoyalty: TypedContractMethod<
+    [receiver: AddressLike, feeNumerator: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   setSVG: TypedContractMethod<
     [_svgStart: BytesLike, _svgEnd: BytesLike],
     [void],
@@ -632,6 +647,13 @@ export interface ColourMeNFT extends BaseContract {
     nameOrSignature: "setArt"
   ): TypedContractMethod<
     [tokenId: BigNumberish, _art: ObjectStruct[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setDefaultRoyalty"
+  ): TypedContractMethod<
+    [receiver: AddressLike, feeNumerator: BigNumberish],
     [void],
     "nonpayable"
   >;

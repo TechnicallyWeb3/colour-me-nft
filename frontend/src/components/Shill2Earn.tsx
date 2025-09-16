@@ -1,12 +1,41 @@
 import React, { useEffect } from 'react';
 import './Shill2Earn.css';
+import type { ContractData } from '../utils/blockchain';
 
 interface Shill2EarnProps {
   isOpen: boolean;
   onClose: () => void;
+  contractData?: ContractData | null;
 }
 
-const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
+// Utility function to parse mint price and calculate reward pool
+const getMintPrice = (mintPrice: string): number => {
+  if (mintPrice === 'FREE') return 0;
+  const parts = mintPrice.split(' ');
+  return parseFloat(parts[0]) || 0;
+};
+
+const calculateRewardPool = (contractData: ContractData | null): { amount: number; symbol: string; percentage: number } => {
+  if (!contractData) {
+    return { amount: 0, symbol: 'ETH', percentage: 0 };
+  }
+  
+  const pricePerToken = getMintPrice(contractData.mintPrice);
+  const totalAmount = pricePerToken * contractData.tokenCount;
+  const maxAmount = 2.5; // Maximum reward pool
+  const percentage = Math.min((totalAmount / maxAmount) * 100, 100);
+  
+  return {
+    amount: totalAmount,
+    symbol: contractData.chain.symbol,
+    percentage
+  };
+};
+
+const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }) => {
+  // Calculate reward pool data once
+  const rewardPool = calculateRewardPool(contractData || null);
+  
   // Prevent background scrolling when popup is open
   useEffect(() => {
     if (isOpen) {
@@ -43,15 +72,42 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
             <p className="shill2earn-intro">
               Forget free mints. Forget farming points for some dusty airdrop. We're flipping the script.
             </p>
-            <div className="shill2earn-highlight">
-              <strong>Colour Me NFT</strong> is giving away <strong>2.5 ETH (~$10,000)</strong> to the top 100 shills!
-            </div>
+             <div className="shill2earn-highlight">
+               <strong>Colour Me NFT</strong> is giving away <strong>up to 2.5 ETH (~$10,000)</strong> to the top 100 shills!
+             </div>
+             
+             {(rewardPool.amount > 0 && <div className="reward-pool-section">
+               <div className="reward-pool-label">Reward Pool</div>
+               <div className="reward-pool-bar">
+                 <div className="reward-pool-fill" style={{ width: `${rewardPool.percentage}%` }}>
+                   <span className="reward-pool-amount">{rewardPool.percentage.toFixed(1)}%</span>
+                 </div>
+               </div>
+               <div className="reward-pool-details">
+                 <span className="reward-pool-current">{rewardPool.amount.toFixed(5)} {rewardPool.symbol}</span>
+               </div>
+             </div>)}
+             
             <p>
               With <strong>Shill2Earn</strong>, your clout = your bag. We're rewarding the community that hypes us up and helps this project go viral.
             </p>
           </div>
 
           <div className="shill2earn-section">
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <img 
+                src="/src/assets/hashtag_cropped.jpg" 
+                alt="Social media post with #ColourMeNFT hashtag"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  height: 'auto',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              />
+            </div>
+            
             <h2 className="shill2earn-section-title">Here's How It Works 👇</h2>
             
             <div className="shill2earn-steps">
@@ -61,11 +117,6 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
                   <strong>Post</strong> → Make a TikTok or X post using hashtag <strong>#ColourMeNFT</strong>.
                   <div className="step-details">
                     Can be memes, reactions, art flexes, mint tutorials, whatever.
-                  </div>
-                  <div className="image-placeholder-small">
-                    [SOCIAL POSTS PLACEHOLDER]
-                    <br />
-                    <small>TikTok/X posts with #ColourMeNFT</small>
                   </div>
                 </div>
               </div>
@@ -90,11 +141,6 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
                       V = views, L = likes, S = shares/retweets, B = bookmarks/saves.
                     </div>
                   </div>
-                  <div className="image-placeholder-small">
-                    [MEME GRAPHIC PLACEHOLDER]
-                    <br />
-                    <small>"FARM CLOUT → FARM ETH"</small>
-                  </div>
                 </div>
               </div>
               
@@ -106,6 +152,23 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
                     Yes, literally all of it. Up to <strong>2 posts per platform</strong> per creator (4 total chances).
                   </div>
                 </div>
+              </div>
+            </div>
+            
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              <img 
+                src="/src/assets/pepeshill_full.jpg" 
+                alt="Pepe the Frog meme about farming clout to farm ETH"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  height: 'auto',
+                  borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              />
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                "FARM CLOUT → FARM ETH"
               </div>
             </div>
             
@@ -135,6 +198,80 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose }) => {
               <div className="requirement-item">
                 <strong>Post history:</strong> At least 100 posts before Sept 15th.
               </div>
+            </div>
+          </div>
+
+          <div className="shill2earn-section">
+            <h2 className="shill2earn-section-title">Content Guidelines ✅</h2>
+            <ul className="content-guidelines-list">
+              <li>Content must be about <strong>Colour Me NFT</strong> and/or your experience with it.</li>
+              <li>No hate, harassment, or defamation toward other projects, creators, or communities.</li>
+              <li>No spam, botted engagement, or misleading claims. Organic posts only.</li>
+              <li>Family-friendly visuals and language. Avoid explicit or NSFW content.</li>
+              <li>Disclose sponsorship if applicable and follow platform rules and local laws.</li>
+              <li>Include the hashtag <strong>#ColourMeNFT</strong> and ensure you spell it correctly.</li>
+              <li>Use your own footage, images, or memes, or ensure you have permission to use them.</li>
+            </ul>
+          </div>
+
+          <div className="shill2earn-section">
+            <h2 className="shill2earn-section-title">Posting Ideas 💡</h2>
+            <p className="section-description">
+              Want to maximize your clout? Here's how to frame Colour Me NFT for maximum traction:
+            </p>
+            
+            <div className="posting-ideas-grid">
+            <div className="idea-category">
+                <h3 className="idea-title">🔥 Viral Hooks</h3>
+                <ul className="idea-list">
+                  <li>"NFTs are so back..."</li>
+                  <li>"This changes everything..."</li>
+                  <li>"Is this the first-ever..."</li>
+                  <li>"Can you believe it's only $1..."</li>
+                </ul>
+              </div>
+              <div className="idea-category">
+                <h3 className="idea-title">🎨 Artists</h3>
+                <ul className="idea-list">
+                  <li>"Mint your own on-chain canvas!"</li>
+                  <li>"This isn't just a JPEG!"</li>
+                  <li>"Create your own NFTs!"</li>
+                  <li>"Sell your art on-chain!"</li>
+                </ul>
+              </div>
+              
+              <div className="idea-category">
+                <h3 className="idea-title">🚀 Degens</h3>
+                <ul className="idea-list">
+                  <li>"First-of-its-kind NFT app!"</li>
+                  <li>"Only $1 for the world's first TWA!"</li>
+                  <li>"TWAs might be the new meta in NFTs!"</li>
+                  <li>"Collect art from thousands of artists!"</li>
+                </ul>
+              </div>
+              
+              <div className="idea-category">
+                <h3 className="idea-title">📱 Tech</h3>
+                <ul className="idea-list">
+                  <li>"Have you heard of TWA NFTs?"</li>
+                  <li>"This project is 100% on-chain!"</li>
+                  <li>"Did you know SVGs can be apps?"</li>
+                  <li>"This smart contract is genius!"</li>
+                </ul>
+              </div>
+              
+              
+            </div>
+            
+            <div className="posting-tips">
+              <h3 className="tips-title">💡 Pro Tips:</h3>
+              <ul className="tips-list">
+                <li>Use trending sounds and hashtags beyond #ColourMeNFT</li>
+                <li>Post during peak hours (7-9 PM EST for TikTok, 12-3 PM EST for X)</li>
+                <li>Engage with comments quickly to boost algorithm</li>
+                <li>Cross-post between platforms but tailor the content</li>
+                <li>Tag @ColourMeNFT and @TechnicallyWeb3 for potential reposts</li>
+              </ul>
             </div>
           </div>
 

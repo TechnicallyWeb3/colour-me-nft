@@ -11,12 +11,12 @@ const NFTModule = buildModule("NFTModule", (m) => {
     const royalty = m.getParameter("royalty", 500);
     
     // New constructor parameters
-    const mintPrice = m.getParameter("mintPrice", 0); // Free minting by default
+    const mintPrice = m.getParameter("mintPrice", 250000000000000); // 0.00025 ETH by default
     const mintLimit = m.getParameter("mintLimit", 10); // 10 tokens per transaction
     // Set mint start to current time minus 1 hour to ensure minting is active
     const now = Math.floor(Date.now() / 1000);
-    const mintStart = m.getParameter("mintStart", now - 3600); // Started 1 hour ago by default
-    const mintDuration = m.getParameter("mintDuration", 365 * 24 * 60 * 60); // 1 year in seconds
+    const mintStart = m.getParameter("mintStart", now + 3600); // Started 1 hour ago by default
+    const mintDuration = m.getParameter("mintDuration", 7 * 24 * 60 * 60); // 1 week in seconds
 
     const cmr = m.contract("ColourMeRenderer");
     const nft = m.contract("ColourMeNFT", [name, symbol, baseURL, maxSupply, cmr, owner, royalty, mintPrice, mintLimit, mintStart, mintDuration]);

@@ -9,10 +9,11 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 // import "@wttp/site/contracts/extensions/WTTPForwarder.sol";
 
 interface IColourMeNFT is IERC721 {
+    function getProjectInfo() external view returns (string memory, string memory, string memory, uint256, uint256, uint256, uint256, uint256, uint256);
     function mint(address to) external;
     function setArt(uint256 tokenId, Object[] memory _art) external;
     function appendArt(uint256 tokenId, Object[] memory _object) external;
-    function tokenSVG(uint256 tokenId) external view returns (bytes memory);
+    function tokenSVG(uint256 tokenId) external view returns (string memory);
     function tokenURI(uint256 tokenId) external view returns (string memory);
 }
 
@@ -48,6 +49,10 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable { //, WTTPForwarder {
         mintLimit = _mintLimit;
         mintStart = _mintStart;
         mintDuration = _mintDuration;
+    }
+
+    function setDefaultRoyalty(address receiver, uint96 feeNumerator) external onlyOwner {
+        _setDefaultRoyalty(receiver, feeNumerator);
     }
 
     string private baseURL;
@@ -88,23 +93,24 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable { //, WTTPForwarder {
         svgEnd = _svgEnd;
     }
 
+    function _correctColors(uint24[] memory colors, uint8 index) internal pure returns (uint24[] memory) {
+        for (uint8 i = 0; i < index; i++) {
+            if (colors[index] >= colors[i]) colors[index] ++;
+        }
+        return colors;
+    }
+
     function _randomTraits(uint256 tokenId) internal view returns (Trait memory) {
         uint24[] memory colors = new uint24[](5);
         colors[0] = uint24(random_(tokenId, 1, 0xfffffe));
         colors[1] = uint24(random_(colors[0], 1, 0xfffffd));
-        if (colors[1] >= colors[0]) colors[1] ++;
+        colors = _correctColors(colors, 1);
         colors[2] = uint24(random_(colors[1], 1, 0xfffffc));
-        if (colors[2] >= colors[0]) colors[2] ++;
-        if (colors[2] >= colors[1]) colors[2] ++;
+        colors = _correctColors(colors, 2);
         colors[3] = uint24(random_(colors[2], 1, 0xfffffb));
-        if (colors[3] == colors[0]) colors[3] ++;
-        if (colors[3] >= colors[1]) colors[3] ++;
-        if (colors[3] >= colors[2]) colors[3] ++;
+        colors = _correctColors(colors, 3);
         colors[4] = uint24(random_(colors[3], 1, 0xfffffa));
-        if (colors[4] >= colors[0]) colors[4] ++;
-        if (colors[4] >= colors[1]) colors[4] ++;
-        if (colors[4] >= colors[2]) colors[4] ++;
-        if (colors[4] >= colors[3]) colors[4] ++;
+        colors = _correctColors(colors, 4);
         uint8[] memory shapes = new uint8[](2);
         shapes[0] = uint8(random_(colors[4], 0, 3));
         shapes[1] = uint8(random_(shapes[0], 0, 2));

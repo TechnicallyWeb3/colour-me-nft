@@ -37,6 +37,7 @@ export interface IColourMeNFTInterface extends Interface {
       | "approve"
       | "balanceOf"
       | "getApproved"
+      | "getProjectInfo"
       | "isApprovedForAll"
       | "mint"
       | "ownerOf"
@@ -69,6 +70,10 @@ export interface IColourMeNFTInterface extends Interface {
   encodeFunctionData(
     functionFragment: "getApproved",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProjectInfo",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
@@ -117,6 +122,10 @@ export interface IColourMeNFTInterface extends Interface {
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProjectInfo",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -267,6 +276,12 @@ export interface IColourMeNFT extends BaseContract {
 
   getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
 
+  getProjectInfo: TypedContractMethod<
+    [],
+    [[string, string, string, bigint, bigint, bigint, bigint, bigint, bigint]],
+    "view"
+  >;
+
   isApprovedForAll: TypedContractMethod<
     [owner: AddressLike, operator: AddressLike],
     [boolean],
@@ -346,6 +361,13 @@ export interface IColourMeNFT extends BaseContract {
   getFunction(
     nameOrSignature: "getApproved"
   ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "getProjectInfo"
+  ): TypedContractMethod<
+    [],
+    [[string, string, string, bigint, bigint, bigint, bigint, bigint, bigint]],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "isApprovedForAll"
   ): TypedContractMethod<
