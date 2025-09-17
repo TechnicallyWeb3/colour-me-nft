@@ -43,6 +43,15 @@ const Home: React.FC = () => {
   // Shill2Earn popup state
   const [isShill2EarnOpen, setIsShill2EarnOpen] = useState(false);
 
+  // Initialize active token from URL hash on first load
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    const id = parseInt(hash, 10);
+    if (!isNaN(id) && id > 0) {
+      setActiveToken(id);
+    }
+  }, []);
+
 
   // Function to refresh contract data from blockchain
   const refreshContractData = async () => {
