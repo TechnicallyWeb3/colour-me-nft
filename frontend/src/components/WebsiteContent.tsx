@@ -256,7 +256,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     }
   };
 
-  // Setup smart contract event listeners
+  // Setup smart contract event listeners with error handling
   const setupContractEventListeners = (contractInstance: ColourMeNFT) => {
     console.log('🔔 Setting up contract event listeners...');
 
@@ -299,18 +299,44 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       });
     };
 
-    // Set up the event listeners using filters
-    const canvasMintedFilter = contractInstance.filters.CanvasMinted();
-    const artSavedFilter = contractInstance.filters.ArtSaved();
-    
-    contractInstance.on(canvasMintedFilter, canvasMintedListener);
-    contractInstance.on(artSavedFilter, artSavedListener);
+    // Set up event listeners with error handling and retry logic
+    const setupListeners = () => {
+      try {
+        // Create filters with error handling
+        const canvasMintedFilter = contractInstance.filters.CanvasMinted();
+        const artSavedFilter = contractInstance.filters.ArtSaved();
+        
+        // Set up listeners with filters
+        contractInstance.on(canvasMintedFilter, canvasMintedListener);
+        contractInstance.on(artSavedFilter, artSavedListener);
+        
+        console.log('✅ Event listeners set up successfully');
+      } catch (error) {
+        console.error('❌ Failed to set up event listeners:', error);
+        
+        // Retry after a short delay
+        setTimeout(() => {
+          console.log('🔄 Retrying event listener setup...');
+          setupListeners();
+        }, 5000);
+      }
+    };
+
+    // Initial setup
+    setupListeners();
 
     // Store cleanup function
     eventListenersRef.current = () => {
       console.log('🧹 Cleaning up contract event listeners...');
-      contractInstance.off(canvasMintedFilter, canvasMintedListener);
-      contractInstance.off(artSavedFilter, artSavedListener);
+      try {
+        const canvasMintedFilter = contractInstance.filters.CanvasMinted();
+        const artSavedFilter = contractInstance.filters.ArtSaved();
+        
+        contractInstance.off(canvasMintedFilter, canvasMintedListener);
+        contractInstance.off(artSavedFilter, artSavedListener);
+      } catch (error) {
+        console.warn('⚠️ Error during event listener cleanup:', error);
+      }
     };
   };
 
@@ -322,14 +348,24 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   useEffect(() => {
     if (contract) {
       setupContractEventListeners(contract);
-    }
+      
+      // Fallback: Poll for events every 30 seconds if real-time listeners fail
+      const pollInterval = setInterval(async () => {
+        try {
+          await loadRecentEvents(contract);
+        } catch (error) {
+          console.warn('⚠️ Event polling failed:', error);
+        }
+      }, 30000);
 
-    // Cleanup on unmount or contract change
-    return () => {
-      if (eventListenersRef.current) {
-        eventListenersRef.current();
-      }
-    };
+      // Cleanup on unmount or contract change
+      return () => {
+        if (eventListenersRef.current) {
+          eventListenersRef.current();
+        }
+        clearInterval(pollInterval);
+      };
+    }
   }, [contract]);
 
   // Initialize wallet connection
