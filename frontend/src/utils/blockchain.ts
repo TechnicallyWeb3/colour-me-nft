@@ -120,7 +120,7 @@ export const getContractData = async (contract: ColourMeNFT | null): Promise<{ d
     const chain = {
       name: config.chainName,
       id: config.chainId,
-      rpc: config.rpcUrls[0],
+      rpc: config.rpcUrl,
       symbol: config.nativeCurrency.symbol
     };
     

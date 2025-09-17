@@ -53,7 +53,7 @@ const AttributesPopup: React.FC<AttributesPopupProps> = ({ tokenId, onClose }) =
     { label: 'Type', value: tokenId === 0 ? 'Example' : 'Minted NFT' },
     { label: 'Created', value: tokenId === 0 ? 'N/A' : 'On Base Network' },
     { label: 'Objects', value: Math.floor(Math.random() * 50) + 10 },
-    { label: 'Colors Used', value: Math.floor(Math.random() * 10) + 3 },
+    { label: 'Colours Used', value: Math.floor(Math.random() * 10) + 3 },
     { label: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary'][Math.floor(Math.random() * 4)] }
   ];
 
@@ -85,6 +85,7 @@ const AttributesPopup: React.FC<AttributesPopupProps> = ({ tokenId, onClose }) =
 
 const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, tokenId, onClose, onAction }) => {
   useEffect(() => {
+    console.log('🔍 [ContextMenu] Component render - tokenId:', tokenId);
     const handleClickOutside = () => onClose();
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
@@ -188,24 +189,12 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
                       <img
                         src={previewUrl}
                         alt={`Token #${tokenId}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          borderRadius: '2px'
-                        }}
+                        className="token-thumbnail-image"
                       />
                     ) : (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        fontSize: '10px'
-                      }}>
-                        <span style={{ marginBottom: '2px' }}>⏳</span>
-                        <span>#{tokenId}</span>
+                      <div className="token-thumbnail-loading">
+                        <span className="token-thumbnail-loading-icon">⏳</span>
+                        <span className="token-thumbnail-loading-text">#{tokenId}</span>
                       </div>
                     )}
                   </div>
@@ -215,7 +204,7 @@ const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelec
             })
           ) : (
             /* Show message when no tokens are minted */
-            <div className="token-item" style={{ opacity: 0.6, cursor: 'default' }}>
+            <div className="token-item token-item-empty">
             </div>
           )}
         </div>
@@ -248,6 +237,7 @@ const Home: React.FC = () => {
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
   const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
+  // const [tokenCount, setTokenCount] = useState(0);
   const [account, setAccount] = useState<string>('');
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
@@ -285,6 +275,7 @@ const Home: React.FC = () => {
   // Initialize blockchain connection and load contract data
   useEffect(() => {
     const initializeBlockchain = async () => {
+      console.log('🔍 [Home.tsx] - initializeBlockchain');
       setIsLoadingContract(true);
       try {
         const { contract, result } = await connectToProvider();
@@ -319,12 +310,13 @@ const Home: React.FC = () => {
       }
     };
 
-    initializeBlockchain();
+    if (contractData === null && !isLoadingContract) initializeBlockchain();
   }, []);
 
   // Initialize write contract when account is available
   useEffect(() => {
     const initializeWriteContract = async () => {
+      console.log('🔍 [Home.tsx] - initializeWriteContract');
       if (account) {
         try {
           const { contract, result } = await connectToWallet();
@@ -343,16 +335,18 @@ const Home: React.FC = () => {
       }
     };
 
-    initializeWriteContract();
+    if (writeContract === null) initializeWriteContract();
   }, [account]);
 
   // Force SVG reload when active token changes (like in App.tsx)
   useEffect(() => {
+    console.log('🔍 [Home.tsx] useEffect - forceSVGReload');
     setSvgKey(prev => prev + 1);
   }, [activeToken]);
 
   // Load token previews for thumbnails (optimized batch loading)
   useEffect(() => {
+    console.log('🔍 [Home.tsx] useEffect - loadTokenPreviews');
     let isMounted = true;
 
     const loadTokenPreviews = async () => {
@@ -401,6 +395,7 @@ const Home: React.FC = () => {
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
+    console.log('🔍 [Home.tsx] useEffect - cleanupTokenPreviews');
     return () => {
       tokenPreviews.forEach(url => {
         URL.revokeObjectURL(url);
@@ -560,6 +555,7 @@ const Home: React.FC = () => {
 
   // Execute save when saveRequestData changes
   useEffect(() => {
+    console.log('🔍 [Home.tsx] useEffect - executeSave');
     if (saveRequestData && writeContract && account && activeToken > 0 && !isSaving) {
       executeSave(saveRequestData);
     }
@@ -567,6 +563,7 @@ const Home: React.FC = () => {
 
   // Listen for messages from SVG (like in App.tsx)
   useEffect(() => {
+    console.log('🔍 [Home.tsx] useEffect - handleMessage');
     const handleMessage = (event: MessageEvent) => {
       const { type, data } = event.data;
       
@@ -636,221 +633,115 @@ const Home: React.FC = () => {
 
       {/* Title Section */}
       <section id="title" className="page-header">
-        <h1>Color Me NFT</h1>
-        <p>Create, color, and mint your digital artwork on Base</p>
+        <h1>Colour Me NFT</h1>
+        <p>Create, colour, and mint your digital artwork on Base</p>
       </section>
 
       {/* About Section */}
       <Window id="about" title="Document - About.txt" icon="🗒️" buttonset={{ minimize: "", expand: "", close: "" }}>
         <div className="about-scroll-container">
           <div className="about-content">
-          <div style={{ 
-            fontWeight: 'bold', 
-            fontSize: '16px', 
-            marginBottom: '20px', 
-            textAlign: 'center',
-            borderBottom: '2px solid #333',
-            paddingBottom: '10px',
-            letterSpacing: '1px'
-          }}>
+          <div className="about-title">
             COLOUR ME NFT - ABOUT
           </div>
           
-          <div style={{ 
-            marginBottom: '20px',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#d32f2f',
-            textAlign: 'center',
-            border: '2px solid #d32f2f',
-            padding: '8px',
-            backgroundColor: '#ffebee'
-          }}>
+          <div className="about-banner">
             🚀 NFTs ARE SO BACK! 🚀
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             Can we even technically call these NFTs? Not another pixel PFP. This isn't "just a JPEG". This is history!
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             Welcome to <strong>Colour Me NFT</strong> — the <strong>first-ever NFT App</strong>. A fully on-chain, interactive canvas where YOU are the artist. Mint your NFT and you don't just get a JPEG — you get a living, breathing SVG art app that runs forever on-chain. Find a creation made by your favourite artist, friend or just something you're vibing!
           </div>
           
-          <div style={{ 
-            marginBottom: '20px',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            color: '#1976d2',
-            border: '1px solid #1976d2',
-            padding: '10px',
-            backgroundColor: '#e3f2fd',
-            borderRadius: '4px'
-          }}>
+          <div className="about-feature-box">
             🖌️ <strong>5 random colours. 3 random shapes. Unique canvases. Unlimited degen energy.</strong>
           </div>
           
-          <div style={{ 
-            textAlign: 'center', 
-            margin: '20px 0',
-            padding: '15px',
-            backgroundColor: '#fff',
-            border: '2px dashed #ccc',
-            borderRadius: '4px'
-          }}>
+          <div className="about-image-container">
             <img 
               src="/src/assets/toolbar_all.png" 
-              alt="Toolbar variations showing different color palettes and brush sizes"
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: '4px'
-              }}
+              alt="Toolbar variations showing different colour palettes and brush sizes"
+              className="about-image"
             />
             <br />
-            <small style={{ color: '#666', fontStyle: 'italic' }}>
-              Interactive drawing toolbar with colors, brush sizes, shapes, and tools
+            <small className="about-image-caption">
+              Interactive drawing toolbar with colours, brush sizes, shapes, and tools
             </small>
           </div>
           
-          <div style={{ 
-            marginBottom: '20px',
-            padding: '10px',
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #ddd',
-            borderRadius: '4px'
-          }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
+          <div className="about-features-section">
+            <div className="about-features-title">
               🎨 Toolbar Features:
             </div>
-            <ul style={{ marginLeft: '20px', marginBottom: '10px', paddingLeft: '20px' }}>
-              <li style={{ marginBottom: '5px' }}>Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.</li>
-              <li style={{ marginBottom: '5px' }}>Colours + shapes are randomized at mint, making each canvas unique.</li>
-              <li style={{ marginBottom: '5px' }}>Tools: brush, eraser and fill bucket and the colour black are common attributes.</li>
+            <ul className="about-features-list">
+              <li>Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.</li>
+              <li>Colours + shapes are randomized at mint, making each canvas unique.</li>
+              <li>Tools: brush, eraser and fill bucket and the colour black are common attributes.</li>
             </ul>
-            <div style={{ 
-              textAlign: 'center', 
-              margin: '10px 0',
-              padding: '15px',
-              backgroundColor: '#fff',
-              border: '2px dashed #ccc',
-              borderRadius: '4px'
-            }}>
+            <div className="about-image-container-full">
               <img 
                 src="/src/assets/toolbar_full.png" 
-                alt="Full interactive drawing toolbar with colors, brush sizes, shapes, and tools"
-                style={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  borderRadius: '4px'
-                }}
+                alt="Full interactive drawing toolbar with colours, brush sizes, shapes, and tools"
+                className="about-image"
               />
               <br />
-              <small style={{ color: '#666', fontStyle: 'italic' }}>
-                Interactive drawing toolbar with colors, brush sizes, shapes, and tools
+              <small className="about-image-caption">
+                Interactive drawing toolbar with colours, brush sizes, shapes, and tools
               </small>
             </div>
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             This isn't stored on IPFS, Arweave, or some server that dies in a year. Nah, fam. Your art lives on the blockchain. <strong>Forever. Immutable. Unstoppable.</strong>
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             And the mint price? Just <strong>0.00025 ETH (~$1)</strong> on Base.
             That's literally cheaper than your morning coffee. If you can't see what a value this is, if you fade this, you're NGMI.
           </div>
           
-          <div style={{ 
-            marginBottom: '15px',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            color: '#2e7d32',
-            border: '1px solid #2e7d32',
-            padding: '8px',
-            backgroundColor: '#e8f5e8',
-            borderRadius: '4px'
-          }}>
+          <div className="about-think-box">
             💡 <strong>Think of it like this:</strong>
           </div>
           
-          <div style={{ 
-            marginLeft: '20px', 
-            marginBottom: '20px',
-            padding: '10px',
-            backgroundColor: '#f9f9f9',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px'
-          }}>
-            <ul style={{ margin: '0', paddingLeft: '20px' }}>
-              <li style={{ marginBottom: '5px' }}>PFPs were the last era.</li>
-              <li style={{ marginBottom: '5px' }}><strong>Tokenized Web Apps (TWAs)</strong> are the next.</li>
-              <li style={{ marginBottom: '5px' }}>And Colour Me NFT is the <strong>first TWA</strong> the world has ever seen.</li>
+          <div className="about-think-list">
+            <ul>
+              <li>PFPs were the last era.</li>
+              <li><strong>Tokenized Web Apps (TWAs)</strong> are the next.</li>
+              <li>And Colour Me NFT is the <strong>first TWA</strong> the world has ever seen.</li>
             </ul>
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             Plus, every mint pays it forward: <strong>5% royalties go to TW3</strong> (Technically Web3) so we can keep building more first-of-its-kind, dope experiments that push Web3 forward.
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div className="about-text">
             👉 Whether you're an artist who wants to make something timeless, or just a degen who knows "first-of-its-kind" is ALWAYS alpha — this is your chance to grab history.
           </div>
           
-          <div style={{ 
-            marginTop: '25px', 
-            padding: '15px', 
-            backgroundColor: '#fff3e0', 
-            borderRadius: '6px', 
-            border: '2px solid #ff9800',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ 
-              fontWeight: 'bold', 
-              marginBottom: '12px',
-              fontSize: '14px',
-              color: '#e65100',
-              textAlign: 'center',
-              borderBottom: '1px solid #ff9800',
-              paddingBottom: '8px'
-            }}>
+          <div className="about-shill-box">
+            <div className="about-shill-title">
               🎯 Wanna Shill This Project?
             </div>
-            <div style={{ fontSize: '11px', marginBottom: '12px' }}>
+            <div className="about-shill-text">
               Wanna talk about how dope this NFT project is? We want to thank you! Originally we were thinking of making this a <strong>FREE</strong> mint, then decided we would just share the <strong>Primary Sale Revenue</strong> with our community instead. So we're going to reward the top 50 posts on TikTok and X. Members of our community can <strong>earn upto $400</strong> to post about this project! To learn more, check out our Shill2Earn page including who is eligible, how to enter and how to get paid.
             </div>
-            <div style={{ 
-              marginTop: '12px', 
-              fontWeight: 'bold',
-              textAlign: 'center',
-              color: '#d84315',
-              fontSize: '12px'
-            }}>
+            <div className="about-shill-footer">
               🏆 May the best shillers win! 🏆
             </div>
-            <div style={{ 
-              marginTop: '15px', 
-              textAlign: 'center'
-            }}>
+            <div className="about-shill-button-container">
               <a 
                 href="#" 
                 onClick={(e) => { 
                   e.preventDefault(); 
                   setIsShill2EarnOpen(true);
                 }}
-                style={{
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: '#ff9800',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: '4px',
-                  fontWeight: 'bold',
-                  fontSize: '12px',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f57c00'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff9800'}
+                className="about-shill-button"
               >
                 Learn More About Shill2Earn →
               </a>
@@ -887,17 +778,7 @@ const Home: React.FC = () => {
           />
           {/* Save Status Display */}
           {saveStatus && (
-            <div style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              background: 'rgba(0, 0, 0, 0.8)',
-              color: 'white',
-              padding: '8px 12px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              zIndex: 1000
-            }}>
+            <div className="save-status">
               {saveStatus}
             </div>
           )}
@@ -906,8 +787,8 @@ const Home: React.FC = () => {
 
       {/* Token Explorer */}
       {isLoadingContract ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'white' }}>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>⏳</div>
+        <div className="loading-container">
+          <div className="loading-icon">⏳</div>
           <div>Loading contract data from blockchain...</div>
         </div>
       ) : (
@@ -1098,7 +979,7 @@ const Home: React.FC = () => {
         <p>
           <strong>💰 Mint Price: {contractData?.mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
-        <p style={{ fontSize: '14px', marginTop: '10px', opacity: 0.8 }}>
+        <p className="footer-subtitle">
           Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base Network'}
         </p>
       </footer>
