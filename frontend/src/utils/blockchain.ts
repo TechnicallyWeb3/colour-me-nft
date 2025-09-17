@@ -557,10 +557,14 @@ export const connectToWallet = async (): Promise<{
 const getGasEstimateForMint = async (
   contract: ColourMeNFT,
   toAddress: string,
-  quantity: number = 1
+  quantity: number = 1,
+  value?: bigint
 ): Promise<bigint> => {
   try {
-    const estimatedGas = await contract.mint.estimateGas(toAddress, quantity);
+    // Include value in gas estimation for accuracy
+    const estimatedGas = await contract.mint.estimateGas(toAddress, quantity, {
+      value: value || 0n
+    });
     return (estimatedGas * 120n) / 100n; // Add 20% buffer
   } catch (error) {
     console.warn('Gas estimation failed for mint, using fallback:', error);
@@ -857,10 +861,20 @@ export const mintToken = async (
       return { success: false, error: `Only ${Number(maxSupply - tokenCount)} tokens remaining` };
     }
 
-    const gasLimit = await getGasEstimateForMint(contract, toAddress, quantity);
+    // Get the mint price from the contract
+    const projectInfo = await contract.getProjectInfo();
+    const mintPriceWei = projectInfo[5]; // mintPrice is at index 5
+    const totalValue = mintPriceWei * BigInt(quantity);
+    
+    console.log('💰 Mint price (wei):', mintPriceWei.toString());
+    console.log('💰 Total value (wei):', totalValue.toString());
+    console.log('💰 Total value (ETH):', ethers.formatEther(totalValue));
+
+    const gasLimit = await getGasEstimateForMint(contract, toAddress, quantity, totalValue);
     
     const tx = await contract.mint(toAddress, quantity, {
-      gasLimit: gasLimit
+      gasLimit: gasLimit,
+      value: totalValue
     });
     
     console.log('🪙 Mint transaction sent:', tx.hash);

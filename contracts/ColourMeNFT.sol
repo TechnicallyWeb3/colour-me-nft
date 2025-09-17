@@ -55,9 +55,8 @@ contract ColourMeNFT is ERC721, ERC2981, Ownable { //, WTTPForwarder {
         _setDefaultRoyalty(receiver, feeNumerator);
     }
 
-    // future proofing allows artists to set their own royalty via an owner contract
-    function setArtistRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) external onlyOwner {
-        _setTokenRoyalty(tokenId, receiver, feeNumerator);
+    function withdraw() external onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 
     string private baseURL;

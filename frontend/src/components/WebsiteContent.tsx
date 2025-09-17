@@ -57,10 +57,58 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, prefix, onC
   };
 
   if (timeLeft <= 0) {
-    return <span>Time's up!</span>;
+    return <span>Open In: 0:00:00:00</span>;
   }
 
   return <span>{prefix} {formatTime(timeLeft)}</span>;
+};
+
+// Duration Timer Component (for when minting is active)
+interface DurationTimerProps {
+  startDate: Date;
+  endDate: Date;
+}
+
+const DurationTimer: React.FC<DurationTimerProps> = ({ endDate }) => {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const end = endDate.getTime();
+      const remaining = end - now;
+
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        return;
+      }
+
+      setTimeLeft(remaining);
+    };
+
+    // Update immediately
+    updateTimer();
+
+    // Update every second
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [endDate]);
+
+  const formatTime = (ms: number): string => {
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  if (timeLeft <= 0) {
+    return <span>Open For: 0:00:00:00</span>;
+  }
+
+  return <span>Open For: {formatTime(timeLeft)}</span>;
 };
 
 interface WebsiteContentProps {
@@ -335,6 +383,31 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     return cleanup || undefined;
   }, []);
 
+  // Check for minting status changes every second to update UI immediately
+  useEffect(() => {
+    if (!contractData) return;
+
+    const checkMintingStatus = () => {
+      const now = new Date();
+      const wasActive = contractData.isMintActive;
+      const isNowActive = now >= contractData.mintOpen && now <= contractData.mintEnd && contractData.tokenCount < contractData.maxSupply;
+      
+      // If minting just became active, refresh contract data
+      if (!wasActive && isNowActive) {
+        console.log('Minting just opened! Refreshing contract data...');
+        onContractDataUpdate?.();
+      }
+    };
+
+    // Check immediately
+    checkMintingStatus();
+
+    // Check every second
+    const interval = setInterval(checkMintingStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [contractData, onContractDataUpdate]);
+
   const handleConnectWallet = async () => {
     setIsLoading(true);
     try {
@@ -476,21 +549,39 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       };
     }
 
-    if (contractData && !contractData.isMintActive) {
+    // Check if minting is closed (sold out or past end time)
+    if (contractData) {
+      const now = new Date();
+      const isSoldOut = contractData.tokenCount >= contractData.maxSupply;
+      const isPastEnd = now > contractData.mintEnd;
+      
+      if (isSoldOut || isPastEnd) {
+        return {
+          text: 'Minting Closed',
+          action: () => {},
+          disabled: true,
+          className: 'sold-out'
+        };
+      }
+    }
+
+    // Check if minting is active (between open and end times)
+    if (contractData && contractData.isMintActive) {
       return {
-        text: 'Connected (Minting Not Open)',
-        action: () => {},
-        disabled: true,
-        className: 'not-open'
+        text: 'Mint',
+        action: handleMint,
+        disabled: false,
+        className: 'mint'
       };
     }
 
-    if (contractData && contractData.tokenCount >= contractData.maxSupply) {
+    // If minting is not active yet, show waiting state
+    if (contractData && !contractData.isMintActive) {
       return {
-        text: 'Sold Out',
+        text: 'Minting Not Open',
         action: () => {},
         disabled: true,
-        className: 'sold-out'
+        className: 'not-open'
       };
     }
 
@@ -513,11 +604,13 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     const mintOpen = contractData.mintOpen;
 
     if (contractData.tokenCount >= contractData.maxSupply) {
-      return 'Sold Out';
+      return 'Minting Closed';
+    } else if (now > mintEnd) {
+      return 'Minting Closed';
     } else if (isActive) {
-      return <CountdownTimer targetDate={mintEnd} prefix="Ends:" />;
+      return <DurationTimer startDate={mintOpen} endDate={mintEnd} />;
     } else if (now < mintOpen) {
-      return <CountdownTimer targetDate={mintOpen} prefix="Opens:" />;
+      return <CountdownTimer targetDate={mintOpen} prefix="Open In:" />;
     } else {
       return 'Minting Closed';
     }
