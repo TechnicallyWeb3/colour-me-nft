@@ -83,33 +83,33 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
             <p className="shill2earn-intro">
               Forget free mints. Forget farming points for some dusty airdrop. We're flipping the script.
             </p>
-             <div className="shill2earn-highlight">
-               <strong>Colour Me NFT</strong> is giving away <strong>up to 2.5 ETH (~$10,000)</strong> to the top 100 shills!
-             </div>
-             
-             <div className="reward-pool-section">
-               <div className="reward-pool-label">
-                 Reward Pool Progress 
-                 {contractData && (
-                   <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
-                     ({contractData.tokenCount} tokens minted)
-                   </span>
-                 )}
-               </div>
-               <div className="reward-pool-bar">
-                 <div className="reward-pool-fill" style={{ width: `${rewardPool.percentage}%` }}>
-                   <span className="reward-pool-amount">{rewardPool.percentage.toFixed(1)}%</span>
-                 </div>
-               </div>
-               <div className="reward-pool-details">
-                 <span className="reward-pool-current">
-                   {rewardPool.amount.toFixed(5)} {rewardPool.symbol} raised
-                 </span>
-                 <span className="reward-pool-max">
-                   / 2.5 {rewardPool.symbol} max
-                 </span>
-               </div>
-             </div>
+            <div className="shill2earn-highlight">
+              <strong>Colour Me NFT</strong> is giving away <strong>up to 2.5 ETH (~$10,000)</strong> to the top 100 shills!
+            </div>
+            
+            <div className="reward-pool-section">
+              <div className="reward-pool-label">
+                Reward Pool Progress 
+                {/* {contractData && (
+                  <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                    ({contractData.tokenCount} tokens minted)
+                  </span>
+                )} */}
+              </div>
+              <div className="reward-pool-bar">
+                <div className="reward-pool-fill" style={{ width: `${rewardPool.percentage}%` }}>
+                  {rewardPool.percentage > 0 && <span className="reward-pool-amount">{rewardPool.percentage.toFixed(1)}%</span>}
+                </div>
+              </div>
+              <div className="reward-pool-details">
+                <span className="reward-pool-current">
+                  {rewardPool.amount > 0 ? rewardPool.amount.toFixed(5) : '0'} {rewardPool.symbol} raised
+                </span>
+                {/* <span className="reward-pool-max">
+                  / 2.5 {rewardPool.symbol} max
+                </span> */}
+              </div>
+            </div>
              
             <p>
               With <strong>Shill2Earn</strong>, your clout = your bag. We're rewarding the community that hypes us up and helps this project go viral.
