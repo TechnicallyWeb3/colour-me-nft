@@ -38,7 +38,7 @@ const About: React.FC<AboutProps> = ({ mintPrice, chainName, setIsShill2EarnOpen
           
           <div className="about-image-container">
             <img 
-              src="/src/assets/toolbar_all.png" 
+              src="../assets/toolbar_all.png" 
               alt="Toolbar variations showing different colour palettes and brush sizes"
               className="about-image"
             />
@@ -59,7 +59,7 @@ const About: React.FC<AboutProps> = ({ mintPrice, chainName, setIsShill2EarnOpen
             </ul>
             <div className="about-image-container-full">
               <img 
-                src="/src/assets/toolbar_full.png" 
+                src="../assets/toolbar_full.png" 
                 alt="Full interactive drawing toolbar with colours, brush sizes, shapes, and tools"
                 className="about-image"
               />

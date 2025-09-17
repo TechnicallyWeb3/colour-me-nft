@@ -125,7 +125,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
               boxSizing: 'border-box'
             }}>
               <img 
-                src="/src/assets/hashtag_cropped.jpg" 
+                src="../assets/hashtag_cropped.jpg" 
                 alt="Social media post with #ColourMeNFT hashtag"
                 style={{
                   maxWidth: '100%',
@@ -190,7 +190,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
             
             <div style={{ textAlign: 'center', margin: '20px 0' }}>
               <img 
-                src="/src/assets/pepeshill_full.jpg" 
+                src="../assets/pepeshill_full.jpg" 
                 alt="Pepe the Frog meme about farming clout to farm ETH"
                 style={{
                   maxWidth: '100%',
