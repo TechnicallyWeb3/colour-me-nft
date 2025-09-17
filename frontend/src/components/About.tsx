@@ -1,6 +1,8 @@
 import React from 'react';
 import './About.css';
 import Window from './Window';
+import toolbarAll from '../assets/toolbar_all.png';
+import toolbarFull from '../assets/toolbar_full.png';
 
 interface AboutProps {
   mintPrice: string;
@@ -38,7 +40,7 @@ const About: React.FC<AboutProps> = ({ mintPrice, chainName, setIsShill2EarnOpen
           
           <div className="about-image-container">
             <img 
-              src="../assets/toolbar_all.png" 
+              src={toolbarAll} 
               alt="Toolbar variations showing different colour palettes and brush sizes"
               className="about-image"
             />
@@ -59,7 +61,7 @@ const About: React.FC<AboutProps> = ({ mintPrice, chainName, setIsShill2EarnOpen
             </ul>
             <div className="about-image-container-full">
               <img 
-                src="../assets/toolbar_full.png" 
+                src={toolbarFull} 
                 alt="Full interactive drawing toolbar with colours, brush sizes, shapes, and tools"
                 className="about-image"
               />

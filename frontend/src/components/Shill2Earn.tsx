@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import './Shill2Earn.css';
 import type { ContractData } from '../utils/blockchain';
+import hashtagCropped from '../assets/hashtag_cropped.jpg';
+import pepeShillFull from '../assets/pepeshill_full.jpg';
 
 interface Shill2EarnProps {
   isOpen: boolean;
@@ -125,7 +127,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
               boxSizing: 'border-box'
             }}>
               <img 
-                src="../assets/hashtag_cropped.jpg" 
+                src={hashtagCropped} 
                 alt="Social media post with #ColourMeNFT hashtag"
                 style={{
                   maxWidth: '100%',
@@ -190,7 +192,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
             
             <div style={{ textAlign: 'center', margin: '20px 0' }}>
               <img 
-                src="../assets/pepeshill_full.jpg" 
+                src={pepeShillFull} 
                 alt="Pepe the Frog meme about farming clout to farm ETH"
                 style={{
                   maxWidth: '100%',
