@@ -22,9 +22,7 @@ const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract
         <WebsiteContent 
           contractData={contractData}
           contract={readOnlyContract}
-          onMintSuccess={(tokenId) => {
-            setActiveToken(tokenId);
-          }}
+          onMintSuccess={(tokenId) => {setActiveToken(tokenId)}}
           onContractDataUpdate={refreshContractData}
           onAccountChange={setAccount}
         />

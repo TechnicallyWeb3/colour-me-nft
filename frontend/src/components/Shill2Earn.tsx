@@ -5,7 +5,7 @@ import type { ContractData } from '../utils/blockchain';
 interface Shill2EarnProps {
   isOpen: boolean;
   onClose: () => void;
-  contractData?: ContractData | null;
+  contractData: ContractData | null;
 }
 
 // Utility function to parse mint price and calculate reward pool
@@ -45,7 +45,7 @@ const calculateRewardPool = (contractData: ContractData | null): { amount: numbe
 
 const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }) => {
   // Calculate reward pool data once
-  const rewardPool = calculateRewardPool(contractData || null);
+  const rewardPool = calculateRewardPool(contractData);
   
   // Prevent background scrolling when popup is open
   useEffect(() => {

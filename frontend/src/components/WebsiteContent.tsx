@@ -63,54 +63,6 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ targetDate, prefix, onC
   return <span>{prefix} {formatTime(timeLeft)}</span>;
 };
 
-// Duration Timer Component (for when minting is active)
-interface DurationTimerProps {
-  startDate: Date;
-  endDate: Date;
-}
-
-const DurationTimer: React.FC<DurationTimerProps> = ({ endDate }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-
-  useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date().getTime();
-      const end = endDate.getTime();
-      const remaining = end - now;
-
-      if (remaining <= 0) {
-        setTimeLeft(0);
-        return;
-      }
-
-      setTimeLeft(remaining);
-    };
-
-    // Update immediately
-    updateTimer();
-
-    // Update every second
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [endDate]);
-
-  const formatTime = (ms: number): string => {
-    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-
-    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  if (timeLeft <= 0) {
-    return <span>Open For: 0:00:00:00</span>;
-  }
-
-  return <span>Open For: {formatTime(timeLeft)}</span>;
-};
-
 interface WebsiteContentProps {
   contractData: ContractData | null;
   contract: ColourMeNFT | null;
@@ -644,7 +596,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     } else if (now > mintEnd) {
       return 'Minting Closed';
     } else if (isActive) {
-      return <DurationTimer startDate={mintOpen} endDate={mintEnd} />;
+      return <CountdownTimer targetDate={mintEnd} prefix="Open For:" />;
     } else if (now < mintOpen) {
       return <CountdownTimer targetDate={mintOpen} prefix="Open In:" />;
     } else {

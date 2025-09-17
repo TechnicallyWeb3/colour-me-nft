@@ -14,8 +14,7 @@ import {
   setArt,
   appendArt,
   type ConnectionResult,
-  type ContractObject,
-  dappConfig
+  type ContractObject
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import Mint from './Mint';
@@ -232,6 +231,7 @@ const Home: React.FC = () => {
     setSaveRequestData(null); // Clear pending request
     setSaveStatus('Art saved successfully!');
     setTimeout(() => setSaveStatus(''), 3000);
+    console.log('✅ [Home.tsx] Save status:', saveStatus);
     
     // Reload thumbnail for the current token
     if (activeToken > 0 && readOnlyContract) {
