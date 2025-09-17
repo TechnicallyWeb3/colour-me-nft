@@ -12,11 +12,14 @@ interface Shill2EarnProps {
 const getMintPrice = (mintPrice: string): number => {
   if (mintPrice === 'FREE') return 0;
   const parts = mintPrice.split(' ');
-  return parseFloat(parts[0]) || 0;
+  const price = parseFloat(parts[0]) || 0;
+  console.log('💰 Parsed mint price:', { mintPrice, parts, price });
+  return price;
 };
 
 const calculateRewardPool = (contractData: ContractData | null): { amount: number; symbol: string; percentage: number } => {
   if (!contractData) {
+    console.log('❌ No contract data for reward pool calculation');
     return { amount: 0, symbol: 'ETH', percentage: 0 };
   }
   
@@ -24,6 +27,14 @@ const calculateRewardPool = (contractData: ContractData | null): { amount: numbe
   const totalAmount = pricePerToken * contractData.tokenCount;
   const maxAmount = 2.5; // Maximum reward pool
   const percentage = Math.min((totalAmount / maxAmount) * 100, 100);
+  
+  console.log('🎯 Reward pool calculation:', {
+    pricePerToken,
+    tokenCount: contractData.tokenCount,
+    totalAmount,
+    maxAmount,
+    percentage
+  });
   
   return {
     amount: totalAmount,
@@ -76,17 +87,29 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
                <strong>Colour Me NFT</strong> is giving away <strong>up to 2.5 ETH (~$10,000)</strong> to the top 100 shills!
              </div>
              
-             {(rewardPool.amount > 0 && <div className="reward-pool-section">
-               <div className="reward-pool-label">Reward Pool</div>
+             <div className="reward-pool-section">
+               <div className="reward-pool-label">
+                 Reward Pool Progress 
+                 {contractData && (
+                   <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                     ({contractData.tokenCount} tokens minted)
+                   </span>
+                 )}
+               </div>
                <div className="reward-pool-bar">
                  <div className="reward-pool-fill" style={{ width: `${rewardPool.percentage}%` }}>
                    <span className="reward-pool-amount">{rewardPool.percentage.toFixed(1)}%</span>
                  </div>
                </div>
                <div className="reward-pool-details">
-                 <span className="reward-pool-current">{rewardPool.amount.toFixed(5)} {rewardPool.symbol}</span>
+                 <span className="reward-pool-current">
+                   {rewardPool.amount.toFixed(5)} {rewardPool.symbol} raised
+                 </span>
+                 <span className="reward-pool-max">
+                   / 2.5 {rewardPool.symbol} max
+                 </span>
                </div>
-             </div>)}
+             </div>
              
             <p>
               With <strong>Shill2Earn</strong>, your clout = your bag. We're rewarding the community that hypes us up and helps this project go viral.
@@ -94,7 +117,13 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
           </div>
 
           <div className="shill2earn-section">
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '20px',
+              maxWidth: '100%',
+              overflow: 'hidden',
+              boxSizing: 'border-box'
+            }}>
               <img 
                 src="/src/assets/hashtag_cropped.jpg" 
                 alt="Social media post with #ColourMeNFT hashtag"
@@ -102,8 +131,12 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
                   maxWidth: '100%',
                   maxHeight: '200px',
                   height: 'auto',
+                  width: 'auto',
                   borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  objectFit: 'contain',
+                  display: 'block',
+                  margin: '0 auto'
                 }}
               />
             </div>

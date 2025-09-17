@@ -1106,7 +1106,8 @@ const Home: React.FC = () => {
       {/* Shill2Earn Popup */}
       <Shill2Earn 
         isOpen={isShill2EarnOpen} 
-        onClose={() => setIsShill2EarnOpen(false)} 
+        onClose={() => setIsShill2EarnOpen(false)}
+        contractData={contractData}
       />
     </div>
   );

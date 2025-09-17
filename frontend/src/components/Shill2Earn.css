@@ -567,3 +567,32 @@
     padding: 10px;
   }
 }
+
+/* Image container fixes */
+.shill2earn-section img {
+  max-width: 100% !important;
+  height: auto !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure image containers don't overflow */
+.shill2earn-section > div {
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Specific fix for hashtag cropped image */
+.shill2earn-section img[alt*="hashtag"] {
+  max-width: 100% !important;
+  max-height: 200px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
