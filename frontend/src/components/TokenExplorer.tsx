@@ -12,6 +12,7 @@ interface TokenExplorerProps {
     tokenCount: number;
     tokenPreviews: Map<number, string>;
     contract: ColourMeNFT | null;
+    onLoadMoreThumbnails: (startTokenId: number, endTokenId: number) => Promise<void>;
   }
   
   interface ContextMenuProps {
@@ -87,9 +88,11 @@ interface TokenExplorerProps {
     );
   };
   
-  const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews, contract }) => {
+  const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews, contract, onLoadMoreThumbnails }) => {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tokenId: number } | null>(null);
     const [showAttributes, setShowAttributes] = useState<number | null>(null);
+    const [visibleTokens, setVisibleTokens] = useState(100); // Start with 100 tokens visible
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
   
     const handleRightClick = (e: React.MouseEvent, tokenId: number) => {
       e.preventDefault();
@@ -121,10 +124,29 @@ interface TokenExplorerProps {
       // Scroll to the app section
       document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    const handleLoadMore = async () => {
+      setIsLoadingMore(true);
+      
+      const currentVisible = visibleTokens;
+      const newVisible = Math.min(visibleTokens + 100, tokenCount);
+      const startTokenId = currentVisible + 1;
+      const endTokenId = newVisible;
+      
+      // Load thumbnails for the new tokens
+      if (onLoadMoreThumbnails) {
+        await onLoadMoreThumbnails(startTokenId, endTokenId);
+      }
+      
+      // Update visible tokens count
+      setVisibleTokens(newVisible);
+      setIsLoadingMore(false);
+    };
   
     // Only show tokens if there are actually tokens minted (tokenCount > 0)
-    // Create array of token IDs from 1 to tokenCount, but only if tokenCount > 0
-    const tokens = tokenCount > 0 ? Array.from({ length: tokenCount }, (_, i) => i + 1) : [];
+    // Create array of token IDs from 1 to visibleTokens, but only if tokenCount > 0
+    const tokens = tokenCount > 0 ? Array.from({ length: Math.min(visibleTokens, tokenCount) }, (_, i) => i + 1) : [];
+    const hasMoreTokens = visibleTokens < tokenCount;
   
     return (
       <>
@@ -186,6 +208,28 @@ interface TokenExplorerProps {
             ) : (
               /* Show message when no tokens are minted */
               <div className="token-item token-item-empty">
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {hasMoreTokens && (
+              <div className="load-more-container">
+                <button 
+                  className="load-more-button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <span className="loading-spinner">⏳</span>
+                      Loading more tokens...
+                    </>
+                  ) : (
+                    <>
+                      Load More Tokens ({tokenCount - visibleTokens} remaining)
+                    </>
+                  )}
+                </button>
               </div>
             )}
           </div>

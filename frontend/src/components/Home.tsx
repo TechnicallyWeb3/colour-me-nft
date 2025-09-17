@@ -142,7 +142,7 @@ const Home: React.FC = () => {
   //   setSvgKey(prev => prev + 1);
   // }, [activeToken]);
 
-  // Load token previews for thumbnails (optimized batch loading)
+  // Load token previews for thumbnails (lazy loading - only first 100 tokens)
   useEffect(() => {
     console.log('🔍 [Home.tsx] useEffect - loadTokenPreviews');
     let isMounted = true;
@@ -150,13 +150,14 @@ const Home: React.FC = () => {
     const loadTokenPreviews = async () => {
       if (!readOnlyContract || !contractData || contractData.tokenCount === 0) return;
 
-      // Load previews for tokens that don't already have them
-      const tokens = Array.from({ length: contractData.tokenCount }, (_, i) => i + 1);
+      // Only load previews for the first 100 tokens (lazy loading)
+      const maxTokensToLoad = Math.min(100, contractData.tokenCount);
+      const tokens = Array.from({ length: maxTokensToLoad }, (_, i) => i + 1);
       const tokensToLoad = tokens.filter(tokenId => !tokenPreviews.has(tokenId));
 
       if (tokensToLoad.length === 0) return;
 
-      console.log(`Loading previews for ${tokensToLoad.length} tokens...`);
+      console.log(`Loading previews for ${tokensToLoad.length} tokens (lazy loading limit: 100)...`);
 
       // Load tokens with a small delay between requests to avoid overwhelming the network
       for (const tokenId of tokensToLoad) {
@@ -278,6 +279,38 @@ const Home: React.FC = () => {
       }
     } catch (error) {
       console.error(`❌ [Home.tsx] Error reloading thumbnail for token #${tokenId}:`, error);
+    }
+  };
+
+  // Load more thumbnails for lazy loading
+  const loadMoreThumbnails = async (startTokenId: number, endTokenId: number) => {
+    if (!readOnlyContract) return;
+    
+    console.log(`🖼️ [Home.tsx] Loading thumbnails for tokens ${startTokenId}-${endTokenId}`);
+    
+    for (let tokenId = startTokenId; tokenId <= endTokenId; tokenId++) {
+      // Skip if already loaded
+      if (tokenPreviews.has(tokenId)) continue;
+      
+      try {
+        const { svg: svgContent, result } = await getTokenSVG(readOnlyContract, tokenId);
+        if (result.success) {
+          // Convert SVG string to data URL for img tag
+          const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+          const url = URL.createObjectURL(blob);
+
+          setTokenPreviews(prev => {
+            const newPreviews = new Map(prev);
+            newPreviews.set(tokenId, url);
+            return newPreviews;
+          });
+        }
+      } catch (error) {
+        console.error(`Error loading preview for token ${tokenId}:`, error);
+      }
+      
+      // Small delay to prevent overwhelming the network
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   };
 
@@ -458,6 +491,7 @@ const Home: React.FC = () => {
         tokenCount={contractData?.tokenCount || 0}
         tokenPreviews={tokenPreviews}
         contract={readOnlyContract}
+        onLoadMoreThumbnails={loadMoreThumbnails}
       />
       
       <Overview contractData={contractData} />
