@@ -32,7 +32,7 @@ interface TokenExplorerProps {
     const attributes = [
       { label: 'Token ID', value: tokenId.toString() },
       { label: 'Type', value: tokenId === 0 ? 'Example' : 'Minted NFT' },
-      { label: 'Created', value: tokenId === 0 ? 'N/A' : 'On Base Network' },
+      { label: 'Created', value: tokenId === 0 ? 'N/A' : `On ${dappConfig.network.chainName || 'Mainnet'} Network'` },
       { label: 'Objects', value: Math.floor(Math.random() * 50) + 10 },
       { label: 'Colours Used', value: Math.floor(Math.random() * 10) + 3 },
       { label: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary'][Math.floor(Math.random() * 4)] }

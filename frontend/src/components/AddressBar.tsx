@@ -34,10 +34,9 @@ const AddressBar: React.FC<AddressBarProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load token data (owners) when contract or tokenCount changes
+  // Create basic token list immediately when tokenCount changes
   useEffect(() => {
-    const loadTokenData = async () => {
-      setIsLoading(true);
+    const createBasicTokenList = () => {
       const tokens: TokenData[] = [];
       
       // Always add example token (ID 0)
@@ -47,42 +46,65 @@ const AddressBar: React.FC<AddressBarProps> = ({
         fileName: 'example.svg'
       });
 
-      // Only load minted tokens if we have a contract and tokens exist
-      if (contract && tokenCount > 0) {
-        // Load owner data for all minted tokens
+      // Add all minted tokens immediately (without owner data)
+      if (tokenCount > 0) {
         for (let tokenId = 1; tokenId <= tokenCount; tokenId++) {
-          try {
-            const { owner, result } = await getOwnerOf(contract, tokenId);
-            if (result.success) {
-            tokens.push({
-              tokenId,
-              owner,
-              fileName: `${tokenId}.svg`
-            });
-            }
-          } catch (error) {
-            console.error(`Failed to get owner for token ${tokenId}:`, error);
-          }
-          
-          // Small delay to prevent overwhelming the network
-          await new Promise(resolve => setTimeout(resolve, 50));
+          tokens.push({
+            tokenId,
+            owner: 'Loading...', // Placeholder until owner data loads
+            fileName: `${tokenId}.svg`
+          });
         }
       }
 
       setTokenData(tokens);
+    };
+
+    createBasicTokenList();
+  }, [tokenCount]);
+
+  // Load owner data in background when contract is available
+  useEffect(() => {
+    const loadOwnerData = async () => {
+      if (!contract || tokenCount === 0) return;
+
+      setIsLoading(true);
+      
+      // Load owner data for all minted tokens in background
+      for (let tokenId = 1; tokenId <= tokenCount; tokenId++) {
+        try {
+          const { owner, result } = await getOwnerOf(contract, tokenId);
+          if (result.success) {
+            setTokenData(prevTokens => 
+              prevTokens.map(token => 
+                token.tokenId === tokenId 
+                  ? { ...token, owner }
+                  : token
+              )
+            );
+          }
+        } catch (error) {
+          console.error(`Failed to get owner for token ${tokenId}:`, error);
+        }
+        
+        // Small delay to prevent overwhelming the network
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
       setIsLoading(false);
     };
 
-    loadTokenData();
+    loadOwnerData();
   }, [contract, tokenCount]);
 
   // Update input value when active token changes
   useEffect(() => {
-    const currentToken = tokenData.find(token => token.tokenId === activeToken);
-    if (currentToken && !isEditing) {
-      setInputValue(`📁 Token/ ➤ ${currentToken.fileName}`);
+    if (!isEditing) {
+      // Display filename immediately based on activeToken, don't wait for tokenData
+      const fileName = activeToken === 0 ? 'example.svg' : `${activeToken}.svg`;
+      setInputValue(`📁 Token/ ➤ ${fileName}`);
     }
-  }, [activeToken, tokenData, isEditing]);
+  }, [activeToken, isEditing]);
 
   // Filter tokens based on input
   useEffect(() => {
@@ -96,9 +118,9 @@ const AddressBar: React.FC<AddressBarProps> = ({
       searchQuery = inputValue.trim();
     }
 
-    // Get current selected token filename
+    // Get current selected token filename (use activeToken directly if tokenData not loaded)
     const currentToken = tokenData.find(token => token.tokenId === activeToken);
-    const currentFileName = currentToken?.fileName || '';
+    const currentFileName = currentToken?.fileName || (activeToken === 0 ? 'example.svg' : `${activeToken}.svg`);
 
     // Show all results if query is empty OR matches current selected file
     if (!searchQuery || searchQuery.toLowerCase() === currentFileName.toLowerCase()) {
@@ -158,11 +180,8 @@ const AddressBar: React.FC<AddressBarProps> = ({
     if (!newValue.startsWith(prefix)) {
       // If user tried to delete prefix, restore it
       const currentToken = tokenData.find(token => token.tokenId === activeToken);
-      if (currentToken) {
-        setInputValue(`${prefix}${currentToken.fileName}`);
-      } else {
-        setInputValue(`${prefix}`);
-      }
+      const fileName = currentToken?.fileName || (activeToken === 0 ? 'example.svg' : `${activeToken}.svg`);
+      setInputValue(`${prefix}${fileName}`);
       return;
     }
     
@@ -200,9 +219,8 @@ const AddressBar: React.FC<AddressBarProps> = ({
     } else {
       // If no match, reset to current token
       const currentToken = tokenData.find(token => token.tokenId === activeToken);
-      if (currentToken) {
-        setInputValue(`📁 Token/ ➤ ${currentToken.fileName}`);
-      }
+      const fileName = currentToken?.fileName || (activeToken === 0 ? 'example.svg' : `${activeToken}.svg`);
+      setInputValue(`📁 Token/ ➤ ${fileName}`);
       setIsEditing(false);
     }
   };

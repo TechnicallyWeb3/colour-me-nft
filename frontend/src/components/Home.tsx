@@ -468,7 +468,7 @@ const Home: React.FC = () => {
           <strong>💰 Mint Price: {contractData?.mintPrice} </strong> • <strong>👑 5% Royalties</strong> to support TechnicallyWeb3 projects
         </p>
         <p className="footer-subtitle">
-          Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Base Network'}
+          Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Mainnet'}
         </p>
       </footer>
 
