@@ -659,7 +659,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
         {/* 90s Style Sidebar */}
         <div className="sidebar">
           <div className="sidebar-header">
-            <h2>🎨 ColourMe NFT</h2>
+            <h2>🎨 Colour Me NFT</h2>
             <div className="sidebar-subtitle">Mint Your Canvas</div>
           </div>
 

@@ -1,0 +1,251 @@
+/* TokenExplorer Component Styles */
+
+/* Token Explorer */
+.token-explorer {
+  margin: 20px auto;
+  max-height: 800px
+}
+
+.explorer-content {
+  padding: 15px;
+  max-height: 800px;
+  background: white;
+  overflow-y: auto;
+  border: 1px solid #c0c0c0;
+}
+
+.token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 10px;
+}
+
+.token-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+}
+
+.token-item:hover {
+  border-color: #0054e3;
+  background: linear-gradient(to bottom, #f0f8ff, #e6f3ff);
+}
+
+.token-item.active {
+  border-color: #ffff00;
+  background: linear-gradient(to bottom, #ffffcc, #ffff99);
+  box-shadow: 0 0 8px rgba(255,255,0,0.5);
+}
+
+.token-thumbnail {
+  width: 80px;
+  height: 80px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  background: white;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.token-filename {
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+}
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  background: #ece9d8;
+  border: 1px solid #0054e3;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 2px;
+  z-index: 1000;
+}
+
+.context-menu-item {
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.1s ease;
+}
+
+.context-menu-item:hover {
+  background: linear-gradient(to bottom, #4a9eff, #0054e3);
+  color: white;
+}
+
+/* Attributes Popup */
+.attributes-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ece9d8;
+  border: 1px solid #0054e3;
+  border-radius: 8px;
+  box-shadow: 
+    0 0 0 1px #ffffff,
+    0 0 0 2px #0054e3,
+    0 4px 16px rgba(0,0,0,0.5);
+  z-index: 2000;
+  max-width: 400px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.attribute-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #c0c0c0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.attribute-row:last-child {
+  border-bottom: none;
+}
+
+.attribute-label {
+  font-weight: bold;
+  color: #0054e3;
+  min-width: 80px;
+}
+
+.attribute-value {
+  color: #333;
+  word-break: break-word;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1999;
+}
+
+/* Token thumbnail styles */
+.token-thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.token-thumbnail-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 10px;
+}
+
+.token-thumbnail-loading-icon {
+  margin-bottom: 2px;
+}
+
+.token-thumbnail-loading-text {
+  font-size: 10px;
+}
+
+.token-item-empty {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .token-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    padding: 5px;
+  }
+  
+  .token-filename {
+    font-size: 10px;
+  }
+  
+  .token-explorer {
+    margin: 10px 5px;
+  }
+  
+  .explorer-content {
+    padding: 10px;
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .token-explorer {
+    margin: 0;
+  }
+  
+  .explorer-content {
+    padding: 5px;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+  }
+  
+  .token-filename {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .attributes-popup {
+    width: 95vw;
+    max-width: none;
+    border-radius: 4px;
+  }
+  
+  .attribute-row {
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px 0;
+  }
+  
+  .attribute-label {
+    min-width: auto;
+    font-size: 14px;
+  }
+  
+  .attribute-value {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .attributes-popup {
+    width: 98vw;
+    margin: 0 1vw;
+  }
+  
+  .attribute-row {
+    padding: 8px 0;
+  }
+  
+  .attribute-label,
+  .attribute-value {
+    font-size: 13px;
+  }
+}

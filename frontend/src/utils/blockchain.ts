@@ -102,6 +102,7 @@ export interface ContractData {
   mintOpen: Date;
   mintDuration: number; // in milliseconds
   mintPrice: string; // in ETH string format
+  mintLimit: number;
   
   // Derived
   mintEnd: Date;
@@ -146,6 +147,7 @@ export const getContractData = async (contract: ColourMeNFT | null): Promise<{ d
     const mintOpen = new Date(projectInfo.mintStart * 1000); // convert to milliseconds
     const mintDuration = projectInfo.mintDuration * 1000; // convert to milliseconds
     const mintPrice = projectInfo?.mintPrice > 0n ? (ethers.formatEther(projectInfo.mintPrice) + ' ' + (chain?.symbol || 'ETH')) : 'FREE'; // convert wei to ETH
+    const mintLimit = projectInfo.mintLimit;
     // Calculate derived values
     const mintEnd = new Date(mintOpen.getTime() + mintDuration);
     const now = new Date();
@@ -162,6 +164,7 @@ export const getContractData = async (contract: ColourMeNFT | null): Promise<{ d
       mintDuration,
       mintPrice,
       mintEnd,
+      mintLimit,
       isMintActive
     };
     

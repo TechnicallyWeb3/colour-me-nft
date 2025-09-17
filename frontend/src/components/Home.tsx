@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import './Home.css';
-import SVGDisplay from './SVGDisplay';
 import Navbar from './Navbar';
-import Window from './Window';
-import TokenAddressBar from './TokenAddressBar';
-import AddressBar from './AddressBar';
-import WebsiteContent from './WebsiteContent';
+import ColourMeApp from './ColourMeApp';
+import About from './About';
+import TokenExplorer from './TokenExplorer';
 import Shill2Earn from './Shill2Earn';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXTwitter, faTiktok, faDiscord } from '@fortawesome/free-brands-svg-icons';
 import {
   connectToProvider,
   getTokenSVG,
   getContractData,
   type ContractData,
-  formatAddress,
   connectToWallet,
   setArt,
   appendArt,
@@ -23,216 +18,11 @@ import {
   dappConfig
 } from '../utils/blockchain';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
-
-
-interface TokenExplorerProps {
-  activeToken: number;
-  onTokenSelect: (tokenId: number) => void;
-  tokenCount: number;
-  tokenPreviews: Map<number, string>;
-  contract: ColourMeNFT | null;
-}
-
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  tokenId: number;
-  onClose: () => void;
-  onAction: (action: string, tokenId: number) => void;
-}
-
-interface AttributesPopupProps {
-  tokenId: number;
-  onClose: () => void;
-}
-
-const AttributesPopup: React.FC<AttributesPopupProps> = ({ tokenId, onClose }) => {
-  // Mock attributes - in a real app these would come from the blockchain
-  const attributes = [
-    { label: 'Token ID', value: tokenId.toString() },
-    { label: 'Type', value: tokenId === 0 ? 'Example' : 'Minted NFT' },
-    { label: 'Created', value: tokenId === 0 ? 'N/A' : 'On Base Network' },
-    { label: 'Objects', value: Math.floor(Math.random() * 50) + 10 },
-    { label: 'Colours Used', value: Math.floor(Math.random() * 10) + 3 },
-    { label: 'Rarity', value: ['Common', 'Rare', 'Epic', 'Legendary'][Math.floor(Math.random() * 4)] }
-  ];
-
-  return (
-    <>
-      <div className="popup-overlay" onClick={onClose} />
-      <div className="attributes-popup os-window">
-        <div className="os-titlebar">
-          <div className="os-titlebar-text">
-            <div className="os-titlebar-icon">📋</div>
-            Token #{tokenId} Attributes
-          </div>
-          <div className="os-control-buttons">
-            <div className="os-btn close" onClick={onClose}></div>
-          </div>
-        </div>
-        <div className="os-content">
-          {attributes.map((attr, index) => (
-            <div key={index} className="attribute-row">
-              <span className="attribute-label">{attr.label}:</span>
-              <span className="attribute-value">{attr.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
-
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, tokenId, onClose, onAction }) => {
-  useEffect(() => {
-    console.log('🔍 [ContextMenu] Component render - tokenId:', tokenId);
-    const handleClickOutside = () => onClose();
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [onClose]);
-
-  return (
-    <div className="context-menu" style={{ left: x, top: y }}>
-      <div className="context-menu-item" onClick={() => onAction('open', tokenId)}>
-        Open in app
-      </div>
-      <div className="context-menu-item" onClick={() => onAction('explorer', tokenId)}>
-        View in explorer
-      </div>
-      <div className="context-menu-item" onClick={() => onAction('attributes', tokenId)}>
-        Attributes
-      </div>
-    </div>
-  );
-};
-
-const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews, contract }) => {
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tokenId: number } | null>(null);
-  const [showAttributes, setShowAttributes] = useState<number | null>(null);
-
-  const handleRightClick = (e: React.MouseEvent, tokenId: number) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, tokenId });
-  };
-
-  const handleContextAction = (action: string, tokenId: number) => {
-    setContextMenu(null);
-
-    switch (action) {
-      case 'open':
-        onTokenSelect(tokenId);
-        // Scroll to the app section
-        document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
-        break;
-      case 'explorer':
-        // Open blockchain explorer in new tab
-        const explorerUrl = dappConfig.network.explorerUrl;
-        window.open(`${explorerUrl}/token/${dappConfig.contracts.ColourMeNFT.address}?a=${tokenId}`, '_blank');
-        break;
-      case 'attributes':
-        setShowAttributes(tokenId);
-        break;
-    }
-  };
-
-  const handleIconClick = (tokenId: number) => {
-    onTokenSelect(tokenId);
-    // Scroll to the app section
-    document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Only show tokens if there are actually tokens minted (tokenCount > 0)
-  // Create array of token IDs from 1 to tokenCount, but only if tokenCount > 0
-  const tokens = tokenCount > 0 ? Array.from({ length: tokenCount }, (_, i) => i + 1) : [];
-
-  return (
-    <>
-      <Window id="explorer" title="Token Explorer" icon="📁" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <AddressBar
-          contract={contract}
-          tokenCount={tokenCount}
-          activeToken={activeToken}
-          onTokenSelect={onTokenSelect}
-        />
-        <div className="explorer-content token-grid">
-          {/* Always show example.svg */}
-          <div
-            className={`token-item ${activeToken === 0 ? 'active' : ''}`}
-            onClick={() => onTokenSelect(0)}
-            onContextMenu={(e) => handleRightClick(e, 0)}
-          >
-            <div
-              className="token-thumbnail"
-              onDoubleClick={() => handleIconClick(0)}
-            >
-              <span>🎨</span>
-            </div>
-            <div className="token-filename">example.svg</div>
-          </div>
-
-          {/* Show minted tokens only if they exist */}
-          {tokens.length > 0 ? (
-            tokens.map(tokenId => {
-              const previewUrl = tokenPreviews.get(tokenId);
-              return (
-                <div
-                  key={tokenId}
-                  className={`token-item ${activeToken === tokenId ? 'active' : ''}`}
-                  onClick={() => onTokenSelect(tokenId)}
-                  onContextMenu={(e) => handleRightClick(e, tokenId)}
-                >
-                  <div
-                    className="token-thumbnail"
-                    onDoubleClick={() => handleIconClick(tokenId)}
-                  >
-                    {previewUrl ? (
-                      <img
-                        src={previewUrl}
-                        alt={`Token #${tokenId}`}
-                        className="token-thumbnail-image"
-                      />
-                    ) : (
-                      <div className="token-thumbnail-loading">
-                        <span className="token-thumbnail-loading-icon">⏳</span>
-                        <span className="token-thumbnail-loading-text">#{tokenId}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="token-filename">{tokenId}.svg</div>
-                </div>
-              );
-            })
-          ) : (
-            /* Show message when no tokens are minted */
-            <div className="token-item token-item-empty">
-            </div>
-          )}
-        </div>
-      </Window>
-
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          tokenId={contextMenu.tokenId}
-          onClose={() => setContextMenu(null)}
-          onAction={handleContextAction}
-        />
-      )}
-
-      {showAttributes !== null && (
-        <AttributesPopup
-          tokenId={showAttributes}
-          onClose={() => setShowAttributes(null)}
-        />
-      )}
-    </>
-  );
-};
+import Mint from './Mint';
+import Overview from './Overview';
 
 const Home: React.FC = () => {
   const [activeToken, setActiveToken] = useState(0);
-  const [svgKey, setSvgKey] = useState(0); // For forcing SVG reload like in App.tsx
 
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
@@ -339,10 +129,10 @@ const Home: React.FC = () => {
   }, [account]);
 
   // Force SVG reload when active token changes (like in App.tsx)
-  useEffect(() => {
-    console.log('🔍 [Home.tsx] useEffect - forceSVGReload');
-    setSvgKey(prev => prev + 1);
-  }, [activeToken]);
+  // useEffect(() => {
+  //   console.log('🔍 [Home.tsx] useEffect - forceSVGReload');
+  //   setSvgKey(prev => prev + 1);
+  // }, [activeToken]);
 
   // Load token previews for thumbnails (optimized batch loading)
   useEffect(() => {
@@ -439,7 +229,6 @@ const Home: React.FC = () => {
   // Handle successful save
   const handleSaveSuccess = () => {
     console.log('✅ [Home.tsx] Save successful, reloading SVG and thumbnail');
-    setSvgKey(prev => prev + 1); // Force SVG reload
     setSaveRequestData(null); // Clear pending request
     setSaveStatus('Art saved successfully!');
     setTimeout(() => setSaveStatus(''), 3000);
@@ -621,358 +410,48 @@ const Home: React.FC = () => {
     return `ColourMeNFT - ${activeToken}.svg`;
   };
 
-  const appWindowWidth = () => {
-    // Use a fixed width to prevent dynamic resizing issues
-    // The CSS will handle responsive behavior through max-width and aspect-ratio
-    return 1000;
-  };
-
   return (
     <div className="home-container">
       <Navbar />
 
-      {/* Title Section */}
       <section id="title" className="page-header">
         <h1>Colour Me NFT</h1>
         <p>Create, colour, and mint your digital artwork on Base</p>
       </section>
 
-      {/* About Section */}
-      <Window id="about" title="Document - About.txt" icon="🗒️" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <div className="about-scroll-container">
-          <div className="about-content">
-          <div className="about-title">
-            COLOUR ME NFT - ABOUT
-          </div>
-          
-          <div className="about-banner">
-            🚀 NFTs ARE SO BACK! 🚀
-          </div>
-          
-          <div className="about-text">
-            Can we even technically call these NFTs? Not another pixel PFP. This isn't "just a JPEG". This is history!
-          </div>
-          
-          <div className="about-text">
-            Welcome to <strong>Colour Me NFT</strong> — the <strong>first-ever NFT App</strong>. A fully on-chain, interactive canvas where YOU are the artist. Mint your NFT and you don't just get a JPEG — you get a living, breathing SVG art app that runs forever on-chain. Find a creation made by your favourite artist, friend or just something you're vibing!
-          </div>
-          
-          <div className="about-feature-box">
-            🖌️ <strong>5 random colours. 3 random shapes. Unique canvases. Unlimited degen energy.</strong>
-          </div>
-          
-          <div className="about-image-container">
-            <img 
-              src="/src/assets/toolbar_all.png" 
-              alt="Toolbar variations showing different colour palettes and brush sizes"
-              className="about-image"
-            />
-            <br />
-            <small className="about-image-caption">
-              Interactive drawing toolbar with colours, brush sizes, shapes, and tools
-            </small>
-          </div>
-          
-          <div className="about-features-section">
-            <div className="about-features-title">
-              🎨 Toolbar Features:
-            </div>
-            <ul className="about-features-list">
-              <li>Shapes: rectangles, ellipses, triangles, lines, polylines, pentagons, hexagons.</li>
-              <li>Colours + shapes are randomized at mint, making each canvas unique.</li>
-              <li>Tools: brush, eraser and fill bucket and the colour black are common attributes.</li>
-            </ul>
-            <div className="about-image-container-full">
-              <img 
-                src="/src/assets/toolbar_full.png" 
-                alt="Full interactive drawing toolbar with colours, brush sizes, shapes, and tools"
-                className="about-image"
-              />
-              <br />
-              <small className="about-image-caption">
-                Interactive drawing toolbar with colours, brush sizes, shapes, and tools
-              </small>
-            </div>
-          </div>
-          
-          <div className="about-text">
-            This isn't stored on IPFS, Arweave, or some server that dies in a year. Nah, fam. Your art lives on the blockchain. <strong>Forever. Immutable. Unstoppable.</strong>
-          </div>
-          
-          <div className="about-text">
-            And the mint price? Just <strong>0.00025 ETH (~$1)</strong> on Base.
-            That's literally cheaper than your morning coffee. If you can't see what a value this is, if you fade this, you're NGMI.
-          </div>
-          
-          <div className="about-think-box">
-            💡 <strong>Think of it like this:</strong>
-          </div>
-          
-          <div className="about-think-list">
-            <ul>
-              <li>PFPs were the last era.</li>
-              <li><strong>Tokenized Web Apps (TWAs)</strong> are the next.</li>
-              <li>And Colour Me NFT is the <strong>first TWA</strong> the world has ever seen.</li>
-            </ul>
-          </div>
-          
-          <div className="about-text">
-            Plus, every mint pays it forward: <strong>5% royalties go to TW3</strong> (Technically Web3) so we can keep building more first-of-its-kind, dope experiments that push Web3 forward.
-          </div>
-          
-          <div className="about-text">
-            👉 Whether you're an artist who wants to make something timeless, or just a degen who knows "first-of-its-kind" is ALWAYS alpha — this is your chance to grab history.
-          </div>
-          
-          <div className="about-shill-box">
-            <div className="about-shill-title">
-              🎯 Wanna Shill This Project?
-            </div>
-            <div className="about-shill-text">
-              Wanna talk about how dope this NFT project is? We want to thank you! Originally we were thinking of making this a <strong>FREE</strong> mint, then decided we would just share the <strong>Primary Sale Revenue</strong> with our community instead. So we're going to reward the top 50 posts on TikTok and X. Members of our community can <strong>earn upto $400</strong> to post about this project! To learn more, check out our Shill2Earn page including who is eligible, how to enter and how to get paid.
-            </div>
-            <div className="about-shill-footer">
-              🏆 May the best shillers win! 🏆
-            </div>
-            <div className="about-shill-button-container">
-              <a 
-                href="#" 
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  setIsShill2EarnOpen(true);
-                }}
-                className="about-shill-button"
-              >
-                Learn More About Shill2Earn →
-              </a>
-            </div>
-          </div>
-          </div>
-        </div>
-      </Window>
+      <About
+        mintPrice={contractData?.mintPrice || 'FREE'}
+        chainName={contractData?.chain?.name || 'Mainnet'}
+        setIsShill2EarnOpen={setIsShill2EarnOpen}
+      />
 
-      {/* Website Browser */}
-      <Window id="mint" title="Mint - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <TokenAddressBar contractAddress={contractData?.contractAddress || ''} tokenId={activeToken || 0} />
-        <WebsiteContent 
-          contractData={contractData}
-          contract={readOnlyContract}
-          onMintSuccess={(tokenId) => {
-            setActiveToken(tokenId);
-          }}
-          onContractDataUpdate={refreshContractData}
-          onAccountChange={setAccount}
-        />
-      </Window>
+      <Mint
+        contractData={contractData}
+        activeToken={activeToken}
+        readOnlyContract={readOnlyContract}
+        setActiveToken={setActiveToken}
+        refreshContractData={refreshContractData}
+        setAccount={setAccount}
+      />
 
       {/* Main App Window */}
-      <Window id="app" title={appTitle()} icon="🎨" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <div className="app-content-area">
-          <SVGDisplay
-            key={svgKey}
-            tokenId={activeToken || undefined}
-            account={account}
-            onSaveRequest={handleSaveRequest}
-            width={appWindowWidth()}
-            height={appWindowWidth()}
-          />
-          {/* Save Status Display */}
-          {saveStatus && (
-            <div className="save-status">
-              {saveStatus}
-            </div>
-          )}
-        </div>
-      </Window>
+      <ColourMeApp
+        appTitle={appTitle()}
+        activeToken={activeToken}
+        account={account}
+        handleSaveRequest={handleSaveRequest}
+      />
 
       {/* Token Explorer */}
-      {isLoadingContract ? (
-        <div className="loading-container">
-          <div className="loading-icon">⏳</div>
-          <div>Loading contract data from blockchain...</div>
-        </div>
-      ) : (
-        <TokenExplorer
-          activeToken={activeToken}
-          onTokenSelect={setActiveToken}
-          tokenCount={contractData?.tokenCount || 0}
-          tokenPreviews={tokenPreviews}
-          contract={readOnlyContract}
-        />
-      )}
-
-      {/* Help Section */}
-      {/* <Window id="help" title="Help" icon="❓" buttonset={{ minimize: "", expand: "", close: "" }}> 
-        <div style={{ padding: '20px', lineHeight: '1.6' }}>
-          <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Getting Started:</h3>
-          <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
-            <li style={{ marginBottom: '8px' }}><strong>Connect Your Wallet:</strong> Click the "Connect Wallet" button and connect your MetaMask or compatible wallet</li>
-            <li style={{ marginBottom: '8px' }}><strong>Switch to Base:</strong> Make sure you're on the Base network for low-cost transactions</li>
-            <li style={{ marginBottom: '8px' }}><strong>Create Art:</strong> Use the painting tools in the main application window to create your masterpiece</li>
-            <li style={{ marginBottom: '8px' }}><strong>Mint NFT:</strong> Once you're happy with your creation, click "Mint NFT" to create your token</li>
-          </ul>
-          
-          <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Advanced Features:</h3>
-          <ul style={{ marginBottom: '25px', paddingLeft: '20px' }}>
-            <li style={{ marginBottom: '8px' }}><strong>Token Explorer:</strong> Browse existing tokens, double-click to load them into the editor</li>
-            <li style={{ marginBottom: '8px' }}><strong>Right-click Menu:</strong> Right-click on tokens for additional options like viewing attributes</li>
-            <li style={{ marginBottom: '8px' }}><strong>Collaborative Art:</strong> Token owners can modify their existing NFTs (costs gas)</li>
-            <li style={{ marginBottom: '8px' }}><strong>Export:</strong> Save your artwork as SVG files for external use</li>
-          </ul>
-          
-          <h3 style={{ color: '#0054e3', marginBottom: '15px', fontSize: '16px', fontWeight: 'bold' }}>Tips:</h3>
-          <ul style={{ paddingLeft: '20px' }}>
-            <li style={{ marginBottom: '8px' }}>Complex artworks may require multiple transactions due to gas limits</li>
-            <li style={{ marginBottom: '8px' }}>Simpler designs with fewer objects are more gas-efficient</li>
-            <li style={{ marginBottom: '8px' }}>All artwork is stored on-chain as SVG, ensuring permanence</li>
-          </ul>
-        </div>
-      </Window> */}
-      <Window id="overview" title="Help - Overview" icon="❓" buttonset={{ minimize: "", expand: "", close: "" }}>
-        <div className="help-content">
-          <div className="help-formatted">
-            <div className="help-header-section">
-              <h1 className="help-main-title">🎨 ColourMeNFT</h1>
-              <p className="help-subtitle">Revolutionary Web3 Paint Platform</p>
-
-              <div className="help-meta-info">
-                <div className="meta-item">
-                  <span className="meta-label">Launch Date:</span>
-                  <span className="meta-value">{contractData?.mintOpen ? contractData.mintOpen.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  }) : 'TBD'}</span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Version:</span>
-                  <span className="meta-value">1.0</span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Platform:</span>
-                  <span className="meta-value">{contractData?.chain?.name || 'Base Network'}</span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Mint Price:</span>
-                  <span className="meta-value">{contractData?.mintPrice}</span>
-                </div>
-                <div className="meta-item">
-                  <span className="meta-label">Contract Address:</span>
-                  <span className="meta-value address-full">{contractData?.contractAddress}</span>
-                  <span className="meta-value address-truncated">{formatAddress(contractData?.contractAddress || '')}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">📖 About This Project</h2>
-              <p className="section-description">
-                Welcome to the future of digital art creation! ColourMeNFT combines the
-                nostalgia of retro computing with cutting-edge blockchain technology.
-              </p>
-              <p className="section-description">
-                Our platform brings together artists, collectors, and Web3 enthusiasts in
-                a unique creative ecosystem where every pixel tells a story.
-              </p>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">🚀 Quick Start</h2>
-              <ol className="steps-list">
-                <li><strong>Connect</strong> your Web3 wallet (MetaMask, etc.)</li>
-                <li><strong>Mint</strong> your NFT canvas for $1</li>
-                <li><strong>Create</strong> vector art using unique tools and colours</li>
-                <li><strong>Save</strong> your artwork directly to the blockchain</li>
-                <li><strong>Sell</strong> or trade your artwork with the community</li>
-              </ol>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">✨ What Makes Us Special</h2>
-              <ul className="feature-list">
-                <li>🎨 Create stunning vector art directly in your browser</li>
-                <li>⛓️ Everything stored <strong>ON-CHAIN</strong> as SVG format</li>
-                <li>💰 Mint your canvas on Base network for just <strong>$1</strong></li>
-                <li>🤝 Collaborate and modify existing NFTs (living art!)</li>
-                <li>👥 Community-driven creative platform</li>
-                <li>🔒 No external dependencies - truly decentralized art</li>
-                <li>🖌️ Unique tools and colours so no 2 canvases are the same</li>
-              </ul>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">🚀 Key Features</h2>
-              <div className="features-grid">
-                <div className="feature-item">✅ Dynamic SVG rendering system</div>
-                <div className="feature-item">🏆 Permanent ownership & provenance</div>
-                <div className="feature-item">🌱 Living, evolving digital art</div>
-                <div className="feature-item">⚡ Low-cost transactions on Base</div>
-                <div className="feature-item">📤 Export functionality</div>
-              </div>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">⚙️ Technical Details</h2>
-              <div className="tech-specs">
-                <div className="spec-row">
-                  <span className="spec-label">Blockchain:</span>
-                  <span className="spec-value">{contractData?.chain?.name || 'Base'} (Ethereum L2)</span>
-                </div>
-                <div className="spec-row">
-                  <span className="spec-label">Token Standard:</span>
-                  <span className="spec-value">ERC-721</span>
-                </div>
-                <div className="spec-row">
-                  <span className="spec-label">Storage:</span>
-                  <span className="spec-value">On-chain SVG</span>
-                </div>
-                <div className="spec-row">
-                  <span className="spec-label">Rendering:</span>
-                  <span className="spec-value">Dynamic, client-side</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="help-section">
-              <h2 className="section-title">🌐 Community & Support</h2>
-              <p className="section-description">
-                Join thousands of artists and NFT collectors in this Web3 paint adventure! Experience the
-                perfect blend of nostalgia and innovation.
-              </p>
-
-              <div className="social-links">
-                <div className="social-item">
-                  <span className="social-icon">🌐 Website</span>
-                  <span className="social-text">ColourMeNFT.xyz</span>
-                </div>
-                <div className="social-item">
-                  <span className="social-icon">
-                    <FontAwesomeIcon icon={faXTwitter} />
-                  </span>
-                  <span className="social-text">@ColourMeNFT</span>
-                </div>
-                <div className="social-item">
-                  <span className="social-icon">
-                    <FontAwesomeIcon icon={faTiktok} />
-                  </span>
-                  <span className="social-text">@TechnicallyWeb3</span>
-                </div>
-                <div className="social-item">
-                  <span className="social-icon">
-                    <FontAwesomeIcon icon={faDiscord} />
-                  </span>
-                  <span className="social-text">Discord Coming Soon!</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="help-footer">
-              <p>Built with ❤️ by the TechnicallyWeb3 team</p>
-              <p className="copyright">© 2025 ColourMeNFT - Powered by Base Network</p>
-            </div>
-          </div>
-        </div>
-      </Window>
+      <TokenExplorer
+        activeToken={activeToken}
+        onTokenSelect={setActiveToken}
+        tokenCount={contractData?.tokenCount || 0}
+        tokenPreviews={tokenPreviews}
+        contract={readOnlyContract}
+      />
+      
+      <Overview contractData={contractData} />
 
       {/* Footer */}
       <footer className="footer">

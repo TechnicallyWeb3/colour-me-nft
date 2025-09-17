@@ -1,0 +1,356 @@
+/* Overview Component Styles */
+
+/* Notepad About Section */
+.help-section {
+  display: block;
+  padding: 20px 0;
+  margin: 10px 0;
+}
+
+/* Notepad Content Styling */
+.help-content {
+  background: white;
+  height: 500px;
+  overflow: auto;
+  border: 2px inset #c0c0c0;
+  margin: 0;
+}
+
+.help-formatted {
+  padding: 20px;
+  font-family: "MS Sans Serif", "Microsoft Sans Serif", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #000;
+  background: white;
+}
+
+/* Header Section */
+.help-header-section {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  border-bottom: 2px solid #0054e3;
+}
+
+.help-main-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #0054e3;
+  margin: 0 0 10px 0;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  letter-spacing: 1px;
+}
+
+.help-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 20px 0;
+  font-style: italic;
+}
+
+.help-meta-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 15px;
+  background: #f8f8f8;
+  padding: 10px;
+  border: 1px inset #c0c0c0;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 2px 16px;
+}
+
+.meta-label {
+  font-weight: bold;
+  color: #333;
+}
+
+.meta-value {
+  color: #0054e3;
+}
+
+.meta-value.highlight {
+  background: #ffff99;
+  padding: 1px 4px;
+  font-weight: bold;
+}
+
+/* Section Styling */
+.help-section {
+  margin: 20px 0;
+  padding: 18px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-left: 4px solid #0054e3;
+  border-radius: 4px;
+}
+
+/* Special styling for About This Project section */
+.help-section:first-of-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #0054e3;
+  margin: 0 0 15px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px dotted #ccc;
+  text-align: center;
+}
+
+.section-description {
+  margin: 10px 0;
+  line-height: 1.6;
+  color: #333;
+  font-size: 12px;
+}
+
+/* Feature Lists */
+.feature-list {
+  margin: 10px 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.feature-list li {
+  margin: 6px 0;
+  padding: 4px 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.feature-list li:hover {
+  background: #f0f8ff;
+  border-color: #0054e3;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.feature-item {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.feature-item:hover {
+  background: #e8f4ff;
+  border-color: #0054e3;
+  transform: translateY(-1px);
+}
+
+/* Steps List */
+.steps-list {
+  margin: 10px 0;
+  padding-left: 20px;
+  counter-reset: step-counter;
+}
+
+.steps-list li {
+  margin: 8px 0;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  position: relative;
+  counter-increment: step-counter;
+}
+
+.steps-list li::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: -25px;
+  top: 6px;
+  background: #0054e3;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+/* Technical Specs */
+.tech-specs {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.spec-row:last-child {
+  border-bottom: none;
+}
+
+.spec-row:nth-child(even) {
+  background: #f8f8f8;
+}
+
+.spec-label {
+  font-weight: bold;
+  color: #333;
+}
+
+.spec-value {
+  color: #0054e3;
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* Social Links */
+.social-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.social-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.social-item:hover {
+  background: #f0f8ff;
+  border-color: #0054e3;
+  cursor: pointer;
+}
+
+.social-icon {
+  font-size: 14px;
+}
+
+.social-text {
+  font-size: 11px;
+  color: #0054e3;
+  font-weight: bold;
+}
+
+/* Footer */
+.help-footer {
+  text-align: center;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 2px solid #0054e3;
+}
+
+.help-footer p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 11px;
+}
+
+.copyright {
+  font-weight: bold;
+  color: #0054e3 !important;
+}
+
+/* Address display styles */
+.address-full {
+  display: block;
+}
+
+.address-truncated {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .address-full {
+    display: none;
+  }
+  
+  .address-truncated {
+    display: block;
+  }
+}
+
+/* Responsive Design for Notepad */
+@media (max-width: 768px) {
+  .help-content {
+    height: 400px;
+  }
+  
+  .help-formatted {
+    padding: 15px;
+    font-size: 10px;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .help-meta-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .social-links {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .help-formatted {
+    padding: 10px;
+    font-size: 9px;
+  }
+  
+  .help-content {
+    height: 350px;
+  }
+  
+  .help-main-title {
+    font-size: 16px;
+  }
+  
+  .section-title {
+    font-size: 12px;
+  }
+  
+  .help-section {
+    padding: 10px;
+    margin: 15px 0;
+  }
+}
+
+@media (max-width: 300px) {
+  .meta-item {
+    display: flow-root;
+    flex-direction: column;
+  }
+}
