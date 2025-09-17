@@ -412,7 +412,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="home-container">
-      <Navbar />
+      <Navbar setIsShill2EarnOpen={setIsShill2EarnOpen} />
 
       <section id="title" className="page-header">
         <h1>Colour Me NFT</h1>

@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './Navbar.css';
-import Shill2Earn from './Shill2Earn';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter, faTiktok, faDiscord } from '@fortawesome/free-brands-svg-icons';
 
-const Navbar: React.FC = () => {
+const Navbar: React.FC<{ setIsShill2EarnOpen: (isOpen: boolean) => void }> = ({ setIsShill2EarnOpen }) => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isShill2EarnOpen, setIsShill2EarnOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -93,12 +91,6 @@ const Navbar: React.FC = () => {
           </a>
         </div>
       </nav>
-      
-      {/* Shill2Earn Popup */}
-      <Shill2Earn 
-        isOpen={isShill2EarnOpen} 
-        onClose={() => setIsShill2EarnOpen(false)} 
-      />
     </>
 
   )
