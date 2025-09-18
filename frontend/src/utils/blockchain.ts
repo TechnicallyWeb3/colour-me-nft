@@ -51,20 +51,20 @@ export const networkConfigs = {
     }
   },
   mainnet: {
-    chainId: '0x2105', // 8453 in hex (Base mainnet)
-    chainName: 'Base',
-    rpcUrls: ['https://mainnet.base.org'],
+    chainId: '0x89', // 137 in hex (Polygon mainnet)
+    chainName: 'Polygon',
+    rpcUrls: ['https://polygon-rpc.publicnode.com'],
     nativeCurrency: {
-      name: 'Ether',
-      symbol: 'ETH',
+      name: 'Polygon',
+      symbol: 'POL',
       decimals: 18,
     },
-    rpcUrl: 'https://base-rpc.publicnode.com',
-    explorerUrl: 'https://basescan.org',
+    rpcUrl: 'https://polygon-rpc.publicnode.com',
+    explorerUrl: 'https://polygonscan.com',
     openseaUrl: 'https://opensea.io',
     contracts: {
       ColourMeNFT: {
-        address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Base mainnet
+        address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Polygon mainnet
         deployedBlock: 0,
       }
     }

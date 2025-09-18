@@ -425,7 +425,7 @@ const Home: React.FC = () => {
 
       <section id="title" className="page-header">
         <h1>Colour Me NFT</h1>
-        <p>Create, colour, and mint your digital artwork on Base</p>
+        <p>Create, colour, and mint your digital artwork on {contractData?.chain?.name || 'Mainnet'}</p>
       </section>
 
       <About

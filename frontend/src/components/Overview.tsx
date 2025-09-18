@@ -76,7 +76,7 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
             <ul className="feature-list">
               <li>🎨 Create stunning vector art directly in your browser</li>
               <li>⛓️ Everything stored <strong>ON-CHAIN</strong> as SVG format</li>
-              <li>💰 Mint your canvas on Base network for just <strong>$1</strong></li>
+              <li>💰 Mint your canvas on {contractData?.chain?.name || 'Mainnet'} network for just <strong>$1</strong></li>
               <li>🤝 Collaborate and modify existing NFTs (living art!)</li>
               <li>👥 Community-driven creative platform</li>
               <li>🔒 No external dependencies - truly decentralized art</li>
@@ -90,7 +90,7 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
               <div className="feature-item">✅ Dynamic SVG rendering system</div>
               <div className="feature-item">🏆 Permanent ownership & provenance</div>
               <div className="feature-item">🌱 Living, evolving digital art</div>
-              <div className="feature-item">⚡ Low-cost transactions on Base</div>
+              <div className="feature-item">⚡ Low-cost transactions on {contractData?.chain?.name || 'Mainnet'}</div>
               <div className="feature-item">📤 Export functionality</div>
             </div>
           </div>
@@ -152,7 +152,7 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
 
           <div className="help-footer">
             <p>Built with ❤️ by the TechnicallyWeb3 team</p>
-            <p className="copyright">© 2025 ColourMeNFT - Powered by Base Network</p>
+            <p className="copyright">© 2025 ColourMeNFT - Powered by {contractData?.chain?.name || 'Mainnet'} Network</p>
           </div>
         </div>
       </div>

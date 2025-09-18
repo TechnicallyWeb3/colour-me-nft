@@ -20,7 +20,7 @@
     "testnet:ui": "npm run dev:testnet --prefix frontend",
     "testnet:build": "npm run build:testnet --prefix frontend",
     "testnet": "npm run testnet:deploy && npm run testnet:setup && npm run testnet:ui",
-    "mainnet:deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts --network base",
+    "mainnet:deploy": "npx hardhat ignition deploy ./ignition/modules/NFT.ts --network polygon",
     "mainnet:setup": "npm run frontend:setup:mainnet",
     "mainnet:ui": "npm run dev:mainnet --prefix frontend",
     "mainnet:build": "npm run build:mainnet --prefix frontend",

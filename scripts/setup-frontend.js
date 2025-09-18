@@ -154,8 +154,8 @@ function getDeployedAddresses(network) {
       'localhost': 'chain-31337', 
       'testnet': 'chain-11155111',
       'sepolia': 'chain-11155111',
-      'mainnet': 'chain-8453',
-      'base': 'chain-8453'
+      'mainnet': 'chain-137',
+      'polygon': 'chain-137'
     };
     
     const chainId = networkToChainId[network] || `chain-${network}`;
@@ -234,7 +234,7 @@ async function main() {
     }
     
     let hardhatProcess = null;
-    const networkName = network === 'testnet' ? 'sepolia' : network === 'mainnet' ? 'base' : 'localhost';
+    const networkName = network === 'testnet' ? 'sepolia' : network === 'mainnet' ? 'polygon' : 'localhost';
     
     // // Step 4: Setup network-specific deployment
     // if (network === 'local') {

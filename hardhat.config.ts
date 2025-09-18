@@ -17,8 +17,8 @@ const config: HardhatUserConfig = {
         mnemonic: process.env.OWNER_MNEMONIC,
       },
     },
-    base: {
-      url: "https://base-rpc.publicnode.com",
+    polygon: {
+      url: "https://polygon-rpc.publicnode.com",
       accounts: {
         mnemonic: process.env.OWNER_MNEMONIC,
       },
@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       sepolia: process.env.ETHERSCAN_API_KEY || "",
-      base: process.env.BASESCAN_API_KEY || "",
+      polygon: process.env.POLYGONSCAN_API_KEY || "",
     },
   },
 };

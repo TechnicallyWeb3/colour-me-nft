@@ -58,7 +58,7 @@ This starts everything with concurrency:
 - `npm run testnet:deploy` - Deploy contracts to Sepolia testnet
 - `npm run testnet:setup` - Setup frontend for testnet
 - `npm run testnet:ui` - Start frontend with testnet config
-- `npm run mainnet:deploy` - Deploy contracts to Base mainnet
+- `npm run mainnet:deploy` - Deploy contracts to Polygon mainnet
 - `npm run mainnet:setup` - Setup frontend for mainnet
 - `npm run mainnet:ui` - Start frontend with mainnet config
 
@@ -93,10 +93,10 @@ The frontend automatically detects the network based on the `VITE_NETWORK` envir
 - **Explorer**: https://sepolia.etherscan.io
 
 ### Mainnet
-- **Network**: Base Mainnet (Chain ID: 8453)
-- **RPC**: https://mainnet.base.org
+- **Network**: Polygon Mainnet (Chain ID: 137)
+- **RPC**: https://polygon-rpc.publicnode.com
 - **Contract**: TBD (not yet deployed)
-- **Explorer**: https://basescan.org
+- **Explorer**: https://polygonscan.com
 
 ## Development Workflow
 
@@ -133,7 +133,7 @@ npx hardhat test test/02-ColourMeNFT.test.ts
 # Set up environment variables in .env file:
 # OWNER_MNEMONIC=your_mnemonic_phrase
 # ETHERSCAN_API_KEY=your_etherscan_api_key  
-# BASESCAN_API_KEY=your_basescan_api_key
+# POLYGONSCAN_API_KEY=your_polygonscan_api_key
 
 # Deploy to testnet (Sepolia) - full workflow
 npm run testnet
@@ -143,7 +143,7 @@ npm run testnet:deploy    # Deploy contracts
 npm run testnet:setup     # Update frontend config with deployed addresses
 npm run testnet:ui        # Start frontend
 
-# Deploy to mainnet (Base) - full workflow
+# Deploy to mainnet (Polygon) - full workflow
 npm run mainnet
 
 # OR deploy step by step:
@@ -184,7 +184,7 @@ The latest version uses highly optimized packed object encoding:
 Frontend automatically adapts to different networks:
 - **Local**: Uses dynamically deployed contracts from local Hardhat node
 - **Testnet**: Automatically updates config with Sepolia deployment addresses
-- **Mainnet**: Automatically updates config with Base deployment addresses
+- **Mainnet**: Automatically updates config with Polygon deployment addresses
 - **Smart Address Detection**: Setup script reads from Ignition deployments and updates frontend config
 
 ### Development Tools
