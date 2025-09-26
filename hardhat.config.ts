@@ -7,6 +7,7 @@ dotenv.config();
 
 // Import tasks
 import "./tasks/reset-svg";
+import "./tasks/withdraw";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",

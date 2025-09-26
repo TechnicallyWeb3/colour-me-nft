@@ -311,10 +311,11 @@ contract ColourMeRenderer {
         string memory _svg, 
         Trait memory _trait
     ) external pure returns (bytes memory) {
+        string memory tokenString = _tokenId.toString();
         return abi.encodePacked(
-            '{"name":"', _name, ' #', _tokenId.toString(), '",',
+            '{"name":"', _name, ' #', tokenString, '",',
                 '"description":"Colour your NFT your way. Proving you can create an SVG using an SVG on the blockchain",',
-                '"external_url":"', _baseURL,'#', _tokenId.toString(), '",',
+                '"external_url":"', _baseURL,'#', tokenString, '",',
                 '"image_data":"data:image/svg+xml;base64,', bytes(_svg).encode(), '",'
                 '"attributes":', getAttributes(_trait),
             '}'
