@@ -224,10 +224,15 @@
       // Optimized position calculation with coordinate transformation
       function calculatePosition(clientX, clientY) {
         if (!svgRect) updateCoordinateFactors();
-        const x = clientX - svgRect.left;
-        const y = clientY - svgRect.top;
-        const rawX = (x * svgWidth) / displayWidth;
-        const rawY = (y * svgHeight) / displayHeight;
+        
+        // Get the actual SVG element's bounding rect for more accurate calculation
+        const svgElement = document.querySelector('svg');
+        const actualSvgRect = svgElement.getBoundingClientRect();
+        
+        const x = clientX - actualSvgRect.left;
+        const y = clientY - actualSvgRect.top;
+        const rawX = (x * svgWidth) / actualSvgRect.width;
+        const rawY = (y * svgHeight) / actualSvgRect.height;
         return {
           x: Math.round(rawX),
           y: Math.round(rawY)
@@ -1194,6 +1199,11 @@
         // Batch initial slider setup
         brushSlider.setAttribute('cx', sliderX);
         brushSlider.setAttribute('r', initialHandleRadius);
+      });
+
+      // Update coordinate factors when window resizes
+      window.addEventListener('resize', function() {
+        updateCoordinateFactors();
       });
     ]]>
   </script>

@@ -51,7 +51,6 @@ export interface ColourMeNFTInterface extends Interface {
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
       | "setArt"
-      | "setArtistRoyalty"
       | "setDefaultRoyalty"
       | "setSVG"
       | "supportsInterface"
@@ -65,6 +64,7 @@ export interface ColourMeNFTInterface extends Interface {
       | "traits"
       | "transferFrom"
       | "transferOwnership"
+      | "withdraw"
   ): FunctionFragment;
 
   getEvent(
@@ -141,10 +141,6 @@ export interface ColourMeNFTInterface extends Interface {
     values: [BigNumberish, ObjectStruct[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "setArtistRoyalty",
-    values: [BigNumberish, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setDefaultRoyalty",
     values: [AddressLike, BigNumberish]
   ): string;
@@ -187,6 +183,7 @@ export interface ColourMeNFTInterface extends Interface {
     functionFragment: "transferOwnership",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "appendArt", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
@@ -231,10 +228,6 @@ export interface ColourMeNFTInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "setArt", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setArtistRoyalty",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setDefaultRoyalty",
     data: BytesLike
   ): Result;
@@ -259,6 +252,7 @@ export interface ColourMeNFTInterface extends Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 }
 
 export namespace ApprovalEvent {
@@ -491,12 +485,6 @@ export interface ColourMeNFT extends BaseContract {
     "nonpayable"
   >;
 
-  setArtistRoyalty: TypedContractMethod<
-    [tokenId: BigNumberish, receiver: AddressLike, feeNumerator: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
   setDefaultRoyalty: TypedContractMethod<
     [receiver: AddressLike, feeNumerator: BigNumberish],
     [void],
@@ -557,6 +545,8 @@ export interface ColourMeNFT extends BaseContract {
     [void],
     "nonpayable"
   >;
+
+  withdraw: TypedContractMethod<[], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -666,13 +656,6 @@ export interface ColourMeNFT extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "setArtistRoyalty"
-  ): TypedContractMethod<
-    [tokenId: BigNumberish, receiver: AddressLike, feeNumerator: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
     nameOrSignature: "setDefaultRoyalty"
   ): TypedContractMethod<
     [receiver: AddressLike, feeNumerator: BigNumberish],
@@ -738,6 +721,9 @@ export interface ColourMeNFT extends BaseContract {
   getFunction(
     nameOrSignature: "transferOwnership"
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdraw"
+  ): TypedContractMethod<[], [void], "nonpayable">;
 
   getEvent(
     key: "Approval"
