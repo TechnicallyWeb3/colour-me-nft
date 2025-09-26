@@ -193,8 +193,8 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
 
   // Listen for SVG messages
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const { type, data } = event.data;
+    const handleSVGMessage = (event: CustomEvent) => {
+      const { type, data } = event.detail;
       
       if (type === 'SAVE_REQUEST' && onSaveRequest) {
         const { artData, saveType } = data;
@@ -210,26 +210,25 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
         } else {
           console.log(`🚫 Save blocked: User does not own token #${effectiveTokenId || 0}`);
           // Send response back to SVG
-          if (event.source && event.source !== window) {
-            (event.source as Window).postMessage({
+          window.dispatchEvent(new CustomEvent('svg-message', {
+            detail: {
               type: 'SAVE_RESPONSE',
               success: false,
               message: 'You do not own this token'
-            }, '*');
-          }
+            }
+          }));
         }
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener('svg-message', handleSVGMessage as EventListener);
+    return () => window.removeEventListener('svg-message', handleSVGMessage as EventListener);
   }, [onSaveRequest, isValidToken, account, tokenOwner, effectiveTokenId]);
 
-  // Expose reload function to parent via ref
+  // Expose reload function to parent via ref - now using direct function call
   useEffect(() => {
-    if (objectRef.current) {
-      (objectRef.current as any).reloadSVG = reloadTokenSVG;
-    }
+    // Store reload function on window for parent access if needed
+    (window as any).reloadSVG = reloadTokenSVG;
   }, [readOnlyContract, isValidToken, effectiveTokenId]);
 
   return (
@@ -272,20 +271,17 @@ const SVGDisplay: React.FC<SVGDisplayProps> = ({
 
       {/* SVG Display */}
       {svgContent && (
-        <object
-          ref={objectRef}
-          data={svgContent}
-          type="image/svg+xml"
-          width={width}
-          height={height}
+        <div
           className={className}
           style={{
             border: '2px solid #ddd',
-            backgroundColor: 'white'
+            backgroundColor: 'white',
+            width: width,
+            height: height,
+            overflow: 'hidden'
           }}
-        >
-          <p>Your browser does not support SVG</p>
-        </object>
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
       )}
     </>
   );
