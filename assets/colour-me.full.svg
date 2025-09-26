@@ -202,37 +202,20 @@
       let mouseMoveThrottle = null;
       let lastDrawPos = null;
 
-      // Coordinate conversion cache for performance
-      let svgRect = null;
-      let svgWidth = 1000;
-      let svgHeight = 1000;
-      let displayWidth = 1000;
-      let displayHeight = 1000;
+      // Removed coordinate conversion cache - now using direct DOM access
 
       let redoStack = [];
       const MAX_REDO_STACK = 100;
 
-      // Update coordinate conversion factors when window resizes
-      function updateCoordinateFactors() {
-        svgRect = svg.getBoundingClientRect();
-        svgWidth = svg.viewBox.baseVal.width;
-        svgHeight = svg.viewBox.baseVal.height;
-        displayWidth = svgRect.width;
-        displayHeight = svgRect.height;
-      }
-
-      // Optimized position calculation with coordinate transformation
+      // Simplified position calculation for direct DOM access
       function calculatePosition(clientX, clientY) {
-        if (!svgRect) updateCoordinateFactors();
-        
-        // Get the actual SVG element's bounding rect for more accurate calculation
         const svgElement = document.querySelector('svg');
-        const actualSvgRect = svgElement.getBoundingClientRect();
+        const svgRect = svgElement.getBoundingClientRect();
         
-        const x = clientX - actualSvgRect.left;
-        const y = clientY - actualSvgRect.top;
-        const rawX = (x * svgWidth) / actualSvgRect.width;
-        const rawY = (y * svgHeight) / actualSvgRect.height;
+        const x = clientX - svgRect.left;
+        const y = clientY - svgRect.top;
+        const rawX = (x * 1000) / svgRect.width;  // 1000 is the viewBox width
+        const rawY = (y * 1000) / svgRect.height; // 1000 is the viewBox height
         return {
           x: Math.round(rawX),
           y: Math.round(rawY)
@@ -1170,9 +1153,9 @@
       // Parent window communication
       function sendMessageToParent(type, data = {}) {
         console.log('sent message to parent: ', type, data);
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type, data }, '*');
-        }
+        window.dispatchEvent(new CustomEvent('svg-message', {
+          detail: { type, data }
+        }));
       }
 
       // Message listener for parent communication
@@ -1184,7 +1167,6 @@
       
       // Application initialization
       window.addEventListener('load', function() {
-        updateCoordinateFactors();
         loadDrawing();
 
         if (paths.length > 0 && !onlyPathIsClear()) {
@@ -1201,10 +1183,7 @@
         brushSlider.setAttribute('r', initialHandleRadius);
       });
 
-      // Update coordinate factors when window resizes
-      window.addEventListener('resize', function() {
-        updateCoordinateFactors();
-      });
+      // Resize handling removed - coordinate calculation now uses direct DOM access
     ]]>
   </script>
 </svg>
