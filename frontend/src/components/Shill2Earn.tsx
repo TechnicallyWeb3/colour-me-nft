@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import './Shill2Earn.css';
 import type { ContractData } from '../utils/blockchain';
 import hashtagCropped from '../assets/hashtag_cropped.jpg';
@@ -15,13 +15,11 @@ const getMintPrice = (mintPrice: string): number => {
   if (mintPrice === 'FREE') return 0;
   const parts = mintPrice.split(' ');
   const price = parseFloat(parts[0]) || 0;
-  console.log('💰 Parsed mint price:', { mintPrice, parts, price });
   return price;
 };
 
 const calculateRewardPool = (contractData: ContractData | null): { amount: number; symbol: string; percentage: number } => {
   if (!contractData) {
-    console.log('❌ No contract data for reward pool calculation');
     return { amount: 0, symbol: 'ETH', percentage: 0 };
   }
   
@@ -29,14 +27,7 @@ const calculateRewardPool = (contractData: ContractData | null): { amount: numbe
   const totalAmount = pricePerToken * contractData.tokenCount;
   const maxAmount = 2.5; // Maximum reward pool
   const percentage = Math.min((totalAmount / maxAmount) * 100, 100);
-  
-  console.log('🎯 Reward pool calculation:', {
-    pricePerToken,
-    tokenCount: contractData.tokenCount,
-    totalAmount,
-    maxAmount,
-    percentage
-  });
+  console.log ('calculateRewardPool', totalAmount, maxAmount, percentage);
   
   return {
     amount: totalAmount,
@@ -46,8 +37,8 @@ const calculateRewardPool = (contractData: ContractData | null): { amount: numbe
 };
 
 const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }) => {
-  // Calculate reward pool data once
-  const rewardPool = calculateRewardPool(contractData);
+  // Calculate reward pool data once and memoize it
+  const rewardPool = useMemo(() => calculateRewardPool(contractData), [contractData?.tokenCount, contractData?.mintPrice]);
   
   // Prevent background scrolling when popup is open
   useEffect(() => {
@@ -86,7 +77,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
               Forget free mints. Forget farming points for some dusty airdrop. We're flipping the script.
             </p>
             <div className="shill2earn-highlight">
-              <strong>Colour Me NFT</strong> is giving away <strong>up to 2.5 ETH (~$10,000)</strong> to the top 100 shills!
+              <strong>Colour Me NFT</strong> is giving away <strong>up to {(getMintPrice(contractData?.mintPrice || '0') * (contractData?.maxSupply || 0))} {contractData?.chain?.symbol || 'ETH'} (~$10,000)</strong> to the top 100 shills!
             </div>
             
             <div className="reward-pool-section">
@@ -105,7 +96,7 @@ const Shill2Earn: React.FC<Shill2EarnProps> = ({ isOpen, onClose, contractData }
               </div>
               <div className="reward-pool-details">
                 <span className="reward-pool-current">
-                  {rewardPool.amount > 0 ? rewardPool.amount.toFixed(5) : '0'} {rewardPool.symbol} raised
+                  {rewardPool.amount > 0 ? rewardPool.amount : '0'} {rewardPool.symbol} raised
                 </span>
                 {/* <span className="reward-pool-max">
                   / 2.5 {rewardPool.symbol} max

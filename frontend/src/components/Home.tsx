@@ -70,7 +70,7 @@ const Home: React.FC = () => {
     }
   };
 
-  // Initialize blockchain connection and load contract data
+  // Initialize blockchain connection and load contract data - only once
   useEffect(() => {
     const initializeBlockchain = async () => {
       console.log('🔍 [Home.tsx] - initializeBlockchain');
@@ -108,10 +108,13 @@ const Home: React.FC = () => {
       }
     };
 
-    if (contractData === null && !isLoadingContract) initializeBlockchain();
-  }, []);
+    // Only initialize if we don't have contract data and aren't already loading
+    if (contractData === null && !isLoadingContract) {
+      initializeBlockchain();
+    }
+  }, [contractData, isLoadingContract]); // Add dependencies to prevent unnecessary calls
 
-  // Initialize write contract when account is available
+  // Initialize write contract when account is available - only when account changes
   useEffect(() => {
     const initializeWriteContract = async () => {
       console.log('🔍 [Home.tsx] - initializeWriteContract');
@@ -133,8 +136,11 @@ const Home: React.FC = () => {
       }
     };
 
-    if (writeContract === null) initializeWriteContract();
-  }, [account]);
+    // Only initialize if we don't have a write contract or account changed
+    if (writeContract === null || (account && !writeContract)) {
+      initializeWriteContract();
+    }
+  }, [account, writeContract]); // Add writeContract to dependencies
 
   // Force SVG reload when active token changes (like in App.tsx)
   // useEffect(() => {
@@ -189,7 +195,7 @@ const Home: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [readOnlyContract, contractData, tokenPreviews]);
+  }, [readOnlyContract, contractData?.tokenCount]); // Only depend on tokenCount, not entire contractData or tokenPreviews
 
   // Cleanup preview URLs on unmount
   useEffect(() => {
