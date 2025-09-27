@@ -658,9 +658,9 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
                     Qty: <input 
                       type="number" 
                       min="1" 
-                      max="10" 
+                      max={contractData?.maxSupply || 10} 
                       value={mintQuantity}
-                      onChange={(e) => setMintQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                      onChange={(e) => setMintQuantity(Math.max(1, Math.min(contractData?.maxSupply || 10, parseInt(e.target.value) || 1)))}
                       style={{ width: '50px', marginLeft: '5px', marginRight: '10px' }}
                     />
                     <button onClick={handleMint} className="simple-button">
