@@ -202,35 +202,57 @@
       let mouseMoveThrottle = null;
       let lastDrawPos = null;
 
-      // Coordinate conversion cache for performance
-      let svgRect = null;
-      let svgWidth = 1000;
-      let svgHeight = 1000;
-      let displayWidth = 1000;
-      let displayHeight = 1000;
+      // Self-adapting SVG coordinate system for maximum portability
+      let svgScaleX = 1;
+      let svgScaleY = 1;
+      let svgOffsetX = 0;
+      let svgOffsetY = 0;
+      let resizeObserver = null;
 
       let redoStack = [];
       const MAX_REDO_STACK = 100;
 
-      // Update coordinate conversion factors when window resizes
-      function updateCoordinateFactors() {
-        svgRect = svg.getBoundingClientRect();
-        svgWidth = svg.viewBox.baseVal.width;
-        svgHeight = svg.viewBox.baseVal.height;
-        displayWidth = svgRect.width;
-        displayHeight = svgRect.height;
+      // Initialize SVG with automatic scaling detection
+      function initializeSVG() {
+        const svgElement = document.querySelector('svg');
+        if (!svgElement) return;
+        
+        // Get the object tag that contains this SVG (for proper positioning)
+        const objectElement = window.frameElement || document.querySelector('object[type="image/svg+xml"]');
+        const rect = objectElement ? objectElement.getBoundingClientRect() : svgElement.getBoundingClientRect();
+        const viewBox = svgElement.viewBox.baseVal;
+        
+        // Calculate actual scaling factors
+        svgScaleX = rect.width / viewBox.width;
+        svgScaleY = rect.height / viewBox.height;
+        svgOffsetX = rect.left;
+        svgOffsetY = rect.top;
+        
+        console.log('🎯 SVG initialized:', {
+          scaleX: svgScaleX,
+          scaleY: svgScaleY,
+          offsetX: svgOffsetX,
+          offsetY: svgOffsetY,
+          rect: { width: rect.width, height: rect.height, left: rect.left, top: rect.top },
+          viewBox: { width: viewBox.width, height: viewBox.height },
+          usingObject: !!objectElement
+        });
       }
 
-      // Optimized position calculation with coordinate transformation
+      // Universal coordinate calculation that works with any scaling
       function calculatePosition(clientX, clientY) {
-        if (!svgRect) updateCoordinateFactors();
-        const x = clientX - svgRect.left;
-        const y = clientY - svgRect.top;
-        const rawX = (x * svgWidth) / displayWidth;
-        const rawY = (y * svgHeight) / displayHeight;
+        // Convert to SVG coordinates using actual scaling
+        const x = (clientX - svgOffsetX) / svgScaleX;
+        const y = (clientY - svgOffsetY) / svgScaleY;
+        
+        // Debug logging - always enabled for now
+        console.log('Mouse coords:', { clientX, clientY });
+        console.log('SVG coords:', { x, y });
+        console.log('Scaling:', { svgScaleX, svgScaleY, svgOffsetX, svgOffsetY });
+        
         return {
-          x: Math.round(rawX),
-          y: Math.round(rawY)
+          x: Math.round(x),
+          y: Math.round(y)
         };
       }
 
@@ -299,8 +321,9 @@
 
       // Canvas boundary validation for drawing operations
       function isWithinCanvas(pos) {
-        return pos.x >= 10 && pos.x <= 10 + 980 && 
-               pos.y >= 90 && pos.y <= 90 + 900;
+        // Use viewBox coordinates (canvas is at 10,90 with size 980x900 in viewBox)
+        return pos.x >= 10 && pos.x <= 990 && 
+               pos.y >= 90 && pos.y <= 990;
       }
 
       // **OPTIMIZATION: Unified distance calculation for brush radius filtering**
@@ -1179,7 +1202,21 @@
       
       // Application initialization
       window.addEventListener('load', function() {
-        updateCoordinateFactors();
+        // Initialize self-adapting coordinate system
+        initializeSVG();
+        
+        // Set up ResizeObserver for automatic scaling detection
+        const svgElement = document.querySelector('svg');
+        if (svgElement && window.ResizeObserver) {
+          resizeObserver = new ResizeObserver(function() {
+            initializeSVG();
+          });
+          resizeObserver.observe(svgElement);
+        } else {
+          // Fallback for browsers without ResizeObserver
+          window.addEventListener('resize', initializeSVG);
+        }
+        
         loadDrawing();
 
         if (paths.length > 0 && !onlyPathIsClear()) {
