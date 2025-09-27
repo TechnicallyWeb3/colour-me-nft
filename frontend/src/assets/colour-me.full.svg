@@ -221,7 +221,7 @@
         displayHeight = svgRect.height;
       }
 
-      // Simplified position calculation - object is now sized to match container
+      // Optimized position calculation - object is now sized to match container
       function calculatePosition(clientX, clientY) {
         if (!svgRect) updateCoordinateFactors();
         
@@ -229,7 +229,8 @@
         const x = clientX - svgRect.left;
         const y = clientY - svgRect.top;
         
-        // Convert to viewBox coordinates (object should be close to 1:1 now)
+        // Convert to viewBox coordinates
+        // Since object is sized to match container, this should be much more accurate
         const rawX = (x * svgWidth) / displayWidth;
         const rawY = (y * svgHeight) / displayHeight;
         
@@ -1199,6 +1200,11 @@
         // Batch initial slider setup
         brushSlider.setAttribute('cx', sliderX);
         brushSlider.setAttribute('r', initialHandleRadius);
+      });
+
+      // Update coordinate factors when window resizes
+      window.addEventListener('resize', function() {
+        updateCoordinateFactors();
       });
     ]]>
   </script>

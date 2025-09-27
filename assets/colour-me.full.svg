@@ -1201,6 +1201,11 @@
         brushSlider.setAttribute('cx', sliderX);
         brushSlider.setAttribute('r', initialHandleRadius);
       });
+
+      // Update coordinate factors when window resizes
+      window.addEventListener('resize', function() {
+        updateCoordinateFactors();
+      });
     ]]>
   </script>
 </svg>
