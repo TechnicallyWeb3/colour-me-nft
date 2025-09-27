@@ -530,3 +530,27 @@ html, body {
   margin-top: 10px;
   opacity: 0.8;
 }
+
+.footer-promo {
+  margin-top: 15px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.footer-promo a {
+  color: #ffd700;
+  text-decoration: none;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.footer-promo a:hover {
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  border-bottom: 1px solid #ffd700;
+  transform: translateY(-1px);
+}

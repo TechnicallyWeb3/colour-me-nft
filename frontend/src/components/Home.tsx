@@ -637,6 +637,11 @@ const Home: React.FC = () => {
         <p className="footer-subtitle">
           Built with ❤️ for the Web3 community • Powered by {contractData?.chain?.name || 'Mainnet'}
         </p>
+        <p className="footer-promo">
+          <a href="https://stan.store/technicallyweb3/p/lifetime-web-hosting" target="_blank" rel="noopener noreferrer">
+            Host your website on the blockchain and stop paying monthly fees!
+          </a>
+        </p>
       </footer>
 
       {/* Shill2Earn Popup */}

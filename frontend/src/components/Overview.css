@@ -281,6 +281,26 @@
   color: #0054e3 !important;
 }
 
+.footer-promo {
+  margin-top: 15px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.footer-promo a {
+  color: #0054e3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.footer-promo a:hover {
+  color: #003d9e;
+  border-bottom: 1px solid #0054e3;
+  text-shadow: 0 0 5px rgba(0, 84, 227, 0.3);
+}
+
 /* Address display styles */
 .address-full {
   display: block;

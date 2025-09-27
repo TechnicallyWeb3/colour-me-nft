@@ -153,6 +153,11 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
           <div className="help-footer">
             <p>Built with ❤️ by the TechnicallyWeb3 team</p>
             <p className="copyright">© 2025 ColourMeNFT - Powered by {contractData?.chain?.name || 'Mainnet'} Network</p>
+            <p className="footer-promo">
+              <a href="https://stan.store/technicallyweb3/p/human-crafted-website" target="_blank" rel="noopener noreferrer">
+                Get a human crafted website just like this!
+              </a>
+            </p>
           </div>
         </div>
       </div>
