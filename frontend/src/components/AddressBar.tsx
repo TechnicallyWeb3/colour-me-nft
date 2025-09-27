@@ -167,8 +167,9 @@ const AddressBar: React.FC<AddressBarProps> = ({
 
   // Handle input blur
   const handleBlur = () => {
-    // Note: Click-outside handler now manages dropdown closing
-    setIsEditing(false);
+    // Don't close dropdown immediately on blur - let click-outside handler manage it
+    // This prevents dropdown from closing when clicking on dropdown items
+    // setIsEditing(false);
   };
 
   // Handle input change
@@ -192,11 +193,20 @@ const AddressBar: React.FC<AddressBarProps> = ({
 
   // Handle token selection
   const handleTokenSelect = (tokenId: number) => {
+    console.log('🎯 Token selected:', tokenId);
     onTokenSelect(tokenId);
     setIsOpen(false);
     setIsEditing(false);
     setSelectedIndex(-1);
     inputRef.current?.blur();
+  };
+
+  // Handle dropdown item click with proper event handling
+  const handleDropdownItemClick = (e: React.MouseEvent, tokenId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🖱️ Dropdown item clicked:', tokenId);
+    handleTokenSelect(tokenId);
   };
 
   // Handle Go button click
@@ -396,7 +406,7 @@ const AddressBar: React.FC<AddressBarProps> = ({
                 } ${
                   activeToken === token.tokenId ? 'active' : ''
                 }`}
-                onClick={() => handleTokenSelect(token.tokenId)}
+                onClick={(e) => handleDropdownItemClick(e, token.tokenId)}
               >
                 <div className="dropdown-item-icon">
                   {token.tokenId === 0 ? '🎨' : '🖼️'}

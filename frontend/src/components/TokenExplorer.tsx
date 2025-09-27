@@ -184,6 +184,55 @@ interface TokenExplorerProps {
 
       return () => observer.disconnect();
     }, [loadMoreTokens, hasMore, isLoading]);
+
+    // Auto-scroll to active token when it changes
+    useEffect(() => {
+      if (activeToken >= 0) {
+        // Check if token is in displayed tokens
+        if (displayedTokens.includes(activeToken)) {
+          // Find the token element and scroll it into view
+          const tokenElement = document.querySelector(`[data-token-id="${activeToken}"]`);
+          if (tokenElement) {
+            console.log(`🎯 Auto-scrolling to token ${activeToken}`);
+            tokenElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'center'
+            });
+          }
+        } else if (activeToken > 0 && onLoadMoreTokens) {
+          // Token not in displayed list, need to load more tokens
+          console.log(`🔄 Token ${activeToken} not in displayed list, loading more tokens...`);
+          
+          // Calculate which batch contains this token
+          const batchStart = Math.floor((activeToken - 1) / BATCH_SIZE) * BATCH_SIZE + 1;
+          const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, tokenCount);
+          
+          // Load tokens up to the target token
+          const tokensToLoad = batchEnd - displayedTokens.length;
+          if (tokensToLoad > 0) {
+            onLoadMoreTokens(displayedTokens.length + 1, tokensToLoad);
+            
+            // Add tokens to displayed list
+            const newTokens = Array.from({ length: tokensToLoad }, (_, i) => displayedTokens.length + 1 + i);
+            setDisplayedTokens(prev => [...prev, ...newTokens]);
+            
+            // Scroll to token after a short delay to allow rendering
+            setTimeout(() => {
+              const tokenElement = document.querySelector(`[data-token-id="${activeToken}"]`);
+              if (tokenElement) {
+                console.log(`🎯 Auto-scrolling to token ${activeToken} after loading`);
+                tokenElement.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'center'
+                });
+              }
+            }, 100);
+          }
+        }
+      }
+    }, [activeToken, displayedTokens, onLoadMoreTokens, tokenCount]);
   
     // Use displayed tokens for infinite scroll instead of all tokens
   
@@ -202,6 +251,7 @@ interface TokenExplorerProps {
               className={`token-item ${activeToken === 0 ? 'active' : ''}`}
               onClick={() => onTokenSelect(0)}
               onContextMenu={(e) => handleRightClick(e, 0)}
+              data-token-id={0}
             >
               <div
                 className="token-thumbnail"
@@ -222,6 +272,7 @@ interface TokenExplorerProps {
                     className={`token-item ${activeToken === tokenId ? 'active' : ''}`}
                     onClick={() => onTokenSelect(tokenId)}
                     onContextMenu={(e) => handleRightClick(e, tokenId)}
+                    data-token-id={tokenId}
                   >
                     <div
                       className="token-thumbnail"
