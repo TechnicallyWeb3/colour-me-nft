@@ -148,9 +148,86 @@ const Home: React.FC = () => {
   //   setSvgKey(prev => prev + 1);
   // }, [activeToken]);
 
-  // Load token previews for thumbnails (optimized batch loading)
+  // Load token previews for thumbnails (optimized batch loading with localStorage cache)
+  const loadTokenPreviewsBatch = async (startToken: number, count: number) => {
+    if (!readOnlyContract || !contractData) return;
+
+    console.log(`🔄 Loading token batch: ${startToken} to ${startToken + count - 1}`);
+
+    // First, try to load from localStorage cache
+    const cacheKey = `token_previews_${contractData.contractAddress}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    let cache = cachedData ? JSON.parse(cachedData) : {};
+    
+    // Check cache expiration (24 hours)
+    const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const now = Date.now();
+    const isCacheValid = cache.timestamp && (now - cache.timestamp) < cacheExpiry;
+
+    // Load cached previews for this batch
+    if (isCacheValid && cache.previews) {
+      for (let i = startToken; i < startToken + count; i++) {
+        const tokenIdStr = i.toString();
+        if (cache.previews[tokenIdStr] && !tokenPreviews.has(i)) {
+          const svgContent = cache.previews[tokenIdStr];
+          const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
+          const url = URL.createObjectURL(blob);
+          
+          setTokenPreviews(prev => {
+            const newPreviews = new Map(prev);
+            newPreviews.set(i, url);
+            return newPreviews;
+          });
+        }
+      }
+    }
+
+    // Load missing tokens from network
+    for (let i = startToken; i < startToken + count; i++) {
+      const tokenIdStr = i.toString();
+      
+      // Skip if already loaded or in cache
+      if (tokenPreviews.has(i) || (isCacheValid && cache.previews && cache.previews[tokenIdStr])) {
+        continue;
+      }
+
+      try {
+        const { svg: svgContent, result } = await getTokenSVG(readOnlyContract, i);
+        if (result.success) {
+          // Convert SVG string to data URL for img tag
+          const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+          const url = URL.createObjectURL(blob);
+
+          setTokenPreviews(prev => {
+            const newPreviews = new Map(prev);
+            newPreviews.set(i, url);
+            return newPreviews;
+          });
+
+          // Update cache
+          if (!cache.previews) cache.previews = {};
+          cache.previews[tokenIdStr] = svgContent;
+          cache.timestamp = now;
+        }
+      } catch (error) {
+        console.error(`Error loading preview for token ${i}:`, error);
+      }
+
+      // Small delay to prevent overwhelming the network
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Save updated cache to localStorage
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(cache));
+    } catch (error) {
+      console.warn('Failed to save cache to localStorage:', error);
+    }
+  };
+
+  // Legacy function for initial loading (can be removed once infinite scroll is working)
   useEffect(() => {
-    console.log('🔍 [Home.tsx] useEffect - loadTokenPreviews');
+    console.log('🔍 [Home.tsx] useEffect - loadTokenPreviews (legacy)');
     let isMounted = true;
 
     const loadTokenPreviews = async () => {
@@ -164,8 +241,50 @@ const Home: React.FC = () => {
 
       console.log(`Loading previews for ${tokensToLoad.length} tokens...`);
 
-      // Load tokens with a small delay between requests to avoid overwhelming the network
-      for (const tokenId of tokensToLoad) {
+      // First, try to load from localStorage cache
+      const cacheKey = `token_previews_${contractData.contractAddress}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      let cache = cachedData ? JSON.parse(cachedData) : {};
+      
+      // Check cache expiration (24 hours)
+      const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const now = Date.now();
+      const isCacheValid = cache.timestamp && (now - cache.timestamp) < cacheExpiry;
+
+      if (isCacheValid && cache.previews) {
+        console.log(`📦 Loading ${Object.keys(cache.previews).length} cached previews from localStorage`);
+        
+        // Load cached previews
+        Object.entries(cache.previews).forEach(([tokenId, svgContent]) => {
+          const tokenIdNum = parseInt(tokenId);
+          if (!tokenPreviews.has(tokenIdNum) && isMounted) {
+            const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            setTokenPreviews(prev => {
+              const newPreviews = new Map(prev);
+              newPreviews.set(tokenIdNum, url);
+              return newPreviews;
+            });
+          }
+        });
+      }
+
+      // Load any missing tokens from network
+      const missingTokens = tokensToLoad.filter(tokenId => {
+        const tokenIdStr = tokenId.toString();
+        return !cache.previews || !cache.previews[tokenIdStr];
+      });
+
+      if (missingTokens.length === 0) {
+        console.log('✅ All previews loaded from cache');
+        return;
+      }
+
+      console.log(`🌐 Loading ${missingTokens.length} missing previews from network...`);
+
+      // Load missing tokens with a small delay between requests
+      for (const tokenId of missingTokens) {
         if (!isMounted) break;
 
         try {
@@ -180,6 +299,20 @@ const Home: React.FC = () => {
               newPreviews.set(tokenId, url);
               return newPreviews;
             });
+
+            // Update cache
+            if (!cache.previews) cache.previews = {};
+            cache.previews[tokenId.toString()] = svgContent;
+            cache.timestamp = now;
+            
+            // Save to localStorage (throttled to avoid excessive writes)
+            if (missingTokens.indexOf(tokenId) % 5 === 0) { // Save every 5 tokens
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify(cache));
+              } catch (error) {
+                console.warn('Failed to save to localStorage:', error);
+              }
+            }
           }
         } catch (error) {
           console.error(`Error loading preview for token ${tokenId}:`, error);
@@ -187,6 +320,14 @@ const Home: React.FC = () => {
 
         // Small delay to prevent overwhelming the network
         await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // Final save to localStorage
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(cache));
+        console.log('💾 Saved previews to localStorage cache');
+      } catch (error) {
+        console.warn('Failed to save final cache to localStorage:', error);
       }
     };
 
@@ -206,6 +347,25 @@ const Home: React.FC = () => {
       });
     };
   }, [tokenPreviews]);
+
+  // Function to clear localStorage cache (useful for debugging or force refresh)
+  const clearPreviewCache = () => {
+    if (contractData?.contractAddress) {
+      const cacheKey = `token_previews_${contractData.contractAddress}`;
+      localStorage.removeItem(cacheKey);
+      console.log('🗑️ Cleared preview cache');
+      // Clear current previews to force reload
+      setTokenPreviews(new Map());
+    }
+  };
+
+  // Expose cache clearing function to window for debugging
+  useEffect(() => {
+    (window as any).clearPreviewCache = clearPreviewCache;
+    return () => {
+      delete (window as any).clearPreviewCache;
+    };
+  }, [contractData?.contractAddress]);
 
   // Handle save request from SVG
   const handleSaveRequest = (data: { artData: any[] | string, saveType: 'set' | 'append' }) => {
@@ -464,6 +624,7 @@ const Home: React.FC = () => {
         tokenCount={contractData?.tokenCount || 0}
         tokenPreviews={tokenPreviews}
         contract={readOnlyContract}
+        onLoadMoreTokens={loadTokenPreviewsBatch}
       />
       
       <Overview contractData={contractData} />

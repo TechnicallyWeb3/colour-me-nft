@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './TokenExplorer.css';
 import Window from './Window';
 import AddressBar from './AddressBar';
@@ -12,6 +12,7 @@ interface TokenExplorerProps {
     tokenCount: number;
     tokenPreviews: Map<number, string>;
     contract: ColourMeNFT | null;
+    onLoadMoreTokens?: (startToken: number, count: number) => void;
   }
   
   interface ContextMenuProps {
@@ -87,9 +88,16 @@ interface TokenExplorerProps {
     );
   };
   
-  const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews, contract }) => {
+  const TokenExplorer: React.FC<TokenExplorerProps> = ({ activeToken, onTokenSelect, tokenCount, tokenPreviews, contract, onLoadMoreTokens }) => {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tokenId: number } | null>(null);
     const [showAttributes, setShowAttributes] = useState<number | null>(null);
+    
+    // Infinite scroll state
+    const [displayedTokens, setDisplayedTokens] = useState<number[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const loadingRef = useRef<HTMLDivElement>(null);
+    const BATCH_SIZE = 50;
   
     const handleRightClick = (e: React.MouseEvent, tokenId: number) => {
       e.preventDefault();
@@ -121,10 +129,63 @@ interface TokenExplorerProps {
       // Scroll to the app section
       document.getElementById('app')?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    // Load more tokens function
+    const loadMoreTokens = useCallback(() => {
+      if (isLoading || !hasMore || !onLoadMoreTokens) return;
+      
+      setIsLoading(true);
+      const startToken = displayedTokens.length + 1; // +1 because tokens start from 1
+      const tokensToLoad = Math.min(BATCH_SIZE, tokenCount - displayedTokens.length);
+      
+      console.log(`🔄 Loading more tokens: ${startToken} to ${startToken + tokensToLoad - 1}`);
+      
+      // Call parent to load more tokens
+      onLoadMoreTokens(startToken, tokensToLoad);
+      
+      // Add tokens to displayed list
+      const newTokens = Array.from({ length: tokensToLoad }, (_, i) => startToken + i);
+      setDisplayedTokens(prev => [...prev, ...newTokens]);
+      
+      // Check if we have more tokens to load
+      setHasMore(displayedTokens.length + tokensToLoad < tokenCount);
+      
+      setIsLoading(false);
+    }, [isLoading, hasMore, displayedTokens.length, tokenCount, onLoadMoreTokens]);
+
+    // Initialize displayed tokens when tokenCount changes
+    useEffect(() => {
+      if (tokenCount > 0 && displayedTokens.length === 0) {
+        const initialTokens = Array.from({ length: Math.min(BATCH_SIZE, tokenCount) }, (_, i) => i + 1);
+        setDisplayedTokens(initialTokens);
+        setHasMore(tokenCount > BATCH_SIZE);
+        
+        // Load initial batch
+        if (onLoadMoreTokens) {
+          onLoadMoreTokens(1, Math.min(BATCH_SIZE, tokenCount));
+        }
+      }
+    }, [tokenCount, onLoadMoreTokens]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore && !isLoading) {
+            loadMoreTokens();
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      if (loadingRef.current) {
+        observer.observe(loadingRef.current);
+      }
+
+      return () => observer.disconnect();
+    }, [loadMoreTokens, hasMore, isLoading]);
   
-    // Only show tokens if there are actually tokens minted (tokenCount > 0)
-    // Create array of token IDs from 1 to tokenCount, but only if tokenCount > 0
-    const tokens = tokenCount > 0 ? Array.from({ length: tokenCount }, (_, i) => i + 1) : [];
+    // Use displayed tokens for infinite scroll instead of all tokens
   
     return (
       <>
@@ -152,8 +213,8 @@ interface TokenExplorerProps {
             </div>
   
             {/* Show minted tokens only if they exist */}
-            {tokens.length > 0 ? (
-              tokens.map(tokenId => {
+            {displayedTokens.length > 0 ? (
+              displayedTokens.map(tokenId => {
                 const previewUrl = tokenPreviews.get(tokenId);
                 return (
                   <div
@@ -186,6 +247,13 @@ interface TokenExplorerProps {
             ) : (
               /* Show message when no tokens are minted */
               <div className="token-item token-item-empty">
+              </div>
+            )}
+
+            {/* Loading indicator for infinite scroll */}
+            {hasMore && (
+              <div ref={loadingRef} className="token-loading-indicator">
+                <span className="loading-text">Loading...</span>
               </div>
             )}
           </div>
