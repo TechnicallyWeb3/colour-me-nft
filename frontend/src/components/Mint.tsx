@@ -13,9 +13,14 @@ interface MintProps {
     setActiveToken: (tokenId: number) => void;
     refreshContractData: () => void;
     setAccount: (account: string) => void;
-}
+    onTokenMinted?: (tokenId: bigint, to: string, qty: bigint) => void;
+  }
 
-const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract, setActiveToken, refreshContractData, setAccount }) => {
+const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract, setActiveToken, refreshContractData, setAccount, onTokenMinted }) => {
+  console.log('🔍 [Mint] Props received:', { 
+    hasOnTokenMinted: !!onTokenMinted,
+    onTokenMintedType: typeof onTokenMinted
+  });
     return (
       <Window id="mint" title="Mint - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
         <TokenAddressBar contractAddress={contractData?.contractAddress || ''} tokenId={activeToken} />
@@ -25,6 +30,7 @@ const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract
           onMintSuccess={(tokenId) => {setActiveToken(tokenId)}}
           onContractDataUpdate={refreshContractData}
           onAccountChange={setAccount}
+          onTokenMinted={onTokenMinted}
         />
       </Window>
     );

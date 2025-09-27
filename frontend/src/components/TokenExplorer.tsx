@@ -155,14 +155,41 @@ interface TokenExplorerProps {
 
     // Initialize displayed tokens when tokenCount changes
     useEffect(() => {
-      if (tokenCount > 0 && displayedTokens.length === 0) {
-        const initialTokens = Array.from({ length: Math.min(BATCH_SIZE, tokenCount) }, (_, i) => i + 1);
-        setDisplayedTokens(initialTokens);
-        setHasMore(tokenCount > BATCH_SIZE);
-        
-        // Load initial batch
-        if (onLoadMoreTokens) {
-          onLoadMoreTokens(1, Math.min(BATCH_SIZE, tokenCount));
+      console.log(`🔍 [TokenExplorer] tokenCount changed to: ${tokenCount}, displayedTokens.length: ${displayedTokens.length}`);
+      
+      if (tokenCount > 0) {
+        if (displayedTokens.length === 0) {
+          // Initial load
+          const initialTokens = Array.from({ length: Math.min(BATCH_SIZE, tokenCount) }, (_, i) => i + 1);
+          setDisplayedTokens(initialTokens);
+          setHasMore(tokenCount > BATCH_SIZE);
+          
+          // Load initial batch
+          if (onLoadMoreTokens) {
+            onLoadMoreTokens(1, Math.min(BATCH_SIZE, tokenCount));
+          }
+        } else if (tokenCount > displayedTokens.length) {
+          // Token count increased (new tokens minted)
+          console.log(`🆕 [TokenExplorer] New tokens minted! Displayed: ${displayedTokens.length}, Total: ${tokenCount}`);
+          
+          // Add new tokens to displayed list
+          const newTokenCount = tokenCount - displayedTokens.length;
+          const newTokens = Array.from({ length: newTokenCount }, (_, i) => displayedTokens.length + 1 + i);
+          
+          console.log(`🆕 [TokenExplorer] Adding ${newTokenCount} new tokens:`, newTokens);
+          
+          setDisplayedTokens(prev => {
+            const updated = [...prev, ...newTokens];
+            console.log(`🆕 [TokenExplorer] Updated displayedTokens:`, updated);
+            return updated;
+          });
+          setHasMore(false); // No more tokens to load until next mint
+          
+          // Load previews for new tokens
+          if (onLoadMoreTokens) {
+            console.log(`🆕 [TokenExplorer] Loading previews for tokens ${displayedTokens.length + 1} to ${displayedTokens.length + newTokenCount}`);
+            onLoadMoreTokens(displayedTokens.length + 1, newTokenCount);
+          }
         }
       }
     }, [tokenCount, onLoadMoreTokens]);

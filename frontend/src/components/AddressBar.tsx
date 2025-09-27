@@ -36,6 +36,8 @@ const AddressBar: React.FC<AddressBarProps> = ({
 
   // Create basic token list immediately when tokenCount changes
   useEffect(() => {
+    console.log(`🔍 [AddressBar] tokenCount changed to: ${tokenCount}`);
+    
     const createBasicTokenList = () => {
       const tokens: TokenData[] = [];
       
@@ -57,6 +59,7 @@ const AddressBar: React.FC<AddressBarProps> = ({
         }
       }
 
+      console.log(`📋 [AddressBar] Updated token list with ${tokenCount} tokens`);
       setTokenData(tokens);
     };
 
@@ -91,6 +94,7 @@ const AddressBar: React.FC<AddressBarProps> = ({
         await new Promise(resolve => setTimeout(resolve, 50));
       }
 
+      console.log(`👤 AddressBar: Loaded owner data for ${tokenCount} tokens`);
       setIsLoading(false);
     };
 

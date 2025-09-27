@@ -367,6 +367,56 @@ const Home: React.FC = () => {
     };
   }, [contractData?.contractAddress]);
 
+  // Function to update token count when mint events are received
+  const handleTokenMinted = (tokenId: bigint, to: string, qty: bigint) => {
+    console.log('🔍 [Home.tsx] handleTokenMinted function called');
+    console.log('🎨 [Home.tsx] Token minted callback received:', { 
+      tokenId: tokenId.toString(), 
+      to, 
+      qty: qty.toString() 
+    });
+    
+    console.log('🔍 [Home.tsx] Current contractData before update:', contractData);
+    
+    // Update contract data by incrementing token count
+    setContractData(prevData => {
+      console.log('🔍 [Home.tsx] setContractData called with prevData:', prevData);
+      
+      if (!prevData) {
+        console.warn('⚠️ No contract data available for mint event update');
+        return prevData;
+      }
+      
+      const quantityMinted = Number(qty);
+      const newTokenCount = prevData.tokenCount + quantityMinted;
+      console.log(`📈 Token count incremented: ${prevData.tokenCount} + ${quantityMinted} = ${newTokenCount}`);
+      
+      const updatedData = {
+        ...prevData,
+        tokenCount: newTokenCount
+      };
+      
+      console.log('🔍 [Home.tsx] Updated contractData:', updatedData);
+      
+      // Also refresh contract data from blockchain as a fallback
+      setTimeout(async () => {
+        try {
+          const { data, result } = await getContractData(readOnlyContract);
+          if (result.success && data) {
+            console.log('🔄 Fallback: Refreshed contract data from blockchain:', data);
+            setContractData(data);
+          }
+        } catch (error) {
+          console.warn('⚠️ Fallback contract data refresh failed:', error);
+        }
+      }, 2000); // Wait 2 seconds then refresh from blockchain
+      
+      return updatedData;
+    });
+    
+    console.log('✅ [Home.tsx] handleTokenMinted function completed');
+  };
+
   // Handle save request from SVG
   const handleSaveRequest = (data: { artData: any[] | string, saveType: 'set' | 'append' }) => {
     console.log('🎨 [Home.tsx] SAVE_REQUEST received:', { type: 'SAVE_REQUEST', data });
@@ -607,7 +657,12 @@ const Home: React.FC = () => {
         setActiveToken={setActiveToken}
         refreshContractData={refreshContractData}
         setAccount={setAccount}
+        onTokenMinted={handleTokenMinted}
       />
+      {console.log('🔍 [Home.tsx] Passing handleTokenMinted to Mint:', { 
+        hasCallback: !!handleTokenMinted,
+        callbackType: typeof handleTokenMinted 
+      })}
 
       {/* Main App Window */}
       <ColourMeApp

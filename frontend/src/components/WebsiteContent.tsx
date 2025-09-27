@@ -69,6 +69,7 @@ interface WebsiteContentProps {
   onMintSuccess?: (tokenId: number) => void;
   onContractDataUpdate?: () => void;
   onAccountChange?: (account: string) => void;
+  onTokenMinted?: (tokenId: bigint, to: string, qty: bigint) => void;
 }
 
 interface EventMessage {
@@ -84,13 +85,22 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   contract, 
   onMintSuccess, 
   onContractDataUpdate,
-  onAccountChange
+  onAccountChange,
+  onTokenMinted
 }) => {
+  console.log('🔍 [WebsiteContent] Props received:', { 
+    hasOnTokenMinted: !!onTokenMinted,
+    onTokenMintedType: typeof onTokenMinted
+  });
   // Wallet state
   const [account, setAccount] = useState<string>('');
   const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
   const [currentChainId, setCurrentChainId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Use ref to ensure callback is always current
+  const onTokenMintedRef = useRef(onTokenMinted);
+  onTokenMintedRef.current = onTokenMinted;
   
   // Minting state
   const [mintQuantity, setMintQuantity] = useState<number>(1);
@@ -234,6 +244,25 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
         message,
         txHash: event.transactionHash
       });
+
+      // Call the parent callback to update token count using ref
+      const currentCallback = onTokenMintedRef.current;
+      console.log('🔍 [WebsiteContent] Checking onTokenMinted callback via ref:', { 
+        hasCallback: !!currentCallback, 
+        callbackType: typeof currentCallback 
+      });
+      
+      if (currentCallback) {
+        console.log('📞 Calling onTokenMinted callback from WebsiteContent with:', { tokenId: tokenId.toString(), to, qty: qty.toString() });
+        try {
+          currentCallback(tokenId, to, qty);
+          console.log('✅ onTokenMinted callback completed');
+        } catch (error) {
+          console.error('❌ Error calling onTokenMinted callback:', error);
+        }
+      } else {
+        console.warn('⚠️ onTokenMinted callback is not provided');
+      }
     };
 
     // ArtSaved event listener
@@ -263,6 +292,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
         contractInstance.on(artSavedFilter, artSavedListener);
         
         console.log('✅ Event listeners set up successfully');
+        console.log('🔍 [WebsiteContent] onTokenMinted callback available via ref:', !!onTokenMintedRef.current);
       } catch (error) {
         console.error('❌ Failed to set up event listeners:', error);
         
@@ -658,9 +688,9 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
                     Qty: <input 
                       type="number" 
                       min="1" 
-                      max="10" 
+                      max={contractData?.mintLimit || 10} 
                       value={mintQuantity}
-                      onChange={(e) => setMintQuantity(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                      onChange={(e) => setMintQuantity(Math.max(1, Math.min(contractData?.mintLimit || 10, parseInt(e.target.value) || 1)))}
                       style={{ width: '50px', marginLeft: '5px', marginRight: '10px' }}
                     />
                     <button onClick={handleMint} className="simple-button">
