@@ -221,13 +221,19 @@
         displayHeight = svgRect.height;
       }
 
-      // Optimized position calculation with coordinate transformation
+      // Optimized position calculation - object is now sized to match container
       function calculatePosition(clientX, clientY) {
         if (!svgRect) updateCoordinateFactors();
+        
+        // Calculate relative position within the SVG
         const x = clientX - svgRect.left;
         const y = clientY - svgRect.top;
+        
+        // Convert to viewBox coordinates
+        // Since object is sized to match container, this should be much more accurate
         const rawX = (x * svgWidth) / displayWidth;
         const rawY = (y * svgHeight) / displayHeight;
+        
         return {
           x: Math.round(rawX),
           y: Math.round(rawY)
