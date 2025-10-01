@@ -93,10 +93,11 @@ interface TokenExplorerProps {
     const [showAttributes, setShowAttributes] = useState<number | null>(null);
     
     // Infinite scroll state
-    const [displayedTokens, setDisplayedTokens] = useState<number[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const loadingRef = useRef<HTMLDivElement>(null);
+  const [displayedTokens, setDisplayedTokens] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loadingRef = useRef<HTMLDivElement>(null);
+  const lastScrolledTokenRef = useRef<number>(-1);
     const BATCH_SIZE = 50;
   
     const handleRightClick = (e: React.MouseEvent, tokenId: number) => {
@@ -185,9 +186,11 @@ interface TokenExplorerProps {
       return () => observer.disconnect();
     }, [loadMoreTokens, hasMore, isLoading]);
 
-    // Auto-scroll to active token when it changes
+    // Auto-scroll to active token when it changes (only once per token)
     useEffect(() => {
-      if (activeToken >= 0) {
+      if (activeToken >= 0 && activeToken !== lastScrolledTokenRef.current) {
+        lastScrolledTokenRef.current = activeToken;
+        
         // Check if token is in displayed tokens
         if (displayedTokens.includes(activeToken)) {
           // Find the token element and scroll it into view
@@ -232,7 +235,7 @@ interface TokenExplorerProps {
           }
         }
       }
-    }, [activeToken, displayedTokens, onLoadMoreTokens, tokenCount]);
+    }, [activeToken]); // Only depend on activeToken, not displayedTokens
   
     // Use displayed tokens for infinite scroll instead of all tokens
   
