@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
       },
     },
     polygon: {
-      url: "https://polygon-rpc.publicnode.com",
+      url: "https://polygon-rpc.com",
       accounts: {
         mnemonic: process.env.OWNER_MNEMONIC,
       },

@@ -53,18 +53,18 @@ export const networkConfigs = {
   mainnet: {
     chainId: '0x89', // 137 in hex (Polygon mainnet)
     chainName: 'Polygon',
-    rpcUrls: ['https://polygon-rpc.publicnode.com'],
+    rpcUrls: ['https://polygon-rpc.com'],
     nativeCurrency: {
       name: 'Polygon',
       symbol: 'POL',
       decimals: 18,
     },
-    rpcUrl: 'https://polygon-rpc.publicnode.com',
+    rpcUrl: 'https://polygon-rpc.com',
     explorerUrl: 'https://polygonscan.com',
     openseaUrl: 'https://opensea.io',
     contracts: {
       ColourMeNFT: {
-        address: "0x0000000000000000000000000000000000000000", // TODO: Deploy to Polygon mainnet
+        address: "0x934374B36F5cB56eB82DDD09dB8aeA3CDAfB3e0e", // TODO: Deploy to Polygon mainnet
         deployedBlock: 0,
       }
     }
@@ -73,7 +73,7 @@ export const networkConfigs = {
 
 // Get active network configuration based on environment variable
 const getActiveNetwork = (): keyof typeof networkConfigs => {
-  const env = import.meta.env.VITE_NETWORK || 'local';
+  const env = import.meta.env.VITE_NETWORK || 'mainnet';
   if (env in networkConfigs) {
     return env as keyof typeof networkConfigs;
   }
