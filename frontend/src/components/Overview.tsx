@@ -63,7 +63,7 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
           <div className="help-section">
             <h2 className="section-title">🚀 Quick Start</h2>
             <ol className="steps-list">
-              <li><strong>Connect</strong> your Web3 wallet (MetaMask, etc.)</li>
+              <li><strong>Connect</strong> your Web3 wallet (supports MetaMask, WalletConnect, Coinbase Wallet, Rainbow, and more)</li>
               <li><strong>Mint</strong> your NFT canvas for $1</li>
               <li><strong>Create</strong> vector art using unique tools and colours</li>
               <li><strong>Save</strong> your artwork directly to the blockchain</li>

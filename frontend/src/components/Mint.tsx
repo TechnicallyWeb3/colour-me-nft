@@ -12,10 +12,9 @@ interface MintProps {
     readOnlyContract: ColourMeNFT | null;
     setActiveToken: (tokenId: number) => void;
     refreshContractData: () => void;
-    setAccount: (account: string) => void;
 }
 
-const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract, setActiveToken, refreshContractData, setAccount }) => {
+const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract, setActiveToken, refreshContractData }) => {
     return (
       <Window id="mint" title="Mint - colourmenft.xyz" icon="🌐" buttonset={{ minimize: "", expand: "", close: "" }}>
         <TokenAddressBar contractAddress={contractData?.contractAddress || ''} tokenId={activeToken} />
@@ -24,7 +23,7 @@ const Mint: React.FC<MintProps> = ({ contractData, activeToken, readOnlyContract
           contract={readOnlyContract}
           onMintSuccess={(tokenId) => {setActiveToken(tokenId)}}
           onContractDataUpdate={refreshContractData}
-          onAccountChange={setAccount}
+          onAccountChange={() => {}} // Account is now handled by wagmi hooks
         />
       </Window>
     );

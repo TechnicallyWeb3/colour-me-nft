@@ -10,12 +10,13 @@ import {
   getTokenSVG,
   getContractData,
   type ContractData,
-  connectToWallet,
   setArt,
   appendArt,
   type ConnectionResult,
   type ContractObject
 } from '../utils/blockchain';
+import { useWallet } from '../hooks/useWallet';
+import { useContract } from '../hooks/useContract';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import Mint from './Mint';
 import Overview from './Overview';
@@ -23,11 +24,12 @@ import Overview from './Overview';
 const Home: React.FC = () => {
   const [activeToken, setActiveToken] = useState(0);
 
+  // Multi-wallet hooks
+  const { address, isConnected } = useWallet();
+  const { writeContract } = useContract();
+
   // Blockchain state
   const [readOnlyContract, setReadOnlyContract] = useState<ColourMeNFT | null>(null);
-  const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
-  // const [tokenCount, setTokenCount] = useState(0);
-  const [account, setAccount] = useState<string>('');
   const [contractData, setContractData] = useState<ContractData | null>(null);
   const [tokenPreviews, setTokenPreviews] = useState<Map<number, string>>(new Map());
   const [isLoadingContract, setIsLoadingContract] = useState(false);
@@ -114,33 +116,15 @@ const Home: React.FC = () => {
     }
   }, [contractData, isLoadingContract]); // Add dependencies to prevent unnecessary calls
 
-  // Initialize write contract when account is available - only when account changes
+  // Log wallet connection status for debugging
   useEffect(() => {
-    const initializeWriteContract = async () => {
-      console.log('🔍 [Home.tsx] - initializeWriteContract');
-      if (account) {
-        try {
-          const { contract, result } = await connectToWallet();
-          if (result.success) {
-            console.log('✅ [Home.tsx] Write contract connected successfully');
-            setWriteContract(contract);
-          } else {
-            console.error('❌ [Home.tsx] Failed to connect write contract:', result.error);
-          }
-        } catch (error) {
-          console.error('❌ [Home.tsx] Error initializing write contract:', error);
-        }
-      } else {
-        console.log('⚠️ [Home.tsx] No account, clearing write contract');
-        setWriteContract(null);
-      }
-    };
-
-    // Only initialize if we don't have a write contract or account changed
-    if (writeContract === null || (account && !writeContract)) {
-      initializeWriteContract();
+    if (isConnected && address) {
+      console.log('✅ [Home.tsx] Wallet connected:', address);
+      console.log('✅ [Home.tsx] Write contract available:', !!writeContract);
+    } else {
+      console.log('⚠️ [Home.tsx] No wallet connected');
     }
-  }, [account, writeContract]); // Add writeContract to dependencies
+  }, [isConnected, address, writeContract]);
 
   // Force SVG reload when active token changes (like in App.tsx)
   // useEffect(() => {
@@ -452,31 +436,31 @@ const Home: React.FC = () => {
     console.log('🔄 [Home.tsx] useEffect triggered with state:', {
       saveRequestData: !!saveRequestData,
       writeContract: !!writeContract,
-      account: !!account,
+      address: !!address,
       activeToken: activeToken,
       isSaving: isSaving
     });
     
-    if (saveRequestData && writeContract && account && activeToken > 0 && !isSaving) {
+    if (saveRequestData && writeContract && address && activeToken > 0 && !isSaving) {
       console.log('✅ [Home.tsx] All conditions met, calling handleSaveRequest');
       handleSaveRequest(saveRequestData);
     } else {
       console.log('❌ [Home.tsx] Conditions not met for auto-save:', {
         hasSaveRequest: !!saveRequestData,
         hasWriteContract: !!writeContract,
-        hasAccount: !!account,
+        hasAddress: !!address,
         hasValidToken: activeToken > 0,
         notSaving: !isSaving
       });
     }
-  }, [saveRequestData, writeContract, account, activeToken, isSaving]);
+  }, [saveRequestData, writeContract, address, activeToken, isSaving]);
 
   // Handle save execution
   const executeSave = async (data: { artData: ContractObject[], saveType: 'set' | 'append' }) => {
-    if (!writeContract || !account || !activeToken || activeToken === 0) {
+    if (!writeContract || !address || !activeToken || activeToken === 0) {
       console.error('❌ [Home.tsx] Prerequisites not met for save:', {
         writeContract: !!writeContract,
-        account: !!account,
+        address: !!address,
         activeToken: activeToken
       });
       setSaveStatus('Cannot save: Missing requirements');
@@ -520,10 +504,10 @@ const Home: React.FC = () => {
   // Execute save when saveRequestData changes
   useEffect(() => {
     console.log('🔍 [Home.tsx] useEffect - executeSave');
-    if (saveRequestData && writeContract && account && activeToken > 0 && !isSaving) {
+    if (saveRequestData && writeContract && address && activeToken > 0 && !isSaving) {
       executeSave(saveRequestData);
     }
-  }, [saveRequestData, writeContract, account, activeToken, isSaving]);
+  }, [saveRequestData, writeContract, address, activeToken, isSaving]);
 
   // Listen for messages from SVG (like in App.tsx)
   useEffect(() => {
@@ -606,14 +590,13 @@ const Home: React.FC = () => {
         readOnlyContract={readOnlyContract}
         setActiveToken={setActiveToken}
         refreshContractData={refreshContractData}
-        setAccount={setAccount}
       />
 
       {/* Main App Window */}
       <ColourMeApp
         appTitle={appTitle()}
         activeToken={activeToken}
-        account={account}
+        account={address || ''}
         handleSaveRequest={handleSaveRequest}
       />
 

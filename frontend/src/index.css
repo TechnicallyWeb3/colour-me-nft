@@ -13,6 +13,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* RainbowKit Modal Centering Fix */
+[data-rk] ._9pm4ki3 {
+  left: 0 !important;
+  right: auto !important;
+  transform: translateX(0) !important;
+  margin: 0 auto !important;
+  width: fit-content !important;
+}
+
 a {
   font-weight: 500;
   color: #646cff;

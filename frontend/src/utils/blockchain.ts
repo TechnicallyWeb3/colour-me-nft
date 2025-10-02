@@ -414,7 +414,7 @@ export const getNetworkStatus = async (): Promise<NetworkStatus> => {
 
 export const addNetwork = async (): Promise<ConnectionResult> => {
   if (!window.ethereum) {
-    return { success: false, error: 'MetaMask not found' };
+    return { success: false, error: 'No Web3 wallet found' };
   }
 
   try {
@@ -436,7 +436,7 @@ export const addNetwork = async (): Promise<ConnectionResult> => {
 
 export const switchNetwork = async (): Promise<ConnectionResult> => {
   if (!window.ethereum) {
-    return { success: false, error: 'MetaMask not found' };
+    return { success: false, error: 'No Web3 wallet found' };
   }
 
   try {
@@ -512,7 +512,7 @@ export const connectToWallet = async (): Promise<{
 }> => {
   try {
     if (!window.ethereum) {
-      throw new Error('MetaMask not found');
+      throw new Error('No Web3 wallet found. Please install MetaMask, Coinbase Wallet, or another Web3 wallet.');
     }
 
     // Check if we're on the correct network (case-insensitive comparison)
@@ -1202,10 +1202,13 @@ export const setupNetworkListeners = (
   };
 };
 
-// Utility function to check if MetaMask is available
-export const isMetaMaskAvailable = (): boolean => {
+// Utility function to check if a Web3 wallet is available
+export const isWalletAvailable = (): boolean => {
   return typeof window !== 'undefined' && !!window.ethereum;
 };
+
+// Legacy alias for backward compatibility
+export const isMetaMaskAvailable = isWalletAvailable;
 
 // Get contract instance (helper for external use)
 export const getContractInstance = (

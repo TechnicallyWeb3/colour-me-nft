@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './WebsiteContent.css';
 import { 
-  connectToWallet, 
   mintToken,
-  switchNetwork,
-  addNetwork,
-  getCurrentNetwork,
-  setupNetworkListeners,
   dappConfig,
   formatAddress,
   type ContractData
 } from '../utils/blockchain';
+import { switchNetwork, addNetwork } from '../utils/walletCompat';
+import { useWallet } from '../hooks/useWallet';
+import { useContract } from '../hooks/useContract';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 
 // Countdown Timer Component
@@ -86,10 +84,11 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   onContractDataUpdate,
   onAccountChange
 }) => {
-  // Wallet state
-  const [account, setAccount] = useState<string>('');
-  const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
-  const [currentChainId, setCurrentChainId] = useState<string>('');
+  // Wallet hooks (multi-wallet support via RainbowKit)
+  const { address, isConnected, connect, switchToTargetNetwork, isOnCorrectNetwork } = useWallet();
+  const { writeContract } = useContract();
+  
+  // Local state
   const [isLoading, setIsLoading] = useState(false);
   
   // Minting state
@@ -292,9 +291,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     };
   };
 
-  const isOnCorrectNetwork = (chainId: string = currentChainId) => {
-    return chainId.toLowerCase() === dappConfig.network.chainId.toLowerCase();
-  };
+  // Legacy function removed - now using isOnCorrectNetwork from useWallet hook
 
   // Setup contract event listeners when contract is available
   useEffect(() => {
@@ -320,56 +317,16 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     }
   }, [contract]);
 
-  // Initialize wallet connection
+  // Sync wallet state with parent component
   useEffect(() => {
-    const initializeWallet = async () => {
-      // Get current network
-      const chainId = await getCurrentNetwork();
-      if (chainId) {
-        setCurrentChainId(chainId.toLowerCase());
-      }
+    if (address && isConnected) {
+      onAccountChange?.(address);
+    } else {
+      onAccountChange?.('');
+    }
+  }, [address, isConnected, onAccountChange]);
 
-      // Auto-connect if previously connected
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            handleConnectWallet();
-          }
-        } catch (error) {
-          console.log('Auto-connect failed:', error);
-        }
-      }
-    };
-
-    initializeWallet();
-
-    // Setup network change listeners
-    const cleanup = setupNetworkListeners(
-      (chainId: string) => {
-        setCurrentChainId(chainId.toLowerCase());
-        if (isOnCorrectNetwork(chainId) && contract) {
-          handleConnectWallet();
-        }
-      },
-      (accounts: string[]) => {
-        if (accounts.length === 0) {
-          setAccount('');
-          setWriteContract(null);
-          onAccountChange?.('');
-          showMessage('Wallet disconnected', true);
-        } else if (accounts[0] !== account) {
-          const newAccount = accounts[0];
-          setAccount(newAccount);
-          onAccountChange?.(newAccount);
-          showMessage(`Switched to ${formatAddress(newAccount)}`);
-          setTimeout(() => handleConnectWallet(), 100);
-        }
-      }
-    );
-
-    return cleanup || undefined;
-  }, []);
+  // No manual chain tracking needed - wagmi handles this automatically via useWallet hook
 
   // Check for minting status changes every second to update UI immediately
   useEffect(() => {
@@ -399,16 +356,9 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   const handleConnectWallet = async () => {
     setIsLoading(true);
     try {
-      const { signer, contract: walletContract, account: walletAccount, result } = await connectToWallet();
-      
-      if (result.success && walletAccount && signer) {
-        setAccount(walletAccount);
-        onAccountChange?.(walletAccount);
-        setWriteContract(walletContract);
-        showMessage(`Connected to ${formatAddress(walletAccount)}`);
-      } else {
-        showMessage(result.error || 'Failed to connect wallet', true);
-      }
+      // Use the new multi-wallet connect modal
+      connect();
+      showMessage('Opening wallet selection...');
     } catch (error) {
       showMessage(`Connection failed: ${error}`, true);
     } finally {
@@ -419,16 +369,21 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
   const handleSwitchNetwork = async () => {
     setIsLoading(true);
     try {
-      const result = await switchNetwork();
-      if (result.success) {
-        showMessage('Network switched successfully');
-        const chainId = await getCurrentNetwork();
-        if (chainId) setCurrentChainId(chainId.toLowerCase());
+      // Try wagmi first
+      if (switchToTargetNetwork) {
+        switchToTargetNetwork();
+        showMessage('Switching network...');
       } else {
-        // If switch fails, try adding the network
-        const addResult = await handleAddNetwork();
-        if (!addResult) {
-          showMessage(result.error || 'Failed to switch network', true);
+        // Fallback to legacy method
+        const result = await switchNetwork();
+        if (result.success) {
+          showMessage('Network switched successfully');
+        } else {
+          // If switch fails, try adding the network
+          const addResult = await handleAddNetwork();
+          if (!addResult) {
+            showMessage(result.error || 'Failed to switch network', true);
+          }
         }
       }
     } finally {
@@ -441,8 +396,6 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       const result = await addNetwork();
       if (result.success) {
         showMessage('Network added successfully');
-        const chainId = await getCurrentNetwork();
-        if (chainId) setCurrentChainId(chainId.toLowerCase());
         return true;
       } else {
         showMessage(result.error || 'Failed to add network', true);
@@ -456,12 +409,12 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
 
 
   const handleMint = async () => {
-    if (!account) {
+    if (!address || !isConnected) {
       await handleConnectWallet();
       return;
     }
 
-    if (!isOnCorrectNetwork()) {
+    if (!isOnCorrectNetwork) {
       await handleSwitchNetwork();
       return;
     }
@@ -479,10 +432,10 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
 
     setIsLoading(true);
     try {
-      showMessage(`Minting ${mintQuantity} token${mintQuantity > 1 ? 's' : ''} to ${formatAddress(account)}...`);
+      showMessage(`Minting ${mintQuantity} token${mintQuantity > 1 ? 's' : ''} to ${formatAddress(address)}...`);
       
       // For now, we'll mint one at a time - you can extend this for quantity later
-      const result = await mintToken(writeContract, account, mintQuantity);
+      const result = await mintToken(writeContract, address, mintQuantity);
       
       if (result.success) {
         showMessage(`Successfully minted ${mintQuantity} token${mintQuantity > 1 ? 's' : ''}!`);
@@ -519,7 +472,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       };
     }
 
-    if (!account) {
+    if (!address || !isConnected) {
       return {
         text: 'Connect Wallet',
         action: handleConnectWallet,
@@ -528,7 +481,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
       };
     }
 
-    if (!isOnCorrectNetwork()) {
+    if (!isOnCorrectNetwork) {
       return {
         text: 'Switch Network',
         action: handleSwitchNetwork,
@@ -641,19 +594,19 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
           <div className="section">
             <h3>Login/Mint</h3>
             
-            {!account ? (
+            {!address || !isConnected ? (
               <button onClick={buttonState.action} className="simple-button">
                 Connect Wallet
               </button>
             ) : (
               <div>
                 <p><strong>Wallet Connected</strong></p>
-                <p>{formatAddress(account)}</p>
-                {!isOnCorrectNetwork() && (
+                <p>{formatAddress(address)}</p>
+                {!isOnCorrectNetwork && (
                   <p style={{ color: 'red' }}>Wrong Network</p>
                 )}
                 
-                {contractData?.isMintActive && isOnCorrectNetwork() && buttonState.className === 'mint' && (
+                {contractData?.isMintActive && isOnCorrectNetwork && buttonState.className === 'mint' && (
                   <p>
                     Qty: <input 
                       type="number" 
