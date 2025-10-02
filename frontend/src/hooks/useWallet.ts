@@ -1,4 +1,4 @@
-import { useAccount, useConnect, useDisconnect, useSwitchChain, useChainId } from 'wagmi';
+import { useAccount, useDisconnect, useSwitchChain, useChainId } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useState, useEffect } from 'react';
 import { dappConfig } from '../utils/blockchain';
