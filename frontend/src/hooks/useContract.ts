@@ -1,32 +1,18 @@
-import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
-import { useMemo } from 'react';
+import { useAccount, usePublicClient } from 'wagmi';
+import { useMemo, useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import { ColourMeNFT__factory } from '../typechain-types/factories/contracts/ColourMeNFT.sol/ColourMeNFT__factory';
 import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import { dappConfig } from '../utils/blockchain';
-import type { WalletClient } from 'viem';
-
-/**
- * Converts a viem WalletClient to an ethers Signer
- */
-function walletClientToSigner(walletClient: WalletClient): ethers.Signer {
-  const { account, chain, transport } = walletClient;
-  const network = {
-    chainId: chain?.id,
-    name: chain?.name,
-  };
-  const provider = new ethers.BrowserProvider(transport, network);
-  const signer = provider.getSigner(account?.address);
-  return signer as any;
-}
 
 /**
  * Custom hook that provides contract instances with proper signer/provider
+ * Uses window.ethereum directly for write operations (works with RainbowKit)
  */
 export function useContract() {
-  const { isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
+  const [writeContract, setWriteContract] = useState<ColourMeNFT | null>(null);
 
   const readContract = useMemo(() => {
     if (!publicClient) return null;
@@ -38,20 +24,48 @@ export function useContract() {
     );
   }, [publicClient]);
 
-  const writeContract = useMemo(() => {
-    if (!isConnected || !walletClient) return null;
+  // Set up write contract using window.ethereum (provided by RainbowKit)
+  useEffect(() => {
+    const setupWriteContract = async () => {
+      if (!isConnected || !address) {
+        setWriteContract(null);
+        return;
+      }
 
-    try {
-      const signer = walletClientToSigner(walletClient);
-      return ColourMeNFT__factory.connect(
-        dappConfig.contracts.ColourMeNFT.address,
-        signer
-      );
-    } catch (error) {
-      console.error('Error creating write contract:', error);
-      return null;
-    }
-  }, [isConnected, walletClient]);
+      if (!window.ethereum) {
+        setWriteContract(null);
+        return;
+      }
+
+      try {
+        // Use window.ethereum directly (RainbowKit ensures this is available when connected)
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        
+        // Get the actual network from the provider
+        const network = await provider.getNetwork();
+        
+        // Verify we're on the correct network
+        if (Number(network.chainId) !== parseInt(dappConfig.network.chainId, 16)) {
+          console.warn('Network mismatch detected. Please switch to', dappConfig.network.chainName);
+          setWriteContract(null);
+          return;
+        }
+        
+        const contract = ColourMeNFT__factory.connect(
+          dappConfig.contracts.ColourMeNFT.address,
+          signer
+        );
+        
+        setWriteContract(contract);
+      } catch (error) {
+        console.error('Error creating write contract:', error);
+        setWriteContract(null);
+      }
+    };
+
+    setupWriteContract();
+  }, [isConnected, address]);
 
   return {
     readContract,

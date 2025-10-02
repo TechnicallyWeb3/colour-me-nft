@@ -420,8 +420,7 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     }
 
     if (!writeContract) {
-      showMessage('Write contract not available - reconnecting...', true);
-      await handleConnectWallet();
+      showMessage('Contract connection error. Please refresh the page and try again.', true);
       return;
     }
 
@@ -431,6 +430,9 @@ const WebsiteContent: React.FC<WebsiteContentProps> = ({
     }
 
     setIsLoading(true);
+    setStatusMessage('');
+    setErrorMessage('');
+    
     try {
       showMessage(`Minting ${mintQuantity} token${mintQuantity > 1 ? 's' : ''} to ${formatAddress(address)}...`);
       
