@@ -133,6 +133,9 @@ const Home: React.FC = () => {
   // }, [activeToken]);
 
   // Load token previews for thumbnails (optimized batch loading with localStorage cache)
+  // Only cache first 50 tokens to localStorage to prevent quota issues
+  const MAX_CACHED_TOKENS = 50;
+  
   const loadTokenPreviewsBatch = async (startToken: number, count: number) => {
     if (!readOnlyContract || !contractData) return;
 
@@ -140,8 +143,18 @@ const Home: React.FC = () => {
 
     // First, try to load from localStorage cache
     const cacheKey = `token_previews_${contractData.contractAddress}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    let cache = cachedData ? JSON.parse(cachedData) : {};
+    let cache: any = {};
+    let cachedData: string | null = null;
+    
+    try {
+      cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        cache = JSON.parse(cachedData);
+      }
+    } catch (error) {
+      console.warn('Failed to read cache from localStorage:', error);
+      cache = {};
+    }
     
     // Check cache expiration (24 hours)
     const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -153,15 +166,19 @@ const Home: React.FC = () => {
       for (let i = startToken; i < startToken + count; i++) {
         const tokenIdStr = i.toString();
         if (cache.previews[tokenIdStr] && !tokenPreviews.has(i)) {
-          const svgContent = cache.previews[tokenIdStr];
-          const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
-          const url = URL.createObjectURL(blob);
-          
-          setTokenPreviews(prev => {
-            const newPreviews = new Map(prev);
-            newPreviews.set(i, url);
-            return newPreviews;
-          });
+          try {
+            const svgContent = cache.previews[tokenIdStr];
+            const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            setTokenPreviews(prev => {
+              const newPreviews = new Map(prev);
+              newPreviews.set(i, url);
+              return newPreviews;
+            });
+          } catch (error) {
+            console.warn(`Failed to load cached preview for token ${i}:`, error);
+          }
         }
       }
     }
@@ -188,10 +205,12 @@ const Home: React.FC = () => {
             return newPreviews;
           });
 
-          // Update cache
-          if (!cache.previews) cache.previews = {};
-          cache.previews[tokenIdStr] = svgContent;
-          cache.timestamp = now;
+          // Only cache first MAX_CACHED_TOKENS tokens to prevent storage quota issues
+          if (i <= MAX_CACHED_TOKENS) {
+            if (!cache.previews) cache.previews = {};
+            cache.previews[tokenIdStr] = svgContent;
+            cache.timestamp = now;
+          }
         }
       } catch (error) {
         console.error(`Error loading preview for token ${i}:`, error);
@@ -201,11 +220,29 @@ const Home: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Save updated cache to localStorage
+    // Save updated cache to localStorage (only first MAX_CACHED_TOKENS)
     try {
+      // Clean up cache to only keep first MAX_CACHED_TOKENS
+      if (cache.previews) {
+        const filteredPreviews: any = {};
+        Object.keys(cache.previews).forEach(tokenId => {
+          if (parseInt(tokenId) <= MAX_CACHED_TOKENS) {
+            filteredPreviews[tokenId] = cache.previews[tokenId];
+          }
+        });
+        cache.previews = filteredPreviews;
+      }
+      
       localStorage.setItem(cacheKey, JSON.stringify(cache));
     } catch (error) {
-      console.warn('Failed to save cache to localStorage:', error);
+      console.warn('Failed to save cache to localStorage (storage quota may be full):', error);
+      // Try to clear old cache and retry with just new data
+      try {
+        localStorage.removeItem(cacheKey);
+        localStorage.setItem(cacheKey, JSON.stringify(cache));
+      } catch (retryError) {
+        console.error('Failed to save cache even after clearing:', retryError);
+      }
     }
   };
 
@@ -227,8 +264,18 @@ const Home: React.FC = () => {
 
       // First, try to load from localStorage cache
       const cacheKey = `token_previews_${contractData.contractAddress}`;
-      const cachedData = localStorage.getItem(cacheKey);
-      let cache = cachedData ? JSON.parse(cachedData) : {};
+      let cache: any = {};
+      let cachedData: string | null = null;
+      
+      try {
+        cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+          cache = JSON.parse(cachedData);
+        }
+      } catch (error) {
+        console.warn('Failed to read cache from localStorage:', error);
+        cache = {};
+      }
       
       // Check cache expiration (24 hours)
       const cacheExpiry = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -242,14 +289,18 @@ const Home: React.FC = () => {
         Object.entries(cache.previews).forEach(([tokenId, svgContent]) => {
           const tokenIdNum = parseInt(tokenId);
           if (!tokenPreviews.has(tokenIdNum) && isMounted) {
-            const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            
-            setTokenPreviews(prev => {
-              const newPreviews = new Map(prev);
-              newPreviews.set(tokenIdNum, url);
-              return newPreviews;
-            });
+            try {
+              const blob = new Blob([svgContent as string], { type: 'image/svg+xml' });
+              const url = URL.createObjectURL(blob);
+              
+              setTokenPreviews(prev => {
+                const newPreviews = new Map(prev);
+                newPreviews.set(tokenIdNum, url);
+                return newPreviews;
+              });
+            } catch (error) {
+              console.warn(`Failed to load cached preview for token ${tokenIdNum}:`, error);
+            }
           }
         });
       }
@@ -284,17 +335,19 @@ const Home: React.FC = () => {
               return newPreviews;
             });
 
-            // Update cache
-            if (!cache.previews) cache.previews = {};
-            cache.previews[tokenId.toString()] = svgContent;
-            cache.timestamp = now;
-            
-            // Save to localStorage (throttled to avoid excessive writes)
-            if (missingTokens.indexOf(tokenId) % 5 === 0) { // Save every 5 tokens
-              try {
-                localStorage.setItem(cacheKey, JSON.stringify(cache));
-              } catch (error) {
-                console.warn('Failed to save to localStorage:', error);
+            // Only cache first MAX_CACHED_TOKENS tokens to prevent storage quota issues
+            if (tokenId <= MAX_CACHED_TOKENS) {
+              if (!cache.previews) cache.previews = {};
+              cache.previews[tokenId.toString()] = svgContent;
+              cache.timestamp = now;
+              
+              // Save to localStorage (throttled to avoid excessive writes)
+              if (missingTokens.indexOf(tokenId) % 5 === 0) { // Save every 5 tokens
+                try {
+                  localStorage.setItem(cacheKey, JSON.stringify(cache));
+                } catch (error) {
+                  console.warn('Failed to save to localStorage:', error);
+                }
               }
             }
           }
@@ -306,12 +359,30 @@ const Home: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      // Final save to localStorage
+      // Final save to localStorage (only first MAX_CACHED_TOKENS)
       try {
+        // Clean up cache to only keep first MAX_CACHED_TOKENS
+        if (cache.previews) {
+          const filteredPreviews: any = {};
+          Object.keys(cache.previews).forEach(tokenId => {
+            if (parseInt(tokenId) <= MAX_CACHED_TOKENS) {
+              filteredPreviews[tokenId] = cache.previews[tokenId];
+            }
+          });
+          cache.previews = filteredPreviews;
+        }
+        
         localStorage.setItem(cacheKey, JSON.stringify(cache));
         console.log('💾 Saved previews to localStorage cache');
       } catch (error) {
-        console.warn('Failed to save final cache to localStorage:', error);
+        console.warn('Failed to save final cache to localStorage (storage quota may be full):', error);
+        // Try to clear old cache and retry with just new data
+        try {
+          localStorage.removeItem(cacheKey);
+          localStorage.setItem(cacheKey, JSON.stringify(cache));
+        } catch (retryError) {
+          console.error('Failed to save cache even after clearing:', retryError);
+        }
       }
     };
 
