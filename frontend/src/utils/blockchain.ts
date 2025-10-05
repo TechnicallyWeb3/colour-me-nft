@@ -4,6 +4,42 @@ import type { ColourMeNFT } from '../typechain-types/contracts/ColourMeNFT.sol/C
 import type { ObjectStruct } from '../typechain-types/contracts/ColourMeNFT.sol/ColourMeNFT';
 import { encodeObject, encodeObjects, type ObjectStruct as FrontendObject } from './encoding';
 
+// Global RPC rate limiting (enabled on mainnet): ensure at least 5s between non-setup calls
+const CALL_GAP_MS = 500;
+let callQueue: Promise<void> = Promise.resolve();
+const isMainnetRateLimitEnabled = (() => {
+  try {
+    // We don't have activeNetwork yet at module top; defer check after it's defined below as a fallback
+    // Default to enabling only when VITE_NETWORK is 'mainnet'
+    // This avoids impacting local/testnet developer experience
+    const env = (import.meta as any)?.env?.VITE_NETWORK || 'mainnet';
+    return env === 'mainnet';
+  } catch {
+    return true;
+  }
+})();
+
+const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+function scheduleRpc<T>(task: () => Promise<T>, options?: { isSetup?: boolean }): Promise<T> {
+  const isSetup = options?.isSetup === true;
+  if (!isMainnetRateLimitEnabled || isSetup) {
+    return task();
+  }
+  const runWithGap = async () => {
+    try {
+      return await task();
+    } finally {
+      // enforce gap after the task completes (success or failure)
+      await delay(CALL_GAP_MS);
+    }
+  };
+  const next = callQueue.then(runWithGap, runWithGap);
+  // prevent queue from breaking on errors
+  callQueue = next.then(() => undefined, () => undefined);
+  return next;
+}
+
 // Format address for display (truncate middle)
 export const formatAddress = (address: string): string => {
   if (address.length <= 20) return address;
@@ -53,13 +89,13 @@ export const networkConfigs = {
   mainnet: {
     chainId: '0x89', // 137 in hex (Polygon mainnet)
     chainName: 'Polygon',
-    rpcUrls: ['https://polygon-rpc.com'],
+    rpcUrls: ['https://rpc-mainnet.matic.quiknode.pro'],
     nativeCurrency: {
       name: 'Polygon',
       symbol: 'POL',
       decimals: 18,
     },
-    rpcUrl: 'https://polygon-rpc.com',
+    rpcUrl: 'https://rpc-mainnet.matic.quiknode.pro',
     explorerUrl: 'https://polygonscan.com',
     openseaUrl: 'https://opensea.io',
     contracts: {
@@ -807,7 +843,7 @@ export const getProjectInfo = async (
   contract: ColourMeNFT
 ): Promise<{ projectInfo: any; result: ConnectionResult }> => {
   try {
-    const projectInfo = await contract.getProjectInfo();
+    const projectInfo = await scheduleRpc(() => contract.getProjectInfo());
     const [
       name,
       symbol,
@@ -1086,7 +1122,7 @@ export const getTokenURI = async (
   tokenId: number
 ): Promise<{ uri: string; result: ConnectionResult }> => {
   try {
-    const uri = await contract.tokenURI(tokenId);
+    const uri = await scheduleRpc(() => contract.tokenURI(tokenId));
     return {
       uri,
       result: {
@@ -1107,7 +1143,7 @@ export const getTokenSVG = async (
   tokenId: number
 ): Promise<{ svg: string; result: ConnectionResult }> => {
   try {
-    const svg = await contract.tokenSVG(tokenId);
+    const svg = await scheduleRpc(() => contract.tokenSVG(tokenId));
     return {
       svg,
       result: {
@@ -1125,7 +1161,7 @@ export const getTokenSVG = async (
 
 export const getTokenCount = async (contract: ColourMeNFT): Promise<{ count: number; result: ConnectionResult }> => {
   try {
-    const count = await contract.tokenCount();
+    const count = await scheduleRpc(() => contract.tokenCount());
     return {
       count: Number(count),
       result: {
@@ -1143,7 +1179,7 @@ export const getTokenCount = async (contract: ColourMeNFT): Promise<{ count: num
 
 export const getMaxSupply = async (contract: ColourMeNFT): Promise<{ maxSupply: number; result: ConnectionResult }> => {
   try {
-    const maxSupply = await contract.maxSupply();
+    const maxSupply = await scheduleRpc(() => contract.maxSupply());
     return {
       maxSupply: Number(maxSupply),
       result: {
@@ -1161,7 +1197,7 @@ export const getMaxSupply = async (contract: ColourMeNFT): Promise<{ maxSupply: 
 
 export const getOwnerOf = async (contract: ColourMeNFT, tokenId: number): Promise<{ owner: string; result: ConnectionResult }> => {
   try {
-    const owner = await contract.ownerOf(tokenId);
+    const owner = await scheduleRpc(() => contract.ownerOf(tokenId));
     return {
       owner,
       result: {

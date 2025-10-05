@@ -129,24 +129,24 @@ const Overview: React.FC<OverviewProps> = ({ contractData }) => {
                 <span className="social-icon">🌐 Website</span>
                 <span className="social-text">ColourMeNFT.xyz</span>
               </div>
-              <div className="social-item">
-                <span className="social-icon">
-                  <FontAwesomeIcon icon={faXTwitter} />
-                </span>
-                <span className="social-text">@ColourMeNFT</span>
-              </div>
-              <div className="social-item">
-                <span className="social-icon">
-                  <FontAwesomeIcon icon={faTiktok} />
-                </span>
-                <span className="social-text">@TechnicallyWeb3</span>
-              </div>
-              <div className="social-item">
+            <a className="social-item" href="https://twitter.com/ColourMeNFT" target="_blank" rel="noopener noreferrer">
+              <span className="social-icon">
+                <FontAwesomeIcon icon={faXTwitter} />
+              </span>
+              <span className="social-text">@ColourMeNFT</span>
+            </a>
+            <a className="social-item" href="https://tiktok.com/@TechnicallyWeb3" target="_blank" rel="noopener noreferrer">
+              <span className="social-icon">
+                <FontAwesomeIcon icon={faTiktok} />
+              </span>
+              <span className="social-text">@TechnicallyWeb3</span>
+            </a>
+              <a className="social-item" href="https://discord.gg/9Wkz9sTnAB" target="_blank" rel="noopener noreferrer">
                 <span className="social-icon">
                   <FontAwesomeIcon icon={faDiscord} />
                 </span>
-                <span className="social-text">Discord Coming Soon!</span>
-              </div>
+                <span className="social-text">Join our Discord Server</span>
+              </a>
             </div>
           </div>
 

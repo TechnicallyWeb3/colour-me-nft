@@ -381,7 +381,7 @@ const AddressBar: React.FC<AddressBarProps> = ({
       <button 
         className="address-bar-explorer-button" 
         onClick={handleExplorerClick}
-        disabled={isLoading || activeToken === 0}
+        disabled={activeToken === 0}
         title={activeToken === 0 ? 'No explorer for example token' : 'View on blockchain explorer'}
       >
         📄
@@ -389,7 +389,7 @@ const AddressBar: React.FC<AddressBarProps> = ({
       <button 
         className="address-bar-opensea-button" 
         onClick={() => handleOpenSeaClick(activeToken)}
-        disabled={isLoading || activeToken === 0}
+        disabled={activeToken === 0}
         title={activeToken === 0 ? 'No OpenSea listing for example token' : 'View on OpenSea marketplace'}
       >
         🌊

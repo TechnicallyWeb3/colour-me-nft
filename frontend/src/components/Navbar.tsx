@@ -64,7 +64,7 @@ const Navbar: React.FC<{ setIsShill2EarnOpen: (isOpen: boolean) => void }> = ({ 
           <a href="https://tiktok.com/@TechnicallyWeb3" target="_blank" rel="noopener noreferrer" className="os-social-link">
             <FontAwesomeIcon icon={faTiktok} />
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" className="os-social-link" title="Discord Coming Soon!">
+          <a href="https://discord.gg/9Wkz9sTnAB" target="_blank" rel="noopener noreferrer" className="os-social-link" title="Join our Discord">
             <FontAwesomeIcon icon={faDiscord} />
           </a>
         </div>
