@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Home.css';
 import Navbar from './Navbar';
 import ColourMeApp from './ColourMeApp';
@@ -44,6 +44,9 @@ const Home: React.FC = () => {
   
   // Shill2Earn popup state
   const [isShill2EarnOpen, setIsShill2EarnOpen] = useState(false);
+  
+  // Track last processed save request to prevent duplicate processing
+  const lastProcessedRequestRef = useRef<string | null>(null);
 
   // Initialize active token from URL hash on first load
   useEffect(() => {
@@ -459,6 +462,7 @@ const Home: React.FC = () => {
   const handleSaveSuccess = () => {
     console.log('✅ [Home.tsx] Save successful, reloading SVG and thumbnail');
     setSaveRequestData(null); // Clear pending request
+    lastProcessedRequestRef.current = null; // Clear processed request ref
     setSaveStatus('Art saved successfully!');
     setTimeout(() => setSaveStatus(''), 3000);
     console.log('✅ [Home.tsx] Save status:', saveStatus);
@@ -513,8 +517,21 @@ const Home: React.FC = () => {
     });
     
     if (saveRequestData && writeContract && address && activeToken > 0 && !isSaving) {
-      console.log('✅ [Home.tsx] All conditions met, calling handleSaveRequest');
-      handleSaveRequest(saveRequestData);
+      // Create a unique identifier for this save request to prevent duplicate processing
+      const requestId = JSON.stringify({
+        artData: saveRequestData.artData,
+        saveType: saveRequestData.saveType,
+        tokenId: activeToken
+      });
+      
+      // Only process if this is a new request
+      if (lastProcessedRequestRef.current !== requestId) {
+        console.log('✅ [Home.tsx] All conditions met, executing save directly');
+        lastProcessedRequestRef.current = requestId;
+        executeSave(saveRequestData);
+      } else {
+        console.log('🔄 [Home.tsx] Duplicate request detected, skipping execution');
+      }
     } else {
       console.log('❌ [Home.tsx] Conditions not met for auto-save:', {
         hasSaveRequest: !!saveRequestData,
@@ -563,22 +580,21 @@ const Home: React.FC = () => {
       } else {
         console.error('❌ [Home.tsx] Transaction failed:', result.error);
         setSaveStatus(result.error || `Failed to ${data.saveType} art`);
+        // Clear save request data on failure to prevent retries
+        setSaveRequestData(null);
+        lastProcessedRequestRef.current = null;
       }
     } catch (error) {
       console.error('❌ [Home.tsx] Exception during save:', error);
       setSaveStatus(`Error saving to blockchain: ${error}`);
+      // Clear save request data on exception to prevent retries
+      setSaveRequestData(null);
+      lastProcessedRequestRef.current = null;
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Execute save when saveRequestData changes
-  useEffect(() => {
-    console.log('🔍 [Home.tsx] useEffect - executeSave');
-    if (saveRequestData && writeContract && address && activeToken > 0 && !isSaving) {
-      executeSave(saveRequestData);
-    }
-  }, [saveRequestData, writeContract, address, activeToken, isSaving]);
 
   // Listen for messages from SVG (like in App.tsx)
   useEffect(() => {
